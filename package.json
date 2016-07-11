@@ -1,0 +1,44 @@
+{
+  "name": "mobx-rest",
+  "version": "0.0.1",
+  "description": "REST conventions for mobx.",
+  "repository": {
+    "type": "git",
+    "url": "git@github.com:masylum/mobx-rest.git"
+  },
+  "license": "MIT",
+  "dependencies": {
+    "lodash.difference": "^4.3.0",
+    "lodash.last": "^3.0.0",
+    "lodash.without": "^4.2.0",
+    "mobx": "^2.3.2",
+    "xhr": "^2.2.1"
+  },
+  "standard": {
+    "parser": "babel-eslint"
+  },
+  "devDependencies": {
+    "babel-cli": "^6.10.1",
+    "babel-core": "^6.10.4",
+    "babel-eslint": "^6.1.1",
+    "babel-plugin-transform-decorators-legacy": "^1.3.4",
+    "babel-plugin-transform-flow-strip-types": "^6.8.0",
+    "babel-polyfill": "^6.9.1",
+    "babel-preset-es2015": "^6.3.13",
+    "babel-preset-stage-1": "^6.5.0",
+    "babel-register": "^6.9.0",
+    "flow-bin": "^0.28.0",
+    "mocha": "^2.3.4",
+    "node-uuid": "^1.4.7",
+    "sinon": "^1.17.4",
+    "snazzy": "^4.0.0",
+    "standard": "^7.1.2"
+  },
+  "main": "lib",
+  "scripts": {
+    "test": "./node_modules/mocha/bin/mocha test/* --require babel-core/register",
+    "lint": "standard --verbose | snazzy",
+    "flow": "flow",
+    "flow-stop": "flow stop"
+  }
+}

@@ -1,0 +1,10 @@
+[include]
+.*/src/.*
+
+[ignore]
+.*/react/node_modules/.*
+
+[options]
+esproposal.class_instance_fields=enable
+esproposal.decorators=ignore
+unsafe.enable_getters_and_setters=true
