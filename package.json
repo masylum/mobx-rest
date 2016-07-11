@@ -8,11 +8,11 @@
   },
   "license": "MIT",
   "dependencies": {
+    "jquery": "^3.1.0",
     "lodash.difference": "^4.3.0",
     "lodash.last": "^3.0.0",
     "lodash.without": "^4.2.0",
-    "mobx": "^2.3.2",
-    "xhr": "^2.2.1"
+    "mobx": "^2.3.2"
   },
   "standard": {
     "parser": "babel-eslint"
@@ -36,6 +36,8 @@
   },
   "main": "lib",
   "scripts": {
+    "compile": "./node_modules/.bin/babel src --out-dir lib",
+    "prepublish": "npm run compile",
     "test": "./node_modules/mocha/bin/mocha test/* --require babel-core/register",
     "lint": "standard --verbose | snazzy",
     "flow": "flow",
