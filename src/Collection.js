@@ -1,6 +1,6 @@
 /* globals Class */
 // @flow
-import { observable, computed } from 'mobx'
+import { observable, computed, action } from 'mobx'
 import Model from './Model'
 import Api from './Api'
 import arrayDiff from 'lodash.difference'

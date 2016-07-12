@@ -1,5 +1,5 @@
 // @flow
-import { observable, extendObservable, asMap } from 'mobx'
+import { observable, asMap, action, ObservableMap } from 'mobx'
 import Collection from './Collection'
 import getUuid from 'node-uuid'
 import type { Uuid, Error, Request, Id, Label, DestroyOptions, SaveOptions } from './types'
@@ -10,19 +10,20 @@ class Model {
 
   uuid: Uuid
   collection: Collection
+  attributes: ObservableMap
 
   constructor (collection: Collection, attributes: {}) {
     this.uuid = getUuid.v4()
     this.collection = collection
-    extendObservable(this, {attributes: asMap(attributes)})
+    this.attributes = observable(asMap(attributes))
   }
 
   get (attribute: string): ?any {
-    return this.attributes[attribute]
+    return this.attributes.get(attribute)
   }
 
   @action set (data: {}): void {
-    this.attributes = Object.assign(this.attributes, data)
+    this.attributes.merge(data)
   }
 
   @action save (
@@ -30,15 +31,15 @@ class Model {
     {optimistic = true, patch = true}: SaveOptions = {}
   ): Promise<*> {
     let data = Object.assign({}, attributes)
-    let originalAttributes = Object.assign({}, this.attributes)
-    if (!this.attributes.id) {
+    let originalAttributes = this.attributes.toJS()
+    if (!this.get('id')) {
       return this.collection.create(attributes, {optimistic})
     }
 
     const label: Label = 'updating'
 
     if (patch) {
-      data = Object.assign({}, this.attributes, attributes)
+      data = Object.assign({}, this.attributes.toJS(), attributes)
     }
 
     // TODO: use PATCH
@@ -47,7 +48,7 @@ class Model {
       data
     )
 
-    if (optimistic) this.attributes = data
+    if (optimistic) this.attributes = asMap(data)
 
     this.request = {label, abort}
 
@@ -58,7 +59,7 @@ class Model {
       })
     .catch((body) => {
       this.request = null
-      this.attributes = originalAttributes
+      this.attributes = asMap(originalAttributes)
       this.error = {label, body}
     })
   }
@@ -66,7 +67,7 @@ class Model {
   @action destroy (
     {optimistic = true}: DestroyOptions = {}
   ): Promise<*> {
-    if (!this.attributes.id) {
+    if (!this.get('id')) {
       this.collection.remove([this.uuid], {optimistic})
       return Promise.resolve()
     }
@@ -84,14 +85,14 @@ class Model {
         this.request = null
       })
       .catch((body) => {
-        if (optimistic) this.collection.add([this.attributes])
+        if (optimistic) this.collection.add([this.attributes.toJS()])
         this.error = {label, body}
         this.request = null
       })
   }
 
   get id (): Id {
-    return this.attributes.id || this.uuid
+    return this.get('id') || this.uuid
   }
 }
 

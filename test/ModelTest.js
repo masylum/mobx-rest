@@ -31,7 +31,7 @@ describe('Model', () => {
   })
 
   describe('get', () => {
-    it('finds a model at a given position', () => {
+    it('returns the attribute', () => {
       assert.equal(model.get('name'), item.name)
     })
   })
@@ -50,7 +50,7 @@ describe('Model', () => {
     const name = 'dylan'
 
     context('if the item is not persisted', () => {
-      beforeEach(() => delete model.attributes.id)
+      beforeEach(() => model.attributes.delete('id'))
 
       it('it adds the model', () => {
         const create = sinon.stub(collection, 'create')
@@ -162,7 +162,7 @@ describe('Model', () => {
 
   describe('destroy', () => {
     context('if the item is not persisted', () => {
-      beforeEach(() => delete model.attributes.id)
+      beforeEach(() => model.attributes.delete('id'))
 
       it('it removes the model', () => {
         const remove = sinon.stub(collection, 'remove')
