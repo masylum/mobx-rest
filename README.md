@@ -21,8 +21,13 @@ import { observer } from 'mobx-react'
 
 class Task extends Model { }
 class Tasks extends Collection {
-  basePath ()  { `${apiPath}/tasks` }
-  model () { Task }
+  basePath ()  {
+    return `${apiPath}/tasks`
+  }
+
+  model () {
+    return Task
+  }
 }
 
 const tasks = new Tasks()
