@@ -190,6 +190,7 @@ describe('Model', () => {
         it('rolls back the changes', () => {
           return model.destroy().then(() => {
             assert.equal(collection.models.length, 1)
+            assert.equal(collection.at(0).get('name'), item.name)
           })
         })
 

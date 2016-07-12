@@ -85,7 +85,7 @@ class Model {
         this.request = null
       })
       .catch((body) => {
-        if (optimistic) this.collection.add([this])
+        if (optimistic) this.collection.add([this.attributes])
         this.error = {label, body}
         this.request = null
       })
