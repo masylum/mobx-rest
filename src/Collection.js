@@ -1,6 +1,6 @@
 /* globals Class */
 // @flow
-import { observable, computed, action } from 'mobx'
+import { observable, action } from 'mobx'
 import Model from './Model'
 import Api from './Api'
 import arrayDiff from 'lodash.difference'
@@ -32,6 +32,17 @@ class Collection {
    */
   model (): Class<Model> {
     return Model
+  }
+
+  /**
+   * Gets the ids of all the items in the collection
+   */
+  _ids (): Array<number> {
+    const ids = this.models.map((item) => item.id)
+      .filter(Boolean)
+
+    // LOL flow: https://github.com/facebook/flow/issues/1414
+    return ((ids.filter(Boolean): Array<any>): Array<number>)
   }
 
   /**
@@ -84,7 +95,7 @@ class Collection {
   ): void {
     if (remove) {
       const ids = models.map((d) => d.id)
-      this.remove(arrayDiff(this.ids, ids))
+      this.remove(arrayDiff(this._ids(), ids))
     }
 
     models.forEach((attributes) => {
@@ -151,17 +162,6 @@ class Collection {
         this.request = null
         this.error = {label, body}
       })
-  }
-
-  /**
-   * Gets the ids of all the items in the collection
-   */
-  @computed get ids (): Array<number> {
-    const ids = this.models.map((item) => item.id)
-      .filter(Boolean)
-
-    // LOL flow: https://github.com/facebook/flow/issues/1414
-    return ((ids.filter(Boolean): Array<any>): Array<number>)
   }
 }
 

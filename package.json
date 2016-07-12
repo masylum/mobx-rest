@@ -1,6 +1,6 @@
 {
   "name": "mobx-rest",
-  "version": "0.0.6",
+  "version": "0.0.7",
   "description": "REST conventions for mobx.",
   "repository": {
     "type": "git",
