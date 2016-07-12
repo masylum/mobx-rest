@@ -28,7 +28,7 @@ export type Request = {
 }
 
 export type SetOptions = {
-  add: ?boolean;
-  change: ?boolean;
-  remove: ?boolean;
+  add?: boolean;
+  change?: boolean;
+  remove?: boolean;
 }

@@ -13,23 +13,35 @@ class Collection {
   @observable models: [] = []
 
   api: Api
-  basePath: string
-  model: Class<Model> = Model
 
   constructor (data: ?[]) {
-    this.api = new Api(this.basePath)
+    this.api = new Api(this.url())
 
     if (data) this.set(data)
   }
 
-  /*
+  /**
+   * Returns the URL where the model's resource would be located on the server.
+   */
+  url (): string {
+    return '/'
+  }
+
+  /**
+   * Specifies the model class for that collection
+   */
+  model (): Class<Model> {
+    return Model
+  }
+
+  /**
    * Get a resource at a given position
    */
   at (index: number): ?Model {
     return this.models[index]
   }
 
-  /*
+  /**
    * Get a resource with the given id or uuid
    */
   get (id: Id): ?Model {
@@ -41,7 +53,7 @@ class Collection {
    * Returns the added models.
    */
   add (models: Array<Object>): Array<Model> {
-    const Model = this.model
+    const Model = this.model()
 
     const instances = models.map((attr) => new Model(this, attr))
     this.models = this.models.concat(instances)
@@ -62,7 +74,9 @@ class Collection {
   }
 
   /**
-   * Set the models into the collection.
+   * Sets the models into the collection.
+   *
+   * You can disable adding, changing or removing.
    */
   set (
     models: [],
@@ -81,6 +95,12 @@ class Collection {
     })
   }
 
+  /**
+   * Creates the model and saves it on the backend
+   *
+   * The default behaviour is optimistic but this
+   * can be tuned.
+   */
   create (
     attributes: Object,
     {optimistic = true}: CreateOptions = {}
@@ -109,16 +129,23 @@ class Collection {
       })
   }
 
-  fetch (): Promise<*> {
+  /**
+   * Fetches the models from the backend.
+   *
+   * It uses `set` internally so you can
+   * use the options to disable adding, changing
+   * or removing.
+   */
+  fetch (options: SetOptions = {}): Promise<*> {
     const label: Label = 'fetching'
-    const {abort, promise} = this.api.fetch('')
+    const {abort, promise} = this.api.fetch()
 
     this.request = {label, abort}
 
     return promise
       .then((data) => {
         this.request = null
-        this.set(data)
+        this.set(data, options)
       })
       .catch((body) => {
         this.request = null
@@ -126,6 +153,9 @@ class Collection {
       })
   }
 
+  /**
+   * Gets the ids of all the items in the collection
+   */
   @computed get ids (): Array<number> {
     const ids = this.models.map((item) => item.id)
       .filter(Boolean)

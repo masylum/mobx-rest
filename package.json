@@ -1,6 +1,6 @@
 {
   "name": "mobx-rest",
-  "version": "0.0.1",
+  "version": "0.0.2",
   "description": "REST conventions for mobx.",
   "repository": {
     "type": "git",
@@ -41,6 +41,6 @@
     "test": "./node_modules/mocha/bin/mocha test/* --require babel-core/register",
     "lint": "standard --verbose | snazzy",
     "flow": "flow",
-    "flow-stop": "flow stop"
+    "check": "npm run flow && npm run link && npm test"
   }
 }

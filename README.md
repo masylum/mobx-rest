@@ -21,8 +21,8 @@ import { observer } from 'mobx-react'
 
 class Task extends Model { }
 class Tasks extends Collection {
-  basePath = `${apiPath}/tasks`
-  model = Task
+  basePath ()  { `${apiPath}/tasks` }
+  model () { Task }
 }
 
 const tasks = new Tasks()
@@ -55,7 +55,7 @@ Your tree will have the following schema:
 ```js
 models: [
   {                    // Information at the resource level
-    uuid: String,       // Client side id. Used for optimistic updates
+    uuid: String,      // Client side id. Used for optimistic updates
     request: {         // An ongoing request
       label: String,   // Examples: 'updating', 'creating', 'fetching', 'destroying' ...
       abort: Function, // A method to abort the ongoing request
