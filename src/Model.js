@@ -23,7 +23,7 @@ class Model {
   }
 
   set (data: {}): void {
-    Object.assign(this.attributes, data)
+    this.attributes = Object.assign(this.attributes, data)
   }
 
   save (
