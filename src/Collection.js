@@ -52,7 +52,7 @@ class Collection {
    * Adds a collection of models.
    * Returns the added models.
    */
-  add (models: Array<Object>): Array<Model> {
+  @action add (models: Array<Object>): Array<Model> {
     const Model = this.model()
 
     const instances = models.map((attr) => new Model(this, attr))
@@ -64,7 +64,7 @@ class Collection {
   /**
    * Removes the model with the given ids or uuids
    */
-  remove (ids: Array<Id>): void {
+  @action remove (ids: Array<Id>): void {
     ids.forEach((id) => {
       const model = this.get(id)
       if (!model) return
@@ -78,7 +78,7 @@ class Collection {
    *
    * You can disable adding, changing or removing.
    */
-  set (
+  @action set (
     models: [],
     {add = true, change = true, remove = true}: SetOptions = {}
   ): void {
@@ -101,7 +101,7 @@ class Collection {
    * The default behaviour is optimistic but this
    * can be tuned.
    */
-  create (
+  @action create (
     attributes: Object,
     {optimistic = true}: CreateOptions = {}
   ): Promise<*> {
@@ -136,7 +136,7 @@ class Collection {
    * use the options to disable adding, changing
    * or removing.
    */
-  fetch (options: SetOptions = {}): Promise<*> {
+  @action fetch (options: SetOptions = {}): Promise<*> {
     const label: Label = 'fetching'
     const {abort, promise} = this.api.fetch()
 

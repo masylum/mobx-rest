@@ -1,5 +1,5 @@
 // @flow
-import { observable } from 'mobx'
+import { observable, extendObservable, asMap } from 'mobx'
 import Collection from './Collection'
 import getUuid from 'node-uuid'
 import type { Uuid, Error, Request, Id, Label, DestroyOptions, SaveOptions } from './types'
@@ -7,7 +7,6 @@ import type { Uuid, Error, Request, Id, Label, DestroyOptions, SaveOptions } fro
 class Model {
   @observable request: ?Request
   @observable error: ?Error
-  @observable attributes: Object = {}
 
   uuid: Uuid
   collection: Collection
@@ -15,18 +14,18 @@ class Model {
   constructor (collection: Collection, attributes: {}) {
     this.uuid = getUuid.v4()
     this.collection = collection
-    this.set(attributes)
+    extendObservable(this, {attributes: asMap(attributes)})
   }
 
   get (attribute: string): ?any {
     return this.attributes[attribute]
   }
 
-  set (data: {}): void {
+  @action set (data: {}): void {
     this.attributes = Object.assign(this.attributes, data)
   }
 
-  save (
+  @action save (
     attributes: {},
     {optimistic = true, patch = true}: SaveOptions = {}
   ): Promise<*> {
@@ -64,7 +63,7 @@ class Model {
     })
   }
 
-  destroy (
+  @action destroy (
     {optimistic = true}: DestroyOptions = {}
   ): Promise<*> {
     if (!this.attributes.id) {
