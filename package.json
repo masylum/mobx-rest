@@ -1,6 +1,6 @@
 {
   "name": "mobx-rest",
-  "version": "0.0.7",
+  "version": "0.0.8",
   "description": "REST conventions for mobx.",
   "repository": {
     "type": "git",
@@ -12,6 +12,7 @@
     "lodash.difference": "^4.3.0",
     "lodash.last": "^3.0.0",
     "lodash.without": "^4.2.0",
+    "node-uuid": "^1.4.7",
     "mobx": "^2.3.2"
   },
   "standard": {
@@ -29,7 +30,6 @@
     "babel-register": "^6.9.0",
     "flow-bin": "^0.28.0",
     "mocha": "^2.3.4",
-    "node-uuid": "^1.4.7",
     "sinon": "^1.17.4",
     "snazzy": "^4.0.0",
     "standard": "^7.1.2"
