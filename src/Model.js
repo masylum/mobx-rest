@@ -56,6 +56,8 @@ class Model {
       .then((data) => {
         this.request = null
         this.set(data)
+
+        return data
       })
     .catch((body) => {
       this.request = null

@@ -133,6 +133,8 @@ class Collection {
         } else {
           this.add([data])
         }
+
+        return data
       })
       .catch((body) => {
         if (model) this.remove([model.id])
@@ -157,6 +159,8 @@ class Collection {
       .then((data) => {
         this.request = null
         this.set(data, options)
+
+        return data
       })
       .catch((body) => {
         this.request = null
