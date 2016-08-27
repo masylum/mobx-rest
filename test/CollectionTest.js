@@ -74,14 +74,14 @@ describe('Collection', () => {
         beforeEach(reject)
 
         it('sets the error', () => {
-          return collection.create(newItem).then(() => {
+          return collection.create(newItem).catch(() => {
             assert.equal(collection.error.label, 'creating')
             assert.equal(collection.error.body, error)
           })
         })
 
         it('removes the model', () => {
-          return collection.create(newItem).then(() => {
+          return collection.create(newItem).catch(() => {
             assert.equal(collection.models.length, 1)
           })
         })
@@ -113,7 +113,7 @@ describe('Collection', () => {
         beforeEach(reject)
 
         it('sets the error', () => {
-          return collection.create(newItem, {optimistic: false}).then(() => {
+          return collection.create(newItem, {optimistic: false}).catch(() => {
             assert.equal(collection.error.label, 'creating')
             assert.equal(collection.error.body, error)
           })
@@ -126,7 +126,7 @@ describe('Collection', () => {
         })
 
         it('adds data from the server', () => {
-          return collection.create(newItem, {optimistic: false}).then(() => {
+          return collection.create(newItem, {optimistic: false}).catch(() => {
             assert.equal(collection.models.length, 2)
             assert.equal(collection.at(1).get('name'), 'dylan')
           })
@@ -145,7 +145,7 @@ describe('Collection', () => {
       beforeEach(reject)
 
       it('sets the error', () => {
-        return collection.fetch().then(() => {
+        return collection.fetch().catch(() => {
           assert.equal(collection.error.label, 'fetching')
           assert.equal(collection.error.body, error)
         })

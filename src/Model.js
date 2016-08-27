@@ -58,18 +58,22 @@ class Model {
 
     this.request = {label, abort}
 
-    return promise
-      .then((data) => {
-        this.request = null
-        this.set(data)
+    return new Promise((resolve, reject) => {
+      promise
+        .then((data) => {
+          this.request = null
+          this.set(data)
 
-        return data
-      })
-      .catch((body) => {
-        this.request = null
-        this.attributes = asMap(originalAttributes)
-        this.error = {label, body}
-      })
+          resolve(data)
+        })
+        .catch((body) => {
+          this.request = null
+          this.attributes = asMap(originalAttributes)
+          this.error = {label, body}
+
+          reject(body)
+        })
+    })
   }
 
   @action destroy (
@@ -87,16 +91,22 @@ class Model {
 
     this.request = {label, abort}
 
-    return promise
-      .then(() => {
-        if (!optimistic) this.collection.remove([this.id])
-        this.request = null
-      })
-      .catch((body) => {
-        if (optimistic) this.collection.add([this.attributes.toJS()])
-        this.error = {label, body}
-        this.request = null
-      })
+    return new Promise((resolve, reject) => {
+      return promise
+        .then(() => {
+          if (!optimistic) this.collection.remove([this.id])
+          this.request = null
+
+          resolve()
+        })
+        .catch((body) => {
+          if (optimistic) this.collection.add([this.attributes.toJS()])
+          this.error = {label, body}
+          this.request = null
+
+          reject(body)
+        })
+    })
   }
 
   get id (): Id {

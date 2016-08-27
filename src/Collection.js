@@ -125,21 +125,25 @@ class Collection {
       model.request = {label, abort}
     }
 
-    return promise
-      .then((data) => {
-        if (model) {
-          model.set(data)
-          model.request = null
-        } else {
-          this.add([data])
-        }
+    return new Promise((resolve, reject) => {
+      promise
+        .then((data) => {
+          if (model) {
+            model.set(data)
+            model.request = null
+          } else {
+            this.add([data])
+          }
 
-        return data
-      })
-      .catch((body) => {
-        if (model) this.remove([model.id])
-        this.error = {label, body}
-      })
+          resolve(data)
+        })
+        .catch((body) => {
+          if (model) this.remove([model.id])
+          this.error = {label, body}
+
+          reject(body)
+        })
+    })
   }
 
   /**
@@ -155,17 +159,21 @@ class Collection {
 
     this.request = {label, abort}
 
-    return promise
-      .then((data) => {
-        this.request = null
-        this.set(data, options)
+    return new Promise((resolve, reject) => {
+      promise
+        .then((data) => {
+          this.request = null
+          this.set(data, options)
 
-        return data
-      })
-      .catch((body) => {
-        this.request = null
-        this.error = {label, body}
-      })
+          resolve(data)
+        })
+        .catch((body) => {
+          this.request = null
+          this.error = {label, body}
+
+          reject(body)
+        })
+    })
   }
 }
 

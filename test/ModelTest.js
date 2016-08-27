@@ -82,14 +82,14 @@ describe('Model', () => {
         beforeEach(reject)
 
         it('sets the error', () => {
-          return model.save({name}).then(() => {
+          return model.save({name}).catch(() => {
             assert.equal(model.error.label, 'updating')
             assert.equal(model.error.body, error)
           })
         })
 
         it('rolls back the changes', () => {
-          return model.save({name}).then(() => {
+          return model.save({name}).catch(() => {
             assert.equal(model.get('name'), item.name)
             assert.equal(model.get('album'), item.album)
             assert.equal(model.request, null)
@@ -97,7 +97,7 @@ describe('Model', () => {
         })
 
         it('nullifies the request', () => {
-          return model.save({name}).then(() => {
+          return model.save({name}).catch(() => {
             assert.equal(model.request, null)
           })
         })
@@ -127,14 +127,14 @@ describe('Model', () => {
         beforeEach(reject)
 
         it('sets the error', () => {
-          return model.save({name}, {optimistic: false}).then(() => {
+          return model.save({name}, {optimistic: false}).catch(() => {
             assert.equal(model.error.label, 'updating')
             assert.equal(model.error.body, error)
           })
         })
 
         it('nullifies the request', () => {
-          return model.save({name}).then(() => {
+          return model.save({name}).catch(() => {
             assert.equal(model.request, null)
           })
         })
@@ -181,21 +181,21 @@ describe('Model', () => {
         beforeEach(reject)
 
         it('sets the error', () => {
-          return model.destroy().then(() => {
+          return model.destroy().catch(() => {
             assert.equal(model.error.label, 'destroying')
             assert.equal(model.error.body, error)
           })
         })
 
         it('rolls back the changes', () => {
-          return model.destroy().then(() => {
+          return model.destroy().catch(() => {
             assert.equal(collection.models.length, 1)
             assert.equal(collection.at(0).get('name'), item.name)
           })
         })
 
         it('nullifies the request', () => {
-          return model.destroy().then(() => {
+          return model.destroy().catch(() => {
             assert.equal(model.request, null)
           })
         })
@@ -217,20 +217,20 @@ describe('Model', () => {
         beforeEach(reject)
 
         it('sets the error', () => {
-          return model.destroy({optimistic: false}).then(() => {
+          return model.destroy({optimistic: false}).catch(() => {
             assert.equal(model.error.label, 'destroying')
             assert.equal(model.error.body, error)
           })
         })
 
         it('rolls back the changes', () => {
-          return model.destroy({optimistic: false}).then(() => {
+          return model.destroy({optimistic: false}).catch(() => {
             assert.equal(collection.models.length, 1)
           })
         })
 
         it('nullifies the request', () => {
-          return model.destroy({optimistic: false}).then(() => {
+          return model.destroy({optimistic: false}).catch(() => {
             assert.equal(model.request, null)
           })
         })
