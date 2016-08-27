@@ -30,8 +30,9 @@ class Model {
     attributes: {},
     {optimistic = true, patch = true}: SaveOptions = {}
   ): Promise<*> {
-    let data = Object.assign({}, attributes)
     let originalAttributes = this.attributes.toJS()
+    let newAttributes
+    let data
 
     if (!this.get('id')) {
       return this.collection.create(attributes, {optimistic})
@@ -40,9 +41,11 @@ class Model {
     const label: Label = 'updating'
 
     if (patch) {
-      data = Object.assign({}, originalAttributes, attributes)
+      newAttributes = Object.assign({}, originalAttributes, attributes)
+      data = Object.assign({}, attributes)
     } else {
-      data = attributes
+      newAttributes = Object.assign({}, attributes)
+      data = Object.assign({}, originalAttributes, attributes)
     }
 
     // TODO: use PATCH
@@ -51,7 +54,7 @@ class Model {
       data
     )
 
-    if (optimistic) this.attributes = asMap(data)
+    if (optimistic) this.attributes = asMap(newAttributes)
 
     this.request = {label, abort}
 
