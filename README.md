@@ -6,6 +6,10 @@ REST conventions for mobx.
 
 ![](https://media.giphy.com/media/b9QBHfcNpvqDK/giphy.gif)
 
+## TODO
+
+Make API dependency injectable
+
 ## Installation
 
 ```

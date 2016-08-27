@@ -32,6 +32,7 @@ class Model {
   ): Promise<*> {
     let data = Object.assign({}, attributes)
     let originalAttributes = this.attributes.toJS()
+
     if (!this.get('id')) {
       return this.collection.create(attributes, {optimistic})
     }
@@ -39,7 +40,9 @@ class Model {
     const label: Label = 'updating'
 
     if (patch) {
-      data = Object.assign({}, this.attributes.toJS(), attributes)
+      data = Object.assign({}, originalAttributes, attributes)
+    } else {
+      data = attributes
     }
 
     // TODO: use PATCH

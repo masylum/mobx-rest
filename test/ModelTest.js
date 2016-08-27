@@ -71,7 +71,7 @@ describe('Model', () => {
 
       context('and its not patching', () => {
         it('it sets model straight away', () => {
-          model.save({id: item.id, name}, {patch: false})
+          model.save({name}, {patch: false})
           assert.equal(model.get('name'), 'dylan')
           assert.equal(model.get('album'), null)
           assert.equal(model.request.label, 'updating')
