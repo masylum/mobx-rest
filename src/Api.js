@@ -11,8 +11,12 @@ function ajax (url: string, options: {}): Request {
 
   const promise = new Promise((resolve, reject) => {
     xhr
-      .then(resolve)
-      .fail((jqXHR, textStatus) => reject(textStatus))
+      .done(resolve)
+      .fail((jqXHR, textStatus) => {
+        return reject(
+          JSON.parse(jqXHR.responseText).errors || {}
+        )
+      })
   })
 
   const abort = () => xhr.abort()

@@ -65,11 +65,11 @@ class Model {
 
         return data
       })
-    .catch((body) => {
-      this.request = null
-      this.attributes = asMap(originalAttributes)
-      this.error = {label, body}
-    })
+      .catch((body) => {
+        this.request = null
+        this.attributes = asMap(originalAttributes)
+        this.error = {label, body}
+      })
   }
 
   @action destroy (
