@@ -1,4 +1,3 @@
-// TODO: Move away from jQuery when a better alternative is available
 import jq from 'jquery'
 
 type Request = {
@@ -24,7 +23,7 @@ function ajax (url: string, options: {}): Request {
   return {abort, promise}
 }
 
-class API {
+class ApiClient {
   basePath: string
 
   /**
@@ -51,4 +50,4 @@ class API {
   }
 }
 
-export default API
+export default ApiClient

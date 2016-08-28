@@ -22,9 +22,8 @@ describe('Collection', () => {
 
   beforeEach(() => {
     item = {id: 1, name: 'miles'}
-    collection = new Collection([item])
-    api = new MockApi()
-    collection.api = api
+    collection = new Collection([item], MockApi)
+    api = collection.api
   })
 
   describe('at', () => {

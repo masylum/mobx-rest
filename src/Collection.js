@@ -2,19 +2,30 @@
 // @flow
 import { observable, action } from 'mobx'
 import Model from './Model'
-import Api from './Api'
 import arrayDiff from 'lodash.difference'
 import arrayLast from 'lodash.last'
 import type { Label, CreateOptions, Error, Request, SetOptions, Id } from './types.js'
+
+type ApiCall = {
+  abort: () => void;
+  promise: Promise<*>;
+}
+
+interface ApiInterface { // eslint-disable-line
+  fetch(path?: string): ApiCall;
+  post(path?: string, data: {}): ApiCall;
+  put(path?: string, data: {}): ApiCall;
+  del(path?: string): ApiCall;
+}
 
 class Collection {
   @observable request: ?Request
   @observable error: ?Error
   @observable models: [] = []
 
-  api: Api
+  api: ApiInterface // eslint-disable-line
 
-  constructor (data: ?[]) {
+  constructor (data: ?[], Api: any) {
     this.api = new Api(this.url())
 
     if (data) this.set(data)

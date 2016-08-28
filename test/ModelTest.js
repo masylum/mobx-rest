@@ -24,10 +24,9 @@ describe('Model', () => {
 
   beforeEach(() => {
     item = {id: 1, name: 'miles', album: 'kind of blue'}
-    collection = new Collection([item])
+    collection = new Collection([item], MockApi)
+    api = collection.api
     model = collection.at(0)
-    api = new MockApi()
-    collection.api = api
   })
 
   describe('get', () => {
