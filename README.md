@@ -6,21 +6,29 @@ REST conventions for mobx.
 
 ![](https://media.giphy.com/media/b9QBHfcNpvqDK/giphy.gif)
 
-## TODO
-
-Make API dependency injectable
-
 ## Installation
 
 ```
 npm install rest-mobx --save
 ```
 
+## What is it?
+
+MobX is great to represent RESTful resources. Each resource can be represented
+with a store which will have exactly the same actions (create, fetch, save, destroy).
+
+Instead of writing hundreds of boilerplate lines we can leverage REST conventions
+to deal with backend interactions.
+
+You can provide your own API to talk to you backend of choice. I added a folder
+`api_client_examples` with an ajax example.
+
 ## Example
 
 ```js
 const apiPath = 'http://localhost:8000/api'
 import { Collection, Model } from 'mobx-rest'
+import { Api } from './Api'
 import { observer } from 'mobx-react'
 
 class Task extends Model { }
@@ -34,7 +42,7 @@ class Tasks extends Collection {
   }
 }
 
-const tasks = new Tasks()
+const tasks = new Tasks([], Api)
 
 @observer
 class Companies extends React.Component {
