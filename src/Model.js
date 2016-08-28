@@ -5,8 +5,8 @@ import getUuid from 'node-uuid'
 import type { Uuid, Error, Request, Id, Label, DestroyOptions, SaveOptions } from './types'
 
 class Model {
-  @observable request: ?Request
-  @observable error: ?Error
+  @observable request: ?Request = null
+  @observable error: ?Error = null
 
   uuid: Uuid
   collection: Collection

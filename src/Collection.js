@@ -19,8 +19,8 @@ interface ApiInterface { // eslint-disable-line
 }
 
 class Collection {
-  @observable request: ?Request
-  @observable error: ?Error
+  @observable request: ?Request = null
+  @observable error: ?Error = null
   @observable models: [] = []
 
   api: ApiInterface // eslint-disable-line
