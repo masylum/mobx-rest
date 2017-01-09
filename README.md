@@ -9,7 +9,7 @@ REST conventions for mobx.
 ## Installation
 
 ```
-npm install rest-mobx --save
+npm install mobx-rest --save
 ```
 
 ## What is it?
