@@ -12,8 +12,8 @@
     "lodash.difference": "^4.3.0",
     "lodash.last": "^3.0.0",
     "lodash.without": "^4.2.0",
-    "node-uuid": "^1.4.7",
-    "mobx": "^2.3.2"
+    "mobx": "^2.3.2",
+    "uuid": "^3.0.0"
   },
   "standard": {
     "parser": "babel-eslint"
