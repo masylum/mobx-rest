@@ -15,26 +15,25 @@ npm install mobx-rest --save
 ## What is it?
 
 MobX is great to represent RESTful resources. Each resource can be represented
-with a store which will have exactly the same actions (create, fetch, save, destroy).
+with a store which will the expected REST actions (`create`, `fetch`, `save`, `destroy`, ...).
 
 Instead of writing hundreds of boilerplate lines we can leverage REST conventions
-to deal with backend interactions.
-
-You can provide your own API to talk to you backend of choice. I added a folder
-`api_client_examples` with an ajax example.
+to deal with your API interactions.
 
 ## Example
 
 ```js
-const apiPath = 'http://localhost:8000/api'
-import { Collection, Model } from 'mobx-rest'
-import { Api } from './Api'
-import { observer } from 'mobx-react'
+const apiPath = '/api'
+import jqueryAdapter from 'mobx-rest-jquery-adapter'
+import { apiClient, Collection, Model } from 'mobx-rest'
+
+// Set the adapter
+apiClient(jqueryAdapter, { apiPath })
 
 class Task extends Model { }
 class Tasks extends Collection {
-  basePath ()  {
-    return `${apiPath}/tasks`
+  url ()  {
+    return `/tasks`
   }
 
   model () {
@@ -42,7 +41,9 @@ class Tasks extends Collection {
   }
 }
 
-const tasks = new Tasks([], Api)
+const tasks = new Tasks()
+
+import { observer } from 'mobx-react'
 
 @observer
 class Companies extends React.Component {
@@ -55,8 +56,8 @@ class Companies extends React.Component {
   }
 
   render () {
-    if (tasks.request) {
-      return <span>Loading...</span>
+    if (tasks.isRequest('fetching')) {
+      return <span>Fetching tasks...</span>
     }
 
     return <ul>{tasks.models.map(this.renderTask.bind(this))}</ul>
@@ -71,26 +72,27 @@ Your tree will have the following schema:
 
 ```js
 models: [
-  {                    // Information at the resource level
-    uuid: String,      // Client side id. Used for optimistic updates
-    request: {         // An ongoing request
-      label: String,   // Examples: 'updating', 'creating', 'fetching', 'destroying' ...
-      abort: Function, // A method to abort the ongoing request
+  {                       // Information at the resource level
+    optimisticId: String, // Client side id. Used for optimistic updates
+    request: {            // An ongoing request
+      label: String,      // Examples: 'updating', 'creating', 'fetching', 'destroying' ...
+      abort: Function,    // A method to abort the ongoing request
     },
-    error: {           // A failed request
-      label: String,   // Examples: 'updating', 'creating', 'fetching', 'destroying' ...
-      body: String,    // A string representing the error
+    error: {              // A failed request
+      label: String,      // Examples: 'updating', 'creating', 'fetching', 'destroying' ...
+      body: String,       // A string representing the error
     },
-    attributes: Object // The resource attributes
+    attributes: Object    // The resource attributes
   }
-]                      // Information at the collection level
-request: {             // An ongoing request
-  label: String,       // Examples: 'updating', 'creating', 'fetching', 'destroying' ...
-  abort: Function,     // A method to abort the ongoing request
+]                         // Information at the collection level
+request: {                // An ongoing request
+  label: String,          // Examples: 'updating', 'creating', 'fetching', 'destroying' ...
+  abort: Function,        // A method to abort the ongoing request
+  progress: number        // If uploading a file, represents the progress
 },
-error: {               // A failed request
-  label: String,       // Examples: 'updating', 'creating', 'fetching', 'destroying' ...
-  body: Object,        // A string representing the error
+error: {                  // A failed request
+  label: String,          // Examples: 'updating', 'creating', 'fetching', 'destroying' ...
+  body: Object,           // A string representing the error
 }
 ```
 
@@ -98,7 +100,7 @@ error: {               // A failed request
 
 (The MIT License)
 
-Copyright (c) 2016 Pau Ramon <masylum@gmail.com>
+Copyright (c) 2017 Pau Ramon <masylum@gmail.com>
 
 Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the 'Software'), to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so, subject to the following conditions:
 

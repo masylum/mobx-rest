@@ -1,92 +1,108 @@
-/* globals Class */
 // @flow
-import { observable, action } from 'mobx'
+import { observable, action, asReference, IObservableArray, runInAction } from 'mobx'
 import Model from './Model'
-import arrayDiff from 'lodash.difference'
-import arrayLast from 'lodash.last'
-import type { Label, CreateOptions, Error, Request, SetOptions, Id } from './types.js'
+import { isEmpty, filter, isMatch, find, difference, debounce, last } from 'lodash'
+import apiClient from './apiClient'
+import type { Label, CreateOptions, ErrorType, Request, SetOptions, Id } from './types'
 
-type ApiCall = {
-  abort: () => void;
-  promise: Promise<*>;
-}
-
-interface ApiInterface { // eslint-disable-line
-  fetch(path?: string): ApiCall;
-  post(path?: string, data: {}): ApiCall;
-  put(path?: string, data: {}): ApiCall;
-  del(path?: string): ApiCall;
-}
-
-class Collection {
+export default class Collection<T: Model> {
   @observable request: ?Request = null
-  @observable error: ?Error = null
-  @observable models: [] = []
+  @observable error: ?ErrorType = null
+  @observable models: IObservableArray<T> = []
 
-  api: ApiInterface // eslint-disable-line
-
-  constructor (data: ?[], Api: any) {
-    this.api = new Api(this.url())
-
-    if (data) this.set(data)
+  constructor (data: Array<{[key: string]: any}> = []) {
+    this.set(data)
   }
 
   /**
    * Returns the URL where the model's resource would be located on the server.
+   *
+   * @abstract
    */
   url (): string {
-    return '/'
+    throw new Error('You must implement this method')
   }
 
   /**
    * Specifies the model class for that collection
    */
-  model (): Class<Model> {
+  model (): Class<*> {
     return Model
+  }
+
+  /**
+   * Questions whether the request exists
+   * and matches a certain label
+   */
+  isRequest (label: Label): boolean {
+    if (!this.request) return false
+
+    return this.request.label === label
+  }
+
+  /**
+   * Wether the collection is empty
+   */
+  isEmpty (): boolean {
+    return isEmpty(this.models)
   }
 
   /**
    * Gets the ids of all the items in the collection
    */
-  _ids (): Array<number> {
-    const ids = this.models.map((item) => item.id)
+  _ids (): Array<Id> {
+    return this.models.map((item) => item.id)
       .filter(Boolean)
-
-    // LOL flow: https://github.com/facebook/flow/issues/1414
-    return ((ids.filter(Boolean): Array<any>): Array<number>)
   }
 
   /**
    * Get a resource at a given position
    */
-  at (index: number): ?Model {
+  at (index: number): ?T {
     return this.models[index]
   }
 
   /**
    * Get a resource with the given id or uuid
    */
-  get (id: Id): ?Model {
+  get (id: Id): ?T {
     return this.models.find((item) => item.id === id)
+  }
+
+  /**
+   * Get resources matching criteria
+   */
+  filter (query: {[key: string]: any} = {}): Array<T> {
+    return filter(this.models, ({ attributes }) => {
+      return isMatch(attributes.toJS(), query)
+    })
+  }
+
+  /**
+   * Finds an element with the given matcher
+   */
+  find (query: {[key: string]: mixed}): ?T {
+    return find(this.models, ({ attributes }) => {
+      return isMatch(attributes.toJS(), query)
+    })
   }
 
   /**
    * Adds a collection of models.
    * Returns the added models.
    */
-  @action add (models: Array<Object>): Array<Model> {
-    const Model = this.model()
-
-    const instances = models.map((attr) => new Model(this, attr))
-    this.models = this.models.concat(instances)
-
-    return instances
+  @action
+  add (data: Array<{[key: string]: any}>): Array<T> {
+    const models = data.map(d => this.build(d))
+    this.models = this.models.concat(models)
+    return models
   }
 
   /**
    * Removes the model with the given ids or uuids
    */
-  @action remove (ids: Array<Id>): void {
+  @action
+  remove (ids: Array<Id>): void {
     ids.forEach((id) => {
       const model = this.get(id)
       if (!model) return
@@ -100,21 +116,34 @@ class Collection {
    *
    * You can disable adding, changing or removing.
    */
-  @action set (
-    models: [],
-    {add = true, change = true, remove = true}: SetOptions = {}
+  @action
+  set (
+    models: Array<{[key: string]: any}>,
+    { add = true, change = true, remove = true }: SetOptions = {}
   ): void {
     if (remove) {
       const ids = models.map((d) => d.id)
-      this.remove(arrayDiff(this._ids(), ids))
+      const toRemove = difference(this._ids(), ids)
+      if (toRemove.length) this.remove(toRemove)
     }
 
     models.forEach((attributes) => {
-      let model = this.get(attributes.id)
+      const model = this.get(attributes.id)
 
       if (model && change) model.set(attributes)
       if (!model && add) this.add([attributes])
     })
+  }
+
+  /**
+   * Creates a new model instance with the given attributes
+   */
+  build (attributes: {[key: string]: any} = {}) {
+    const ModelClass = this.model()
+    const model = new ModelClass(attributes)
+    model.collection = this
+
+    return model
   }
 
   /**
@@ -123,38 +152,77 @@ class Collection {
    * The default behaviour is optimistic but this
    * can be tuned.
    */
-  @action create (
-    attributes: Object,
-    {optimistic = true}: CreateOptions = {}
+  @action
+  async create (
+    attributesOrModel: {[key: string]: any} | Model,
+    { optimistic = true }: CreateOptions = {}
   ): Promise<*> {
-    const label: Label = 'creating'
-    const { abort, promise } = this.api.post('', attributes)
     let model
+    let attributes = attributesOrModel instanceof Model
+      ? attributesOrModel.attributes.toJS()
+      : attributesOrModel
+    const label: Label = 'creating'
+
+    const onProgress = debounce(function onProgress (progress) {
+      if (optimistic && model.request) {
+        model.request.progress = progress
+      }
+
+      if (this.request) {
+        this.request.progress = progress
+      }
+    }, 300)
+
+    const { abort, promise } = apiClient().post(
+      this.url(),
+      attributes,
+      { onProgress }
+    )
 
     if (optimistic) {
-      model = arrayLast(this.add([attributes]))
-      model.request = {label, abort}
+      model = attributesOrModel instanceof Model
+        ? attributesOrModel
+        : last(this.add([attributesOrModel]))
+      model.request = {
+        label,
+        abort: asReference(abort),
+        progress: 0
+      }
     }
 
-    return new Promise((resolve, reject) => {
-      promise
-        .then((data) => {
-          if (model) {
-            model.set(data)
-            model.request = null
-          } else {
-            this.add([data])
-          }
+    this.request = {
+      label,
+      abort: asReference(abort),
+      progress: 0
+    }
 
-          resolve(data)
-        })
-        .catch((body) => {
-          if (model) this.remove([model.id])
-          this.error = {label, body}
+    let data: {}
 
-          reject(body)
-        })
+    try {
+      data = await promise
+    } catch (body) {
+      runInAction('create-error', () => {
+        if (model) {
+          this.remove([model.id])
+        }
+        this.error = { label, body }
+        this.request = null
+      })
+
+      throw body
+    }
+
+    runInAction('create-done', () => {
+      if (model) {
+        model.set(data)
+        model.request = null
+      } else {
+        this.add([data])
+      }
+      this.request = null
     })
+
+    return data
   }
 
   /**
@@ -164,28 +232,38 @@ class Collection {
    * use the options to disable adding, changing
    * or removing.
    */
-  @action fetch (options: SetOptions = {}): Promise<*> {
+  @action
+  async fetch (options: SetOptions = {}): Promise<void> {
     const label: Label = 'fetching'
-    const {abort, promise} = this.api.fetch()
+    const { abort, promise } = apiClient().get(
+      this.url(),
+      options.data
+    )
 
-    this.request = {label, abort}
+    this.request = {
+      label,
+      abort: asReference(abort),
+      progress: 0
+    }
 
-    return new Promise((resolve, reject) => {
-      promise
-        .then((data) => {
-          this.request = null
-          this.set(data, options)
+    let data: Array<{[key: string]: any}>
 
-          resolve(data)
-        })
-        .catch((body) => {
-          this.request = null
-          this.error = {label, body}
+    try {
+      data = await promise
+    } catch (err) {
+      runInAction('fetch-error', () => {
+        this.error = { label, body: err }
+        this.request = null
+      })
 
-          reject(body)
-        })
+      throw err
+    }
+
+    runInAction('fetch-done', () => {
+      this.set(data, options)
+      this.request = null
     })
+
+    return data
   }
 }
-
-export default Collection
