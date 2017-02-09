@@ -287,5 +287,38 @@ describe('Collection', () => {
         expect(collection.get(2).get('name')).toBe(newItem.name)
       })
     })
+
+    describe('rpc', () => {
+      it('sets the request', () => {
+        collection.rpc('foo')
+        expect(collection.request.label).toBe('updating')
+      })
+
+      describe('when it fails', () => {
+        beforeEach(reject)
+
+        it('sets the error', async () => {
+          try {
+            await collection.rpc('foo')
+          } catch (_error) {
+            expect(collection.error.label).toBe('updating')
+            expect(collection.error.body).toBe(error)
+          }
+        })
+      })
+
+      describe('when it succeeds', () => {
+        const mockResponse = [item, { id: 2, name: 'bob' }]
+
+        beforeEach(() => {
+          resolve(mockResponse)()
+        })
+
+        it('return the data', async () => {
+          const data = await collection.rpc('foo')
+          expect(data).toBe(mockResponse)
+        })
+      })
+    })
   })
 })
