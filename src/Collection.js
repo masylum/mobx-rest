@@ -266,4 +266,44 @@ export default class Collection<T: Model> {
 
     return data
   }
+
+  /**
+   * Call an RPC action for all those
+   * non-REST endpoints that you may have in
+   * your API.
+   */
+  @action
+  async rpc (
+    method: string,
+    body?: {}
+  ): Promise<*> {
+    const label: Label = 'updating' // TODO: Maybe differentiate?
+    const { promise, abort } = apiClient().post(
+      `${this.url()}/${method}`,
+      body || {}
+    )
+
+    this.request = {
+      label,
+      abort: asReference(abort),
+      progress: 0
+    }
+
+    let response
+
+    try {
+      response = await promise
+    } catch (body) {
+      runInAction('accept-fail', () => {
+        this.request = null
+        this.error = { label, body }
+      })
+
+      throw body
+    }
+
+    this.request = null
+
+    return response
+  }
 }
