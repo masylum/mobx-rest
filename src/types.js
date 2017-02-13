@@ -16,6 +16,7 @@ export type DestroyOptions = {
 export type SaveOptions = {
   optimistic?: boolean;
   patch?: boolean;
+  onProgress?: () => mixed;
 }
 
 export type ErrorType = {

@@ -1,7 +1,16 @@
 // @flow
 import { observable, action, asReference, IObservableArray, runInAction } from 'mobx'
 import Model from './Model'
-import { isEmpty, filter, isMatch, find, difference, debounce, last } from 'lodash'
+import {
+  isEmpty,
+  filter,
+  isMatch,
+  find,
+  difference,
+  debounce,
+  map,
+  last
+} from 'lodash'
 import apiClient from './apiClient'
 import type { Label, CreateOptions, ErrorType, Request, SetOptions, Id } from './types'
 
@@ -51,7 +60,7 @@ export default class Collection<T: Model> {
    * Gets the ids of all the items in the collection
    */
   _ids (): Array<Id> {
-    return this.models.map((item) => item.id)
+    return map(this.models, (item) => item.id)
       .filter(Boolean)
   }
 

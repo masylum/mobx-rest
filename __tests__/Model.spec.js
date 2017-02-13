@@ -8,6 +8,21 @@ class MyCollection extends Collection {
   url () {
     return '/resources'
   }
+
+  model () {
+    return MyModel
+  }
+}
+
+class MyModel extends Model {
+  url () {
+    const id = this.has('id') && this.get('id')
+    if (id) {
+      return `/resources/${id}`
+    } else {
+      return '/resources'
+    }
+  }
 }
 
 describe('Model', () => {
@@ -81,10 +96,88 @@ describe('Model', () => {
       })
 
       describe('and it does not have a collection', () => {
-        it('throws an error', () => {
-          const newModel = new Model()
-          newModel.save(item).catch((s) => {
-            expect(s).toBeTruthy()
+        beforeEach(() => {
+          model.collection = null
+        })
+
+        describe('if its optimistic (default)', () => {
+          it('it sets model straight away', () => {
+            model.save({ name })
+            expect(model.get('name')).toBe('dylan')
+            expect(model.get('album')).toBe(item.album)
+            expect(model.request.label).toBe('creating')
+          })
+
+          describe('when it fails', () => {
+            beforeEach(reject)
+
+            it('sets the error', () => {
+              return model.save({ name }).catch(() => {
+                expect(model.error.label).toBe('creating')
+                expect(model.error.body).toBe(error)
+              })
+            })
+
+            it('nullifies the request', () => {
+              return model.save({ name }).catch(() => {
+                expect(model.request).toBe(null)
+              })
+            })
+          })
+
+          describe('when it succeeds', () => {
+            beforeEach(() => {
+              resolve({ id: 1, name: 'coltrane' })()
+            })
+
+            it('updates the data from the server', () => {
+              return model.save({ name }).then(() => {
+                expect(model.get('name')).toBe('coltrane')
+              })
+            })
+
+            it('nullifies the request', () => {
+              return model.save({ name }).then(() => {
+                expect(model.request).toBe(null)
+              })
+            })
+          })
+        })
+
+        describe('if its pessimistic', () => {
+          describe('when it fails', () => {
+            beforeEach(reject)
+
+            it('sets the error', () => {
+              return model.save({ name }, { optimistic: false }).catch(() => {
+                expect(model.error.label).toBe('creating')
+                expect(model.error.body).toBe(error)
+              })
+            })
+
+            it('nullifies the request', () => {
+              return model.save({ name }).catch(() => {
+                expect(model.request).toBe(null)
+              })
+            })
+          })
+
+          describe('when it succeeds', () => {
+            beforeEach(() => {
+              resolve({ id: 2, name: 'dylan' })()
+            })
+
+            it('adds data from the server', () => {
+              return model.save({ name }, { optimistic: false }).then(() => {
+                expect(model.get('name')).toBe('dylan')
+              })
+            })
+
+            it('nullifies the request', () => {
+              return model.save({ name }).then(() => {
+                expect(model.request).toBe(null)
+              })
+            })
           })
         })
       })
@@ -153,7 +246,7 @@ describe('Model', () => {
       })
     })
 
-    describe('if its pessimistic (default)', () => {
+    describe('if its pessimistic', () => {
       describe('when it fails', () => {
         beforeEach(reject)
 

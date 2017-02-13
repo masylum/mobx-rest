@@ -1,9 +1,18 @@
 // @flow
 import { observable, asMap, asFlat, action, asReference, ObservableMap, runInAction } from 'mobx'
 import Collection from './Collection'
-import { uniqueId, isString } from 'lodash'
+import { uniqueId, isString, debounce } from 'lodash'
 import apiClient from './apiClient'
-import type { OptimisticId, ErrorType, Request, Id, Label, DestroyOptions, SaveOptions } from './types'
+import type {
+  OptimisticId,
+  ErrorType,
+  Request,
+  Id,
+  Label,
+  DestroyOptions,
+  SaveOptions,
+  CreateOptions
+} from './types'
 
 export default class Model {
   @observable request: ?Request = null
@@ -121,26 +130,27 @@ export default class Model {
    * otherwise it creates the new resource.
    *
    * It supports optimistic and patch updates.
+   *
+   * TODO: Add progress
    */
   @action
   async save (
     attributes: {},
     { optimistic = true, patch = true }: SaveOptions = {}
   ): Promise<*> {
-    const originalAttributes = this.attributes.toJS()
-    let newAttributes
-    let data
-
     if (!this.has('id')) {
       this.set(Object.assign({}, attributes))
       if (this.collection) {
         return this.collection.create(this, { optimistic })
+      } else {
+        return this._create(attributes, { optimistic })
       }
-
-      throw new Error('This model does not have a collection defined')
     }
 
+    let newAttributes
+    let data
     const label: Label = 'updating'
+    const originalAttributes = this.attributes.toJS()
 
     if (patch) {
       newAttributes = Object.assign({}, originalAttributes, attributes)
@@ -184,6 +194,57 @@ export default class Model {
     })
 
     return response
+  }
+
+  /**
+   * Internal method that takes care of creating a model that does
+   * not belong to a collection
+   */
+  async _create (
+    attributes: {},
+    { optimistic = true }: CreateOptions = {}
+  ): Promise<*> {
+    const label: Label = 'creating'
+
+    const onProgress = debounce(function onProgress (progress) {
+      if (optimistic && this.request) {
+        this.request.progress = progress
+      }
+    }, 300)
+
+    const { abort, promise } = apiClient().post(
+      this.url(),
+      attributes,
+      { onProgress }
+    )
+
+    if (optimistic) {
+      this.request = {
+        label,
+        abort: asReference(abort),
+        progress: 0
+      }
+    }
+
+    let data: {}
+
+    try {
+      data = await promise
+    } catch (body) {
+      runInAction('create-error', () => {
+        this.error = { label, body }
+        this.request = null
+      })
+
+      throw body
+    }
+
+    runInAction('create-done', () => {
+      this.set(data)
+      this.request = null
+    })
+
+    return data
   }
 
   /**

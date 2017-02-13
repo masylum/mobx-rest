@@ -212,20 +212,6 @@ describe('Collection', () => {
         expect(collection.at(1).get('name')).toBe('bob')
       })
     })
-
-    describe('given a successful non-array response', () => {
-      beforeEach(() => {
-        resolve({ name: 'bob' })()
-      })
-
-      it('throws an error', async () => {
-        collection.fetch().then((result) => {
-          throw new Error('expected promise to fail but it succeeded')
-        }, (err) => {
-          expect(err.message).toBe('expected an array response')
-        })
-      })
-    })
   })
 
   describe('set', () => {
