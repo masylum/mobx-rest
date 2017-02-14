@@ -15,13 +15,8 @@ class MyCollection extends Collection {
 }
 
 class MyModel extends Model {
-  url () {
-    const id = this.has('id') && this.get('id')
-    if (id) {
-      return `/resources/${id}`
-    } else {
-      return '/resources'
-    }
+  urlRoot () {
+    return '/resources'
   }
 }
 
@@ -46,16 +41,46 @@ describe('Model', () => {
     model = collection.at(0)
   })
 
-  describe('url', () => {
-    it('returns the collection one', () => {
-      expect(model.url()).toBe('/resources/1')
+  describe('isNew', () => {
+    it('returns true if it does not have an id', () => {
+      const newModel = new MyModel({})
+      expect(newModel.isNew).toBe(true)
     })
 
-    it('throws if the model does not have a collection', () => {
-      expect(() => {
-        const newModel = new Model({ id: 1 })
-        newModel.url()
-      }).toThrowError()
+    it('returns false if it does not have an id', () => {
+      const newModel = new MyModel({ id: 4 })
+      expect(newModel.isNew).toBe(false)
+    })
+  })
+
+  describe('url', () => {
+    describe('when the model has a collection', () => {
+      it('returns the collection one', () => {
+        expect(model.url()).toBe('/resources/1')
+      })
+    })
+
+    describe('when the model has no collection', () => {
+      describe('and no urlRoot', () => {
+        it('throws', () => {
+          expect(() => {
+            const newModel = new Model({ id: 1 })
+            newModel.url()
+          }).toThrowError()
+        })
+      })
+
+      describe('and urlRoot is defined', () => {
+        it('returns different urls depending whether is new or not', () => {
+          let newModel
+
+          newModel = new MyModel({})
+          expect(newModel.url()).toBe('/resources')
+
+          newModel = new MyModel({ id: 3 })
+          expect(newModel.url()).toBe('/resources/3')
+        })
+      })
     })
   })
 

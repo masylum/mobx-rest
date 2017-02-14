@@ -1,5 +1,14 @@
 // @flow
-import { observable, asMap, asFlat, action, asReference, ObservableMap, runInAction } from 'mobx'
+import {
+  observable,
+  asMap,
+  asFlat,
+  action,
+  asReference,
+  ObservableMap,
+  computed,
+  runInAction
+} from 'mobx'
 import Collection from './Collection'
 import { uniqueId, isString, debounce } from 'lodash'
 import apiClient from './apiClient'
@@ -27,16 +36,47 @@ export default class Model {
   }
 
   /**
-   * Return the url for this given REST resource
+   * Return the base url used in
+   * the `url` method
    *
    * @abstract
    */
+  urlRoot () {
+    throw new Error('`url` method not implemented')
+  }
+
+  /**
+   * Return the url for this given REST resource
+   */
   url (): string {
+    let urlRoot
+
     if (this.collection) {
-      return `${this.collection.url()}/${this.get('id')}`
+      urlRoot = this.collection.url()
+    } else {
+      urlRoot = this.urlRoot()
     }
 
-    throw new Error('`url` method not implemented')
+    if (!urlRoot) {
+      throw new Error('Either implement `urlRoot` or assign a collection')
+    }
+
+    if (this.isNew) {
+      return urlRoot
+    } else {
+      return `${urlRoot}/${this.get('id')}`
+    }
+  }
+
+  /**
+   * Wether the resource is new or not
+   *
+   * We determine this asking if it contains
+   * the `id` attribute (set by the server).
+   */
+  @computed
+  get isNew (): boolean {
+    return !this.has('id')
   }
 
   /**
