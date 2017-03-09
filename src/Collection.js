@@ -1,5 +1,5 @@
 // @flow
-import { observable, action, asReference, IObservableArray, runInAction } from 'mobx'
+import { observable, action, IObservableArray, runInAction } from 'mobx'
 import Model from './Model'
 import {
   isEmpty,
@@ -15,9 +15,9 @@ import apiClient from './apiClient'
 import type { Label, CreateOptions, ErrorType, Request, SetOptions, Id } from './types'
 
 export default class Collection<T: Model> {
-  @observable request: ?Request = null
-  @observable error: ?ErrorType = null
-  @observable models: IObservableArray<T> = []
+  request: ?Request = observable.shallowObject(null)
+  error: ?ErrorType = observable.shallowObject(null)
+  models: IObservableArray<T> = observable.shallowArray([])
 
   constructor (data: Array<{[key: string]: any}> = []) {
     this.set(data)
@@ -194,14 +194,14 @@ export default class Collection<T: Model> {
         : last(this.add([attributesOrModel]))
       model.request = {
         label,
-        abort: asReference(abort),
+        abort,
         progress: 0
       }
     }
 
     this.request = {
       label,
-      abort: asReference(abort),
+      abort,
       progress: 0
     }
 
@@ -251,7 +251,7 @@ export default class Collection<T: Model> {
 
     this.request = {
       label,
-      abort: asReference(abort),
+      abort,
       progress: 0
     }
 
@@ -294,7 +294,7 @@ export default class Collection<T: Model> {
 
     this.request = {
       label,
-      abort: asReference(abort),
+      abort,
       progress: 0
     }
 

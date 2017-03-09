@@ -1,10 +1,7 @@
 // @flow
 import {
   observable,
-  asMap,
-  asFlat,
   action,
-  asReference,
   ObservableMap,
   computed,
   runInAction
@@ -24,15 +21,15 @@ import type {
 } from './types'
 
 export default class Model {
-  @observable request: ?Request = null
-  @observable error: ?ErrorType = asFlat(null)
+  request: ?Request = observable.shallowObject(null)
+  error: ?ErrorType = observable.shallowObject(null)
 
   optimisticId: OptimisticId = uniqueId('i_')
   collection: ?Collection<*> = null
   attributes: ObservableMap
 
   constructor (attributes: {[key: string]: any} = {}) {
-    this.attributes = asMap(attributes)
+    this.attributes = observable.map(attributes)
   }
 
   /**
@@ -138,7 +135,7 @@ export default class Model {
 
     this.request = {
       label,
-      abort: asReference(abort),
+      abort,
       progress: 0
     }
 
@@ -210,7 +207,7 @@ export default class Model {
 
     this.request = {
       label,
-      abort: asReference(abort),
+      abort,
       progress: 0
     }
 
@@ -261,7 +258,7 @@ export default class Model {
     if (optimistic) {
       this.request = {
         label,
-        abort: asReference(abort),
+        abort,
         progress: 0
       }
     }
@@ -310,7 +307,7 @@ export default class Model {
 
     this.request = {
       label,
-      abort: asReference(abort),
+      abort,
       progress: 0
     }
 
@@ -356,7 +353,7 @@ export default class Model {
 
     this.request = {
       label,
-      abort: asReference(abort),
+      abort,
       progress: 0
     }
 
