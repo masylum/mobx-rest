@@ -4,15 +4,16 @@ import {
   action,
   ObservableMap,
   computed,
-  runInAction
+  runInAction,
+  toJS
 } from 'mobx'
 import Collection from './Collection'
 import { uniqueId, isString, debounce } from 'lodash'
 import apiClient from './apiClient'
+import Request from './Request'
+import ErrorObject from './ErrorObject'
 import type {
   OptimisticId,
-  ErrorType,
-  Request,
   Id,
   Label,
   DestroyOptions,
@@ -21,15 +22,23 @@ import type {
 } from './types'
 
 export default class Model {
-  request: ?Request = observable.shallowObject(null)
-  error: ?ErrorType = observable.shallowObject(null)
+  @observable request: ?Request = null
+  @observable error: ?ErrorObject = null
+  attributes: ObservableMap
 
   optimisticId: OptimisticId = uniqueId('i_')
   collection: ?Collection<*> = null
-  attributes: ObservableMap
 
   constructor (attributes: {[key: string]: any} = {}) {
     this.attributes = observable.map(attributes)
+  }
+
+  /**
+   * Returns a JSON representation
+   * of the model
+   */
+  toJS () {
+    return toJS(this.attributes)
   }
 
   /**
@@ -133,11 +142,7 @@ export default class Model {
       options.data
     )
 
-    this.request = {
-      label,
-      abort,
-      progress: 0
-    }
+    this.request = new Request(label, abort, 0)
 
     let data
 
@@ -145,7 +150,7 @@ export default class Model {
       data = await promise
     } catch (body) {
       runInAction('fetch-error', () => {
-        this.error = { label, body }
+        this.error = new ErrorObject(label, body)
         this.request = null
       })
 
@@ -205,11 +210,7 @@ export default class Model {
 
     if (optimistic) this.set(newAttributes)
 
-    this.request = {
-      label,
-      abort,
-      progress: 0
-    }
+    this.request = new Request(label, abort, 0)
 
     let response
 
@@ -219,7 +220,7 @@ export default class Model {
       runInAction('save-fail', () => {
         this.request = null
         this.set(originalAttributes)
-        this.error = { label, body }
+        this.error = new ErrorObject(label, body)
       })
 
       throw isString(body) ? new Error(body) : body
@@ -256,11 +257,7 @@ export default class Model {
     )
 
     if (optimistic) {
-      this.request = {
-        label,
-        abort,
-        progress: 0
-      }
+      this.request = new Request(label, abort, 0)
     }
 
     let data: {}
@@ -269,7 +266,7 @@ export default class Model {
       data = await promise
     } catch (body) {
       runInAction('create-error', () => {
-        this.error = { label, body }
+        this.error = new ErrorObject(label, body)
         this.request = null
       })
 
@@ -305,11 +302,7 @@ export default class Model {
       this.collection.remove([this.id])
     }
 
-    this.request = {
-      label,
-      abort,
-      progress: 0
-    }
+    this.request = new Request(label, abort, 0)
 
     try {
       await promise
@@ -318,7 +311,7 @@ export default class Model {
         if (optimistic && this.collection) {
           this.collection.add([this.attributes.toJS()])
         }
-        this.error = { label, body }
+        this.error = new ErrorObject(label, body)
         this.request = null
       })
 
@@ -351,11 +344,7 @@ export default class Model {
       body || {}
     )
 
-    this.request = {
-      label,
-      abort,
-      progress: 0
-    }
+    this.request = new Request(label, abort, 0)
 
     let response
 
@@ -364,7 +353,7 @@ export default class Model {
     } catch (body) {
       runInAction('accept-fail', () => {
         this.request = null
-        this.error = { label, body }
+        this.error = new ErrorObject(label, body)
       })
 
       throw body

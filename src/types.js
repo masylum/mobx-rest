@@ -19,15 +19,9 @@ export type SaveOptions = {
   onProgress?: () => mixed;
 }
 
-export type ErrorType = {
-  label: Label;
-  body: {};
-}
-
-export type Request = {
-  label: Label;
+export type Response = {
   abort: () => void;
-  progress: number;
+  promise: Promise<*>;
 }
 
 export type SetOptions = {
@@ -38,8 +32,8 @@ export type SetOptions = {
 }
 
 export type Adapter = {
-  get (path: string, data?: {}, options?: {}): Request;
-  post (path: string, data?: {}, options?: {}): Request;
-  put (path: string, data?: {}, options?: {}): Request;
-  del (path: string, options?: {}): Request;
+  get (path: string, data?: {}, options?: {}): Response;
+  post (path: string, data?: {}, options?: {}): Response;
+  put (path: string, data?: {}, options?: {}): Response;
+  del (path: string, options?: {}): Response;
 }

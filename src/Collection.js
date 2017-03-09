@@ -1,5 +1,5 @@
 // @flow
-import { observable, action, IObservableArray, runInAction } from 'mobx'
+import { observable, action, IObservableArray, runInAction, toJS } from 'mobx'
 import Model from './Model'
 import {
   isEmpty,
@@ -11,12 +11,14 @@ import {
   map,
   last
 } from 'lodash'
+import ErrorObject from './ErrorObject'
+import Request from './Request'
 import apiClient from './apiClient'
-import type { Label, CreateOptions, ErrorType, Request, SetOptions, Id } from './types'
+import type { Label, CreateOptions, SetOptions, Id } from './types'
 
 export default class Collection<T: Model> {
-  request: ?Request = observable.shallowObject(null)
-  error: ?ErrorType = observable.shallowObject(null)
+  @observable request: ?Request = null
+  @observable error: ?ErrorObject = null
   models: IObservableArray<T> = observable.shallowArray([])
 
   constructor (data: Array<{[key: string]: any}> = []) {
@@ -37,6 +39,14 @@ export default class Collection<T: Model> {
    */
   model (): Class<*> {
     return Model
+  }
+
+  /**
+   * Returns a JSON representation
+   * of the collection
+   */
+  toJS () {
+    return toJS(this.models)
   }
 
   /**
@@ -192,18 +202,10 @@ export default class Collection<T: Model> {
       model = attributesOrModel instanceof Model
         ? attributesOrModel
         : last(this.add([attributesOrModel]))
-      model.request = {
-        label,
-        abort,
-        progress: 0
-      }
+      model.request = new Request(label, abort, 0)
     }
 
-    this.request = {
-      label,
-      abort,
-      progress: 0
-    }
+    this.request = new Request(label, abort, 0)
 
     let data: {}
 
@@ -214,7 +216,7 @@ export default class Collection<T: Model> {
         if (model) {
           this.remove([model.id])
         }
-        this.error = { label, body }
+        this.error = new ErrorObject(label, body)
         this.request = null
       })
 
@@ -249,23 +251,19 @@ export default class Collection<T: Model> {
       options.data
     )
 
-    this.request = {
-      label,
-      abort,
-      progress: 0
-    }
+    this.request = new Request(label, abort, 0)
 
     let data: Array<{[key: string]: any}>
 
     try {
       data = await promise
-    } catch (err) {
+    } catch (body) {
       runInAction('fetch-error', () => {
-        this.error = { label, body: err }
+        this.error = new ErrorObject(label, body)
         this.request = null
       })
 
-      throw err
+      throw body
     }
 
     runInAction('fetch-done', () => {
@@ -292,11 +290,7 @@ export default class Collection<T: Model> {
       body || {}
     )
 
-    this.request = {
-      label,
-      abort,
-      progress: 0
-    }
+    this.request = new Request(label, abort, 0)
 
     let response
 
@@ -305,7 +299,7 @@ export default class Collection<T: Model> {
     } catch (body) {
       runInAction('accept-fail', () => {
         this.request = null
-        this.error = { label, body }
+        this.error = new ErrorObject(label, body)
       })
 
       throw body
