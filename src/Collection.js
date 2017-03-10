@@ -50,6 +50,14 @@ export default class Collection<T: Model> {
   }
 
   /**
+   * Returns a shallow array representation
+   * of the collection
+   */
+  toArray () {
+    return this.models.slice()
+  }
+
+  /**
    * Questions whether the request exists
    * and matches a certain label
    */

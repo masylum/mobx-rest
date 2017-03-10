@@ -202,10 +202,19 @@ export default class Model {
       data = Object.assign({}, originalAttributes, attributes)
     }
 
+    const onProgress = debounce(function onProgress (progress) {
+      if (optimistic && this.request) {
+        this.request.progress = progress
+      }
+    }, 300)
+
     const { promise, abort } = apiClient().put(
       this.url(),
       data,
-      { method: patch ? 'PATCH' : 'PUT' }
+      {
+        method: patch ? 'PATCH' : 'PUT',
+        onProgress
+      }
     )
 
     if (optimistic) this.set(newAttributes)

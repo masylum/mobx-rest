@@ -5,11 +5,11 @@ import type { Label } from './types'
 export default class Request {
   label: Label
   abort: () => void
-  progress: number
+  @observable progress: number = 0
 
   constructor (label: Label, abort: () => void, progress: number) {
     this.label = label
     this.abort = abort
-    this.progress = observable(progress)
+    this.progress = progress
   }
 }
