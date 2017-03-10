@@ -19,7 +19,7 @@ import type { Label, CreateOptions, SetOptions, Id } from './types'
 export default class Collection<T: Model> {
   @observable request: ?Request = null
   @observable error: ?ErrorObject = null
-  models: IObservableArray<T> = observable.shallowArray([])
+  @observable models: IObservableArray<T> = []
 
   constructor (data: Array<{[key: string]: any}> = []) {
     this.set(data)
