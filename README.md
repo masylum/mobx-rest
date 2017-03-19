@@ -34,6 +34,12 @@ actions built in (`create`, `fetch`, `save`, `destroy`, ...) so instead
 of writing, over and over, hundreds of lines of boilerplate we can leverage
 REST conventions to minimize the code needed for your API interactions.
 
+## Full React example
+
+If you want to see a full example with React you
+can check out the [mobx-rest-example repo](https://github.com/masylum/mobx-rest-example).
+The demo is deployed [here](https://demo-wiimsnkpdy.now.sh/).
+
 ## Documentation
 
 `mobx-rest` is very simple and its source code can be read in 5 minutes.
@@ -390,7 +396,7 @@ Exactly the same as the model one, but at the collection level.
 This is the object that is going to make the `xhr` requests to interact with your API.
 There is an example implementation for jQuery in the `mobx-rest-jquery-adapter` package.
 
-## Full Example
+## Simple Example
 
 A collection looks like this:
 
