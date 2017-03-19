@@ -12,3 +12,9 @@
   - Add `prettier-standard`
   - Add flow linting
   - Set test coverage
+
+## `2.1.1`
+
+:bug: Fixes:
+
+  - Removed need for a runtime by using babel's `transform-async-to-generator`
