@@ -22,14 +22,14 @@ import type {
 } from './types'
 
 export default class Model {
-  @observable request: ?Request = null
-  @observable error: ?ErrorObject = null
-  attributes: ObservableMap
+  @observable request: ?Request = null;
+  @observable error: ?ErrorObject = null;
+  attributes: ObservableMap;
 
-  optimisticId: OptimisticId = uniqueId('i_')
-  collection: ?Collection<*> = null
+  optimisticId: OptimisticId = uniqueId('i_');
+  collection: ?Collection<*> = null;
 
-  constructor (attributes: {[key: string]: any} = {}) {
+  constructor (attributes: { [key: string]: any } = {}) {
     this.attributes = observable.map(attributes)
   }
 
@@ -145,21 +145,16 @@ export default class Model {
    * Merge the given attributes with
    * the current ones
    */
-  @action
-  set (data: {}): void {
+  @action set (data: {}): void {
     this.attributes.merge(data)
   }
 
   /**
    * Fetches the model from the backend.
    */
-  @action
-  async fetch (options: { data?: {} } = {}): Promise<void> {
+  @action async fetch (options: { data?: {} } = {}): Promise<void> {
     const label: Label = 'fetching'
-    const { abort, promise } = apiClient().get(
-      this.url(),
-      options.data
-    )
+    const { abort, promise } = apiClient().get(this.url(), options.data)
 
     this.request = new Request(label, abort, 0)
 
@@ -220,20 +215,19 @@ export default class Model {
       data = Object.assign({}, originalAttributes, attributes)
     }
 
-    const onProgress = debounce(function onProgress (progress) {
-      if (optimistic && this.request) {
-        this.request.progress = progress
-      }
-    }, 300)
-
-    const { promise, abort } = apiClient().put(
-      this.url(),
-      data,
-      {
-        method: patch ? 'PATCH' : 'PUT',
-        onProgress
-      }
+    const onProgress = debounce(
+      function onProgress (progress) {
+        if (optimistic && this.request) {
+          this.request.progress = progress
+        }
+      },
+      300
     )
+
+    const { promise, abort } = apiClient().put(this.url(), data, {
+      method: patch ? 'PATCH' : 'PUT',
+      onProgress
+    })
 
     if (optimistic) this.set(newAttributes)
 
@@ -271,17 +265,18 @@ export default class Model {
   ): Promise<*> {
     const label: Label = 'creating'
 
-    const onProgress = debounce(function onProgress (progress) {
-      if (optimistic && this.request) {
-        this.request.progress = progress
-      }
-    }, 300)
-
-    const { abort, promise } = apiClient().post(
-      this.url(),
-      attributes,
-      { onProgress }
+    const onProgress = debounce(
+      function onProgress (progress) {
+        if (optimistic && this.request) {
+          this.request.progress = progress
+        }
+      },
+      300
     )
+
+    const { abort, promise } = apiClient().post(this.url(), attributes, {
+      onProgress
+    })
 
     if (optimistic) {
       this.request = new Request(label, abort, 0)
@@ -359,11 +354,7 @@ export default class Model {
    * non-REST endpoints that you may have in
    * your API.
    */
-  @action
-  async rpc (
-    method: string,
-    body?: {}
-  ): Promise<*> {
+  @action async rpc (method: string, body?: {}): Promise<*> {
     const label: Label = 'updating' // TODO: Maybe differentiate?
     const { promise, abort } = apiClient().post(
       `${this.url()}/${method}`,

@@ -7,7 +7,7 @@ let currentAdapter
  */
 export default function apiClient (
   adapter?: Adapter,
-  options: {[key: string]: any} = {}
+  options: { [key: string]: any } = {}
 ): Adapter {
   if (adapter) {
     currentAdapter = Object.assign({}, adapter, options)

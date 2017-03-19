@@ -17,11 +17,11 @@ import apiClient from './apiClient'
 import type { Label, CreateOptions, SetOptions, Id } from './types'
 
 export default class Collection<T: Model> {
-  @observable request: ?Request = null
-  @observable error: ?ErrorObject = null
-  @observable models: IObservableArray<T> = []
+  @observable request: ?Request = null;
+  @observable error: ?ErrorObject = null;
+  @observable models: IObservableArray<T> = [];
 
-  constructor (data: Array<{[key: string]: any}> = []) {
+  constructor (data: Array<{ [key: string]: any }> = []) {
     this.set(data)
   }
 
@@ -78,8 +78,7 @@ export default class Collection<T: Model> {
    * Gets the ids of all the items in the collection
    */
   _ids (): Array<Id> {
-    return map(this.models, (item) => item.id)
-      .filter(Boolean)
+    return map(this.models, item => item.id).filter(Boolean)
   }
 
   /**
@@ -93,13 +92,13 @@ export default class Collection<T: Model> {
    * Get a resource with the given id or uuid
    */
   get (id: Id): ?T {
-    return this.models.find((item) => item.id === id)
+    return this.models.find(item => item.id === id)
   }
 
   /**
    * Get resources matching criteria
    */
-  filter (query: {[key: string]: any} = {}): Array<T> {
+  filter (query: { [key: string]: any } = {}): Array<T> {
     return filter(this.models, ({ attributes }) => {
       return isMatch(attributes.toJS(), query)
     })
@@ -108,7 +107,7 @@ export default class Collection<T: Model> {
   /**
    * Finds an element with the given matcher
    */
-  find (query: {[key: string]: mixed}): ?T {
+  find (query: { [key: string]: mixed }): ?T {
     return find(this.models, ({ attributes }) => {
       return isMatch(attributes.toJS(), query)
     })
@@ -118,8 +117,7 @@ export default class Collection<T: Model> {
    * Adds a collection of models.
    * Returns the added models.
    */
-  @action
-  add (data: Array<{[key: string]: any}>): Array<T> {
+  @action add (data: Array<{ [key: string]: any }>): Array<T> {
     const models = data.map(d => this.build(d))
     this.models = this.models.concat(models)
     return models
@@ -128,9 +126,8 @@ export default class Collection<T: Model> {
   /**
    * Removes the model with the given ids or uuids
    */
-  @action
-  remove (ids: Array<Id>): void {
-    ids.forEach((id) => {
+  @action remove (ids: Array<Id>): void {
+    ids.forEach(id => {
       const model = this.get(id)
       if (!model) return
 
@@ -139,33 +136,32 @@ export default class Collection<T: Model> {
   }
 
   /**
-   * Sets the models into the collection.
+   * Sets the resources into the collection.
    *
    * You can disable adding, changing or removing.
    */
-  @action
-  set (
-    models: Array<{[key: string]: any}>,
+  @action set (
+    resources: Array<{ [key: string]: any }>,
     { add = true, change = true, remove = true }: SetOptions = {}
   ): void {
     if (remove) {
-      const ids = models.map((d) => d.id)
+      const ids = resources.map(r => r.id)
       const toRemove = difference(this._ids(), ids)
       if (toRemove.length) this.remove(toRemove)
     }
 
-    models.forEach((attributes) => {
-      const model = this.get(attributes.id)
+    resources.forEach(resource => {
+      const model = this.get(resource.id)
 
-      if (model && change) model.set(attributes)
-      if (!model && add) this.add([attributes])
+      if (model && change) model.set(resource)
+      if (!model && add) this.add([resource])
     })
   }
 
   /**
    * Creates a new model instance with the given attributes
    */
-  build (attributes: {[key: string]: any} = {}) {
+  build (attributes: { [key: string]: any } = {}): T {
     const ModelClass = this.model()
     const model = new ModelClass(attributes)
     model.collection = this
@@ -179,9 +175,8 @@ export default class Collection<T: Model> {
    * The default behaviour is optimistic but this
    * can be tuned.
    */
-  @action
-  async create (
-    attributesOrModel: {[key: string]: any} | Model,
+  @action async create (
+    attributesOrModel: { [key: string]: any } | Model,
     { optimistic = true }: CreateOptions = {}
   ): Promise<*> {
     let model
@@ -190,21 +185,22 @@ export default class Collection<T: Model> {
       : attributesOrModel
     const label: Label = 'creating'
 
-    const onProgress = debounce(function onProgress (progress) {
-      if (optimistic && model.request) {
-        model.request.progress = progress
-      }
+    const onProgress = debounce(
+      function onProgress (progress) {
+        if (optimistic && model.request) {
+          model.request.progress = progress
+        }
 
-      if (this.request) {
-        this.request.progress = progress
-      }
-    }, 300)
-
-    const { abort, promise } = apiClient().post(
-      this.url(),
-      attributes,
-      { onProgress }
+        if (this.request) {
+          this.request.progress = progress
+        }
+      },
+      300
     )
+
+    const { abort, promise } = apiClient().post(this.url(), attributes, {
+      onProgress
+    })
 
     if (optimistic) {
       model = attributesOrModel instanceof Model
@@ -251,17 +247,13 @@ export default class Collection<T: Model> {
    * use the options to disable adding, changing
    * or removing.
    */
-  @action
-  async fetch (options: SetOptions = {}): Promise<void> {
+  @action async fetch (options: SetOptions = {}): Promise<void> {
     const label: Label = 'fetching'
-    const { abort, promise } = apiClient().get(
-      this.url(),
-      options.data
-    )
+    const { abort, promise } = apiClient().get(this.url(), options.data)
 
     this.request = new Request(label, abort, 0)
 
-    let data: Array<{[key: string]: any}>
+    let data: Array<{ [key: string]: any }>
 
     try {
       data = await promise
@@ -287,11 +279,7 @@ export default class Collection<T: Model> {
    * non-REST endpoints that you may have in
    * your API.
    */
-  @action
-  async rpc (
-    method: string,
-    body?: {}
-  ): Promise<*> {
+  @action async rpc (method: string, body?: {}): Promise<*> {
     const label: Label = 'updating' // TODO: Maybe differentiate?
     const { promise, abort } = apiClient().post(
       `${this.url()}/${method}`,
