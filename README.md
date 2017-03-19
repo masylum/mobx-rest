@@ -523,6 +523,10 @@ class Task extends Model {
 I recommend to always fallback with a null object which will facilitate
 a ton to write code like `task.author.get('name')`.
 
+## Where is it used?
+
+Developed and battle tested in production in [Factorial](https://factorialhr.com)
+
 ## License
 
 (The MIT License)
