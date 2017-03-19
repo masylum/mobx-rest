@@ -1,4 +1,4 @@
-import { Collection, apiClient } from '../src'
+import { Collection, apiClient, Request } from '../src'
 import MockApi from './mocks/api'
 
 const error = 'boom!'
@@ -61,12 +61,12 @@ describe('Collection', () => {
     })
 
     it('returns false if the label does not match', () => {
-      collection.request = { label: 'creating' }
+      collection.request = new Request('creating', null, 0)
       expect(collection.isRequest('fetching')).toBe(false)
     })
 
     it('returns true otherwie', () => {
-      collection.request = { label: 'fetching' }
+      collection.request = new Request('fetching', null, 0)
       expect(collection.isRequest('fetching')).toBe(true)
     })
   })
