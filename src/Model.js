@@ -42,6 +42,16 @@ export default class Model {
   }
 
   /**
+   * Determine what attribute do you use
+   * as a primary id
+   *
+   * @abstract
+   */
+  get primaryKey (): string {
+    return 'id'
+  }
+
+  /**
    * Return the base url used in
    * the `url` method
    *
@@ -70,7 +80,7 @@ export default class Model {
     if (this.isNew) {
       return urlRoot
     } else {
-      return `${urlRoot}/${this.get('id')}`
+      return `${urlRoot}/${this.get(this.primaryKey)}`
     }
   }
 
@@ -88,11 +98,10 @@ export default class Model {
    * Wether the resource is new or not
    *
    * We determine this asking if it contains
-   * the `id` attribute (set by the server).
+   * the `primaryKey` attribute (set by the server).
    */
-  @computed
-  get isNew (): boolean {
-    return !this.has('id')
+  @computed get isNew (): boolean {
+    return !this.has(this.primaryKey)
   }
 
   /**
@@ -127,8 +136,8 @@ export default class Model {
    * the backend assigned one or the client.
    */
   get id (): Id {
-    return this.has('id')
-      ? this.get('id')
+    return this.has(this.primaryKey)
+      ? this.get(this.primaryKey)
       : this.optimisticId
   }
 
@@ -178,19 +187,18 @@ export default class Model {
   /**
    * Saves the resource on the backend.
    *
-   * If the item has an `id` it updates it,
+   * If the item has a `primaryKey` it updates it,
    * otherwise it creates the new resource.
    *
    * It supports optimistic and patch updates.
    *
    * TODO: Add progress
    */
-  @action
-  async save (
+  @action async save (
     attributes: {},
     { optimistic = true, patch = true }: SaveOptions = {}
   ): Promise<*> {
-    if (!this.has('id')) {
+    if (!this.has(this.primaryKey)) {
       this.set(Object.assign({}, attributes))
       if (this.collection) {
         return this.collection.create(this, { optimistic })
@@ -305,11 +313,10 @@ export default class Model {
    * requests the backend to delete it there
    * too
    */
-  @action
-  async destroy (
+  @action async destroy (
     { optimistic = true }: DestroyOptions = {}
   ): Promise<*> {
-    if (!this.has('id') && this.collection) {
+    if (!this.has(this.primaryKey) && this.collection) {
       this.collection.remove([this.optimisticId], { optimistic })
       return Promise.resolve()
     }
