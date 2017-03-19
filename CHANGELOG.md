@@ -18,3 +18,9 @@
 :bug: Fixes:
 
   - Removed need for a runtime by using babel's `transform-async-to-generator`
+
+## `2.1.2`
+
+:bug: Fixes:
+
+  - Added `transform-runtime`
