@@ -1,4 +1,4 @@
-import { Collection, Model, apiClient } from '../src'
+import { Collection, Model, apiClient, Request } from '../src'
 import MockApi from './mocks/api'
 
 const error = 'boom!'
@@ -39,6 +39,25 @@ describe('Model', () => {
     item = { id: 1, name: 'miles', album: 'kind of blue' }
     collection = new MyCollection([item])
     model = collection.at(0)
+  })
+
+  describe('isRequest', () => {
+    it('returns false if there is no request', () => {
+      const newModel = new MyModel({})
+      expect(newModel.isRequest('fetching')).toBe(false)
+    })
+
+    it('return false if the request is something different', () => {
+      const newModel = new MyModel({})
+      newModel.request = new Request('creating', null, 0)
+      expect(newModel.isRequest('fetching')).toBe(false)
+    })
+
+    it('return true if the request is matching', () => {
+      const newModel = new MyModel({})
+      newModel.request = new Request('fetching', null, 0)
+      expect(newModel.isRequest('fetching')).toBe(true)
+    })
   })
 
   describe('isNew', () => {

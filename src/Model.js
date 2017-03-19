@@ -75,6 +75,16 @@ export default class Model {
   }
 
   /**
+   * Questions whether the request exists
+   * and matches a certain label
+   */
+  isRequest (label: Label): boolean {
+    if (!this.request) return false
+
+    return this.request.label === label
+  }
+
+  /**
    * Wether the resource is new or not
    *
    * We determine this asking if it contains
