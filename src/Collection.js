@@ -119,7 +119,7 @@ export default class Collection<T: Model> {
    */
   @action add (data: Array<{ [key: string]: any }>): Array<T> {
     const models = data.map(d => this.build(d))
-    this.models = this.models.concat(models)
+    this.models.push(...models)
     return models
   }
 
