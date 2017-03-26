@@ -394,7 +394,10 @@ Exactly the same as the model one, but at the collection level.
 ### `apiClient`
 
 This is the object that is going to make the `xhr` requests to interact with your API.
-There is an example implementation for jQuery in the `mobx-rest-jquery-adapter` package.
+There are two example implementations currently:
+
+  - One using `jQuery` in the `mobx-rest-jquery-adapter` package.
+  - One using `fetch` in the `mobx-rest-fetch-adapter` package.
 
 ## Simple Example
 
@@ -403,11 +406,11 @@ A collection looks like this:
 ```js
 // TasksCollection.js
 const apiPath = '/api'
-import jqueryAdapter from 'mobx-rest-jquery-adapter'
+import adapter from 'mobx-rest-fetch-adapter'
 import { apiClient, Collection, Model } from 'mobx-rest'
 
-// We will use the jQuery adapter to make the `xhr` calls
-apiClient(jqueryAdapter, { apiPath })
+// We will use the adapter to make the `xhr` calls
+apiClient(adapter, { apiPath })
 
 class Task extends Model { }
 class Tasks extends Collection {
