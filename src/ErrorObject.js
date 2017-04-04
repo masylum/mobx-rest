@@ -1,7 +1,7 @@
 // @flow
 import type { Label } from './types'
 
-export default class Request {
+export default class ErrorObject {
   label: Label;
   body: {};
 
