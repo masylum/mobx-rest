@@ -123,6 +123,16 @@ describe('Collection', () => {
           }
         })
 
+        it('clears the error', async () => {
+          reject()
+          try {
+            await collection.fetch()
+          } catch (e) {}
+          resolve([])()
+          await collection.fetch()
+          expect(collection.error).toBe(null)
+        })
+
         it('removes the model', async () => {
           try {
             await collection.create(newItem)
@@ -162,6 +172,15 @@ describe('Collection', () => {
             expect(collection.error.label).toBe('creating')
             expect(collection.error.body).toBe(error)
           }
+        })
+        it('clears the error', async () => {
+          reject()
+          try {
+            await collection.fetch()
+          } catch (e) {}
+          resolve([])()
+          await collection.fetch()
+          expect(collection.error).toBe(null)
         })
       })
 
@@ -210,6 +229,15 @@ describe('Collection', () => {
         await collection.fetch()
         expect(collection.models.length).toBe(2)
         expect(collection.at(1).get('name')).toBe('bob')
+      })
+
+      it('clears the error', async () => {
+        try {
+          await collection.fetch()
+        } catch (e) {}
+        resolve([item, { id: 2, name: 'bob' }])()
+        await collection.fetch()
+        expect(collection.error).toBe(null)
       })
     })
   })
@@ -290,6 +318,15 @@ describe('Collection', () => {
             expect(collection.error.label).toBe('updating')
             expect(collection.error.body).toBe(error)
           }
+        })
+
+        it('clears the error', async () => {
+          try {
+            await collection.fetch()
+          } catch (e) {}
+          resolve([])()
+          await collection.fetch()
+          expect(collection.error).toBe(null)
         })
       })
 
