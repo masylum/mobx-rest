@@ -1,7 +1,10 @@
 import { Collection, apiClient, Request } from '../src'
 import MockApi from './mocks/api'
+import ErrorObject from '../src/ErrorObject'
 
 const error = 'boom!'
+const errorObject = new ErrorObject('fetch', error)
+
 apiClient(MockApi)
 
 class MyCollection extends Collection {
@@ -27,6 +30,7 @@ describe('Collection', () => {
   beforeEach(() => {
     item = { id: 1, name: 'miles' }
     collection = new MyCollection([item])
+    collection.error = errorObject
   })
 
   describe('at', () => {
@@ -123,16 +127,6 @@ describe('Collection', () => {
           }
         })
 
-        it('clears the error', async () => {
-          reject()
-          try {
-            await collection.fetch()
-          } catch (e) {}
-          resolve([])()
-          await collection.fetch()
-          expect(collection.error).toBe(null)
-        })
-
         it('removes the model', async () => {
           try {
             await collection.create(newItem)
@@ -156,7 +150,12 @@ describe('Collection', () => {
         it('nullifies the request', async () => {
           await collection.create(newItem)
           expect(collection.models.length).toBe(2)
-          expect(collection.at(1).request).toBe(null)
+          expect(collection.request).toBe(null)
+        })
+
+        it('clears the error', async () => {
+          await collection.create(newItem)
+          expect(collection.error).toBe(null)
         })
       })
     })
@@ -172,15 +171,6 @@ describe('Collection', () => {
             expect(collection.error.label).toBe('creating')
             expect(collection.error.body).toBe(error)
           }
-        })
-        it('clears the error', async () => {
-          reject()
-          try {
-            await collection.fetch()
-          } catch (e) {}
-          resolve([])()
-          await collection.fetch()
-          expect(collection.error).toBe(null)
         })
       })
 
@@ -222,6 +212,7 @@ describe('Collection', () => {
 
     describe('when it succeeds', () => {
       beforeEach(() => {
+        collection.error = errorObject
         resolve([item, { id: 2, name: 'bob' }])()
       })
 
@@ -232,10 +223,6 @@ describe('Collection', () => {
       })
 
       it('clears the error', async () => {
-        try {
-          await collection.fetch()
-        } catch (e) {}
-        resolve([item, { id: 2, name: 'bob' }])()
         await collection.fetch()
         expect(collection.error).toBe(null)
       })
@@ -319,27 +306,24 @@ describe('Collection', () => {
             expect(collection.error.body).toBe(error)
           }
         })
-
-        it('clears the error', async () => {
-          try {
-            await collection.fetch()
-          } catch (e) {}
-          resolve([])()
-          await collection.fetch()
-          expect(collection.error).toBe(null)
-        })
       })
 
       describe('when it succeeds', () => {
         const mockResponse = [item, { id: 2, name: 'bob' }]
 
         beforeEach(() => {
+          collection.error = errorObject
           resolve(mockResponse)()
         })
 
         it('return the data', async () => {
           const data = await collection.rpc('foo')
           expect(data).toBe(mockResponse)
+        })
+
+        it('clears the error', async () => {
+          await collection.rpc('foo')
+          expect(collection.error).toBe(null)
         })
       })
     })
