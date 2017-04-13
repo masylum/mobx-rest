@@ -150,7 +150,7 @@ describe('Collection', () => {
         it('nullifies the request', async () => {
           await collection.create(newItem)
           expect(collection.models.length).toBe(2)
-          expect(collection.request).toBe(null)
+          expect(collection.at(1).request).toBe(null)
         })
 
         it('clears the error', async () => {
