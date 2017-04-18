@@ -559,4 +559,11 @@ describe('Model', () => {
       })
     })
   })
+
+  describe('clear', () => {
+    it('empties the attributes object', () => {
+      model.clear()
+      expect(model.attributes.keys()).toEqual([])
+    })
+  })
 })

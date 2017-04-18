@@ -328,4 +328,11 @@ describe('Collection', () => {
       })
     })
   })
+
+  describe('clear', () => {
+    it('empties the models object', () => {
+      collection.clear()
+      expect(collection.models.length).toEqual(0)
+    })
+  })
 })

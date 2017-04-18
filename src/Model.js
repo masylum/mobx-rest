@@ -385,4 +385,11 @@ export default class Model {
 
     return response
   }
+
+  /**
+   * Clears the attributes
+   */
+  @action clear (): void {
+    this.attributes.clear()
+  }
 }

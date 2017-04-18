@@ -308,4 +308,11 @@ export default class Collection<T: Model> {
 
     return response
   }
+
+  /**
+   * Clears the models
+   */
+  @action clear (): void {
+    this.models.clear()
+  }
 }
