@@ -1,7 +1,10 @@
 import { Collection, Model, apiClient, Request } from '../src'
 import MockApi from './mocks/api'
+import ErrorObject from '../src/ErrorObject'
 
 const error = 'boom!'
+const errorObject = new ErrorObject('fetch', error)
+
 apiClient(MockApi)
 
 class MyCollection extends Collection {
@@ -171,6 +174,7 @@ describe('Model', () => {
 
           describe('when it succeeds', () => {
             beforeEach(() => {
+              model.error = errorObject
               resolve({ id: 1, name: 'coltrane' })()
             })
 
@@ -184,6 +188,11 @@ describe('Model', () => {
               return model.save({ name }).then(() => {
                 expect(model.request).toBe(null)
               })
+            })
+
+            it('clears the error', async () => {
+              await model.save({ name })
+              expect(model.error).toBe(null)
             })
           })
         })
@@ -208,6 +217,7 @@ describe('Model', () => {
 
           describe('when it succeeds', () => {
             beforeEach(() => {
+              model.error = errorObject
               resolve({ id: 2, name: 'dylan' })()
             })
 
@@ -221,6 +231,11 @@ describe('Model', () => {
               return model.save({ name }).then(() => {
                 expect(model.request).toBe(null)
               })
+            })
+
+            it('clears the error', async () => {
+              await model.save({ name })
+              expect(model.error).toBe(null)
             })
           })
         })
@@ -273,6 +288,7 @@ describe('Model', () => {
 
       describe('when it succeeds', () => {
         beforeEach(() => {
+          model.error = errorObject
           resolve({ id: 1, name: 'coltrane' })()
         })
 
@@ -286,6 +302,11 @@ describe('Model', () => {
           return model.save({ name }).then(() => {
             expect(model.request).toBe(null)
           })
+        })
+
+        it('clears the error', async () => {
+          await model.save({ name })
+          expect(model.error).toBe(null)
         })
       })
     })
@@ -310,6 +331,7 @@ describe('Model', () => {
 
       describe('when it succeeds', () => {
         beforeEach(() => {
+          model.error = errorObject
           resolve({ id: 2, name: 'dylan' })()
         })
 
@@ -323,6 +345,11 @@ describe('Model', () => {
           return model.save({ name }).then(() => {
             expect(model.request).toBe(null)
           })
+        })
+
+        it('clears the error', async () => {
+          await model.save({ name })
+          expect(model.error).toBe(null)
         })
       })
     })
@@ -373,12 +400,20 @@ describe('Model', () => {
       })
 
       describe('when it succeeds', () => {
-        beforeEach(resolve())
+        beforeEach(() => {
+          model.error = errorObject
+          resolve()()
+        })
 
         it('nullifies the request', () => {
           return model.destroy().then(() => {
             expect(model.request).toBe(null)
           })
+        })
+
+        it('clears the error', async () => {
+          await model.save({ name })
+          expect(model.error).toBe(null)
         })
       })
     })
@@ -408,7 +443,10 @@ describe('Model', () => {
       })
 
       describe('when it succeeds', () => {
-        beforeEach(resolve())
+        beforeEach(() => {
+          model.error = errorObject
+          resolve()()
+        })
 
         it('applies changes', () => {
           return model.destroy({ optimistic: false }).then(() => {
@@ -420,6 +458,11 @@ describe('Model', () => {
           return model.destroy({ optimistic: false }).then(() => {
             expect(model.request).toBe(null)
           })
+        })
+
+        it('clears the error', async () => {
+          await model.destroy({ optimistic: false })
+          expect(model.error).toBe(null)
         })
       })
     })
@@ -444,7 +487,10 @@ describe('Model', () => {
     })
 
     describe('when it succeeds', () => {
-      beforeEach(resolve({ name: 'bill' }))
+      beforeEach(() => {
+        model.error = errorObject
+        resolve({ name: 'bill' })()
+      })
 
       it('returns the response', () => {
         return model.fetch().then((response) => {
@@ -462,6 +508,11 @@ describe('Model', () => {
         return model.fetch().then(() => {
           expect(model.request).toBe(null)
         })
+      })
+
+      it('clears the error', async () => {
+        await model.fetch()
+        expect(model.error).toBe(null)
       })
     })
   })
@@ -485,7 +536,10 @@ describe('Model', () => {
     })
 
     describe('when it succeeds', () => {
-      beforeEach(resolve('foo'))
+      beforeEach(() => {
+        model.error = errorObject
+        resolve('foo')()
+      })
 
       it('returns the response', () => {
         return model.rpc('approve').then((response) => {
@@ -497,6 +551,11 @@ describe('Model', () => {
         return model.rpc('approve').then(() => {
           expect(model.request).toBe(null)
         })
+      })
+
+      it('clears the error', async () => {
+        await model.rpc('approve')
+        expect(model.error).toBe(null)
       })
     })
   })

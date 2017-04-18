@@ -235,6 +235,7 @@ export default class Collection<T: Model> {
         this.add([data])
       }
       this.request = null
+      this.error = null
     })
 
     return data
@@ -269,6 +270,7 @@ export default class Collection<T: Model> {
     runInAction('fetch-done', () => {
       this.set(data, options)
       this.request = null
+      this.error = null
     })
 
     return data
@@ -302,6 +304,7 @@ export default class Collection<T: Model> {
     }
 
     this.request = null
+    this.error = null
 
     return response
   }

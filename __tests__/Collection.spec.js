@@ -1,7 +1,10 @@
 import { Collection, apiClient, Request } from '../src'
 import MockApi from './mocks/api'
+import ErrorObject from '../src/ErrorObject'
 
 const error = 'boom!'
+const errorObject = new ErrorObject('fetch', error)
+
 apiClient(MockApi)
 
 class MyCollection extends Collection {
@@ -27,6 +30,7 @@ describe('Collection', () => {
   beforeEach(() => {
     item = { id: 1, name: 'miles' }
     collection = new MyCollection([item])
+    collection.error = errorObject
   })
 
   describe('at', () => {
@@ -148,6 +152,11 @@ describe('Collection', () => {
           expect(collection.models.length).toBe(2)
           expect(collection.at(1).request).toBe(null)
         })
+
+        it('clears the error', async () => {
+          await collection.create(newItem)
+          expect(collection.error).toBe(null)
+        })
       })
     })
 
@@ -203,6 +212,7 @@ describe('Collection', () => {
 
     describe('when it succeeds', () => {
       beforeEach(() => {
+        collection.error = errorObject
         resolve([item, { id: 2, name: 'bob' }])()
       })
 
@@ -210,6 +220,11 @@ describe('Collection', () => {
         await collection.fetch()
         expect(collection.models.length).toBe(2)
         expect(collection.at(1).get('name')).toBe('bob')
+      })
+
+      it('clears the error', async () => {
+        await collection.fetch()
+        expect(collection.error).toBe(null)
       })
     })
   })
@@ -297,12 +312,18 @@ describe('Collection', () => {
         const mockResponse = [item, { id: 2, name: 'bob' }]
 
         beforeEach(() => {
+          collection.error = errorObject
           resolve(mockResponse)()
         })
 
         it('return the data', async () => {
           const data = await collection.rpc('foo')
           expect(data).toBe(mockResponse)
+        })
+
+        it('clears the error', async () => {
+          await collection.rpc('foo')
+          expect(collection.error).toBe(null)
         })
       })
     })

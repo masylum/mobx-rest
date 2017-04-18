@@ -174,6 +174,7 @@ export default class Model {
     runInAction('fetch-done', () => {
       this.set(data)
       this.request = null
+      this.error = null
     })
 
     return data
@@ -249,6 +250,7 @@ export default class Model {
 
     runInAction('save-done', () => {
       this.request = null
+      this.error = null
       this.set(response)
     })
 
@@ -298,6 +300,7 @@ export default class Model {
     runInAction('create-done', () => {
       this.set(data)
       this.request = null
+      this.error = null
     })
 
     return data
@@ -344,6 +347,7 @@ export default class Model {
         this.collection.remove([this.id])
       }
       this.request = null
+      this.error = null
     })
 
     return null
@@ -377,6 +381,7 @@ export default class Model {
     }
 
     this.request = null
+    this.error = null
 
     return response
   }
