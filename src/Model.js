@@ -22,12 +22,12 @@ import type {
 } from './types'
 
 export default class Model {
-  @observable request: ?Request = null;
-  @observable error: ?ErrorObject = null;
-  attributes: ObservableMap;
+  @observable request: ?Request = null
+  @observable error: ?ErrorObject = null
+  attributes: ObservableMap
 
-  optimisticId: OptimisticId = uniqueId('i_');
-  collection: ?Collection<*> = null;
+  optimisticId: OptimisticId = uniqueId('i_')
+  collection: ?Collection<*> = null
 
   constructor (attributes: { [key: string]: any } = {}) {
     this.attributes = observable.map(attributes)
@@ -100,7 +100,8 @@ export default class Model {
    * We determine this asking if it contains
    * the `primaryKey` attribute (set by the server).
    */
-  @computed get isNew (): boolean {
+  @computed
+  get isNew (): boolean {
     return !this.has(this.primaryKey)
   }
 
@@ -145,14 +146,16 @@ export default class Model {
    * Merge the given attributes with
    * the current ones
    */
-  @action set (data: {}): void {
+  @action
+  set (data: {}): void {
     this.attributes.merge(data)
   }
 
   /**
    * Fetches the model from the backend.
    */
-  @action async fetch (options: { data?: {} } = {}): Promise<void> {
+  @action
+  async fetch (options: { data?: {} } = {}): Promise<void> {
     const label: Label = 'fetching'
     const { abort, promise } = apiClient().get(this.url(), options.data)
 
@@ -190,7 +193,8 @@ export default class Model {
    *
    * TODO: Add progress
    */
-  @action async save (
+  @action
+  async save (
     attributes: {},
     { optimistic = true, patch = true }: SaveOptions = {}
   ): Promise<*> {
@@ -216,14 +220,11 @@ export default class Model {
       data = Object.assign({}, originalAttributes, attributes)
     }
 
-    const onProgress = debounce(
-      function onProgress (progress) {
-        if (optimistic && this.request) {
-          this.request.progress = progress
-        }
-      },
-      300
-    )
+    const onProgress = debounce(function onProgress (progress) {
+      if (optimistic && this.request) {
+        this.request.progress = progress
+      }
+    }, 300)
 
     const { promise, abort } = apiClient().put(this.url(), data, {
       method: patch ? 'PATCH' : 'PUT',
@@ -267,14 +268,11 @@ export default class Model {
   ): Promise<*> {
     const label: Label = 'creating'
 
-    const onProgress = debounce(
-      function onProgress (progress) {
-        if (optimistic && this.request) {
-          this.request.progress = progress
-        }
-      },
-      300
-    )
+    const onProgress = debounce(function onProgress (progress) {
+      if (optimistic && this.request) {
+        this.request.progress = progress
+      }
+    }, 300)
 
     const { abort, promise } = apiClient().post(this.url(), attributes, {
       onProgress
@@ -311,11 +309,10 @@ export default class Model {
    * requests the backend to delete it there
    * too
    */
-  @action async destroy (
-    { optimistic = true }: DestroyOptions = {}
-  ): Promise<*> {
+  @action
+  async destroy ({ optimistic = true }: DestroyOptions = {}): Promise<*> {
     if (!this.has(this.primaryKey) && this.collection) {
-      this.collection.remove([this.optimisticId], { optimistic })
+      this.collection.remove([this.optimisticId])
       return Promise.resolve()
     }
 
@@ -358,7 +355,8 @@ export default class Model {
    * non-REST endpoints that you may have in
    * your API.
    */
-  @action async rpc (method: string, body?: {}): Promise<*> {
+  @action
+  async rpc (method: string, body?: {}): Promise<*> {
     const label: Label = 'updating' // TODO: Maybe differentiate?
     const { promise, abort } = apiClient().post(
       `${this.url()}/${method}`,

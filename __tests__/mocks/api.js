@@ -1,5 +1,7 @@
 export default {
-  resolver: (resolve) => { resolve() },
+  resolver: resolve => {
+    resolve()
+  },
 
   _mock () {
     return {
@@ -16,10 +18,12 @@ export default {
     const ret = this._mock()
 
     // HACK
-    ret.promise.then(() => {
-      options.onProgress(100)
-      options.onProgress.flush()
-    }).catch(() => {})
+    ret.promise
+      .then(() => {
+        options.onProgress(100)
+        options.onProgress.flush()
+      })
+      .catch(() => {})
 
     return ret
   },

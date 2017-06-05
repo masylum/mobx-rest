@@ -30,7 +30,7 @@ describe('Model', () => {
 
   function resolve (attr) {
     return () => {
-      apiClient().resolver = (resolve) => resolve(attr)
+      apiClient().resolver = resolve => resolve(attr)
     }
   }
 
@@ -362,10 +362,7 @@ describe('Model', () => {
       it('it removes the model', () => {
         collection.remove = jest.fn()
         model.destroy()
-        expect(collection.remove).toBeCalledWith(
-          [model.optimisticId],
-          { optimistic: true }
-        )
+        expect(collection.remove).toBeCalledWith([model.optimisticId])
       })
     })
 
@@ -493,7 +490,7 @@ describe('Model', () => {
       })
 
       it('returns the response', () => {
-        return model.fetch().then((response) => {
+        return model.fetch().then(response => {
           expect(response.name).toBe('bill')
         })
       })
@@ -542,7 +539,7 @@ describe('Model', () => {
       })
 
       it('returns the response', () => {
-        return model.rpc('approve').then((response) => {
+        return model.rpc('approve').then(response => {
           expect(response).toBe('foo')
         })
       })

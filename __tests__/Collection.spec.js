@@ -19,7 +19,7 @@ describe('Collection', () => {
 
   function resolve (attr) {
     return () => {
-      apiClient().resolver = (resolve) => resolve(attr)
+      apiClient().resolver = resolve => resolve(attr)
     }
   }
 
@@ -47,7 +47,9 @@ describe('Collection', () => {
 
   describe('filter', () => {
     it('filters a collection with the given conditions', () => {
-      expect(collection.filter({ name: 'miles' })[0].get('name')).toBe(item.name)
+      expect(collection.filter({ name: 'miles' })[0].get('name')).toBe(
+        item.name
+      )
       expect(collection.filter({ name: 'bob' }).length).toBe(0)
     })
   })

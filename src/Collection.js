@@ -17,9 +17,9 @@ import apiClient from './apiClient'
 import type { Label, CreateOptions, SetOptions, Id } from './types'
 
 export default class Collection<T: Model> {
-  @observable request: ?Request = null;
-  @observable error: ?ErrorObject = null;
-  @observable models: IObservableArray<T> = [];
+  @observable request: ?Request = null
+  @observable error: ?ErrorObject = null
+  @observable models: IObservableArray<T> = []
 
   constructor (data: Array<{ [key: string]: any }> = []) {
     this.set(data)
@@ -117,7 +117,8 @@ export default class Collection<T: Model> {
    * Adds a collection of models.
    * Returns the added models.
    */
-  @action add (data: Array<{ [key: string]: any }>): Array<T> {
+  @action
+  add (data: Array<{ [key: string]: any }>): Array<T> {
     const models = data.map(d => this.build(d))
     this.models.push(...models)
     return models
@@ -126,7 +127,8 @@ export default class Collection<T: Model> {
   /**
    * Removes the model with the given ids or uuids
    */
-  @action remove (ids: Array<Id>): void {
+  @action
+  remove (ids: Array<Id>): void {
     ids.forEach(id => {
       const model = this.get(id)
       if (!model) return
@@ -140,7 +142,8 @@ export default class Collection<T: Model> {
    *
    * You can disable adding, changing or removing.
    */
-  @action set (
+  @action
+  set (
     resources: Array<{ [key: string]: any }>,
     { add = true, change = true, remove = true }: SetOptions = {}
   ): void {
@@ -175,7 +178,8 @@ export default class Collection<T: Model> {
    * The default behaviour is optimistic but this
    * can be tuned.
    */
-  @action async create (
+  @action
+  async create (
     attributesOrModel: { [key: string]: any } | Model,
     { optimistic = true }: CreateOptions = {}
   ): Promise<*> {
@@ -185,18 +189,15 @@ export default class Collection<T: Model> {
       : attributesOrModel
     const label: Label = 'creating'
 
-    const onProgress = debounce(
-      function onProgress (progress) {
-        if (optimistic && model.request) {
-          model.request.progress = progress
-        }
+    const onProgress = debounce(function onProgress (progress) {
+      if (optimistic && model.request) {
+        model.request.progress = progress
+      }
 
-        if (this.request) {
-          this.request.progress = progress
-        }
-      },
-      300
-    )
+      if (this.request) {
+        this.request.progress = progress
+      }
+    }, 300)
 
     const { abort, promise } = apiClient().post(this.url(), attributes, {
       onProgress
@@ -248,7 +249,8 @@ export default class Collection<T: Model> {
    * use the options to disable adding, changing
    * or removing.
    */
-  @action async fetch (options: SetOptions = {}): Promise<void> {
+  @action
+  async fetch (options: SetOptions = {}): Promise<void> {
     const label: Label = 'fetching'
     const { abort, promise } = apiClient().get(this.url(), options.data)
 
@@ -281,7 +283,8 @@ export default class Collection<T: Model> {
    * non-REST endpoints that you may have in
    * your API.
    */
-  @action async rpc (method: string, body?: {}): Promise<*> {
+  @action
+  async rpc (method: string, body?: {}): Promise<*> {
     const label: Label = 'updating' // TODO: Maybe differentiate?
     const { promise, abort } = apiClient().post(
       `${this.url()}/${method}`,
