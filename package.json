@@ -1,6 +1,6 @@
 {
   "name": "mobx-rest",
-  "version": "2.1.5",
+  "version": "2.1.6",
   "description": "REST conventions for mobx.",
   "repository": {
     "type": "git",
@@ -50,15 +50,20 @@
     "eslint-plugin-promise": "^3.5.0",
     "eslint-plugin-standard": "^3.0.1",
     "flow-bin": "^0.47.0",
+    "flow-copy-source": "^1.1.0",
     "husky": "^0.13.4",
     "jest": "^20.0.4",
     "lint-staged": "^3.6.0",
-    "prettier-standard": "^5.0.0"
+    "prettier-standard": "^5.0.0",
+    "rimraf": "^2.6.1"
   },
   "main": "lib",
   "scripts": {
-    "compile": "babel src --out-dir lib",
-    "prepublish": "npm run compile",
+    "build:clean": "rimraf lib",
+    "build:lib": "babel -d lib src --ignore '**/__tests__/**'",
+    "build:flow": "flow-copy-source -v -i '**/__tests__/**' src lib",
+    "build": "npm run build:clean && npm run build:lib && npm run build:flow",
+    "prepublish": "npm run build",
     "jest": "BABEL_ENV=test NODE_PATH=src jest --no-cache",
     "lint": "eslint src __tests__",
     "flow": "flow",
