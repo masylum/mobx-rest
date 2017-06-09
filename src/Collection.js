@@ -96,6 +96,17 @@ export default class Collection<T: Model> {
   }
 
   /**
+   * The whinny version of the `get` method
+   */
+  mustGet (id: Id): T {
+    const model = this.get(id)
+
+    if (!model) throw Error(`Invariant: Model must be found with id: ${id}`)
+
+    return model
+  }
+
+  /**
    * Get resources matching criteria
    */
   filter (query: { [key: string]: any } = {}): Array<T> {
@@ -111,6 +122,20 @@ export default class Collection<T: Model> {
     return find(this.models, ({ attributes }) => {
       return isMatch(attributes.toJS(), query)
     })
+  }
+
+  /**
+   * The whinny version of `find`
+   */
+  mustFind (query: { [key: string]: mixed }): T {
+    const model = this.find(query)
+
+    if (!model) {
+      const conditions = JSON.stringify(query)
+      throw Error(`Invariant: Model must be found with: ${conditions}`)
+    }
+
+    return model
   }
 
   /**

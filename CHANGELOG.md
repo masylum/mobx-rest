@@ -1,5 +1,30 @@
 # Changelog
 
+## `2.1.7`
+
+:tophat:
+
+  - Added `mustGet` and `mustFind` as whinny versions of `get` and `find`
+
+## `2.1.6`
+
+:nail_care:
+
+  - Added flow types in the build process
+  - Updated dependencies
+
+## `2.1.5`
+
+:nail_care:
+
+  - Improved error handling (kudos to @p3drosola)
+
+## `2.1.4`
+
+:bug: Bugfix:
+
+  - Stop publishing `babelrc` since it breaks React native
+
 ## `2.1.3`
 
 :bug: Bugfix:
