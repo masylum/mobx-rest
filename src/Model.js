@@ -203,7 +203,7 @@ export default class Model {
       if (this.collection) {
         return this.collection.create(this, { optimistic })
       } else {
-        return this._create(attributes, { optimistic })
+        return this._create(this.attributes.toJS(), { optimistic })
       }
     }
 
