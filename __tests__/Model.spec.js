@@ -147,6 +147,22 @@ describe('Model', () => {
           model.collection = null
         })
 
+        it('sends merged attributes on the request', () => {
+          const adapter = apiClient()
+          const spy = jest.spyOn(adapter, 'post')
+
+          model.save({ name })
+
+          expect(spy).toHaveBeenCalledTimes(1)
+          expect(spy.mock.calls[0][1]).toEqual({
+            name: 'dylan',
+            album: 'kind of blue'
+          })
+
+          spy.mockReset()
+          spy.mockRestore()
+        })
+
         describe('if its optimistic (default)', () => {
           it('it sets model straight away', () => {
             model.save({ name })
