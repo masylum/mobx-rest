@@ -140,6 +140,22 @@ describe('Model', () => {
           model.save(item)
           expect(collection.create).toBeCalledWith(model, { optimistic: true })
         })
+
+        it('sends merged attributes on the request', () => {
+          const adapter = apiClient()
+          const spy = jest.spyOn(adapter, 'post')
+
+          model.save({ name })
+
+          expect(spy).toHaveBeenCalledTimes(1)
+          expect(spy.mock.calls[0][1]).toEqual({
+            name: 'dylan',
+            album: 'kind of blue'
+          })
+
+          spy.mockReset()
+          spy.mockRestore()
+        })
       })
 
       describe('and it does not have a collection', () => {
