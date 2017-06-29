@@ -1,5 +1,11 @@
 # Changelog
 
+## `2.1.8`
+
+:bug:
+
+  - Fixed: Creating a new model didn't merge the attribute in some cases.
+
 ## `2.1.7`
 
 :tophat:
