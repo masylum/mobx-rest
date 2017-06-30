@@ -210,7 +210,7 @@ export default class Model {
     let newAttributes
     let data
     const label: Label = 'updating'
-    const originalAttributes = this.attributes.toJS()
+    const originalAttributes = this.toJS()
 
     if (patch) {
       newAttributes = Object.assign({}, originalAttributes, attributes)

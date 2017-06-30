@@ -302,6 +302,28 @@ describe('Model', () => {
           expect(model.get('album')).toBe(item.album)
           expect(model.request.label).toBe('updating')
         })
+
+        it('sends merged attributes on the request', () => {
+          const adapter = apiClient()
+
+          spy = jest.spyOn(adapter, 'put')
+          model.save({
+            name,
+            tracks: [
+              { name: 'Track 1' },
+              { name: 'Track 2' }
+            ]
+          })
+
+          expect(spy).toHaveBeenCalledTimes(1)
+          expect(spy.mock.calls[0][1]).toEqual({
+            name: 'dylan',
+            tracks: [
+              { name: 'Track 1' },
+              { name: 'Track 2' }
+            ]
+          })
+        })
       })
 
       describe('and its not patching', () => {
@@ -310,6 +332,29 @@ describe('Model', () => {
           expect(model.get('name')).toBe('dylan')
           expect(model.get('album')).toBe('kind of blue')
           expect(model.request.label).toBe('updating')
+        })
+
+        it('sends merged attributes on the request', () => {
+          const adapter = apiClient()
+
+          spy = jest.spyOn(adapter, 'put')
+          model.save({
+            name,
+            tracks: [
+              { name: 'Track 1' },
+              { name: 'Track 2' }
+            ]
+          }, { patch: false })
+
+          expect(spy).toHaveBeenCalledTimes(1)
+          expect(spy.mock.calls[0][1]).toEqual({
+            ...item,
+            name: 'dylan',
+            tracks: [
+              { name: 'Track 1' },
+              { name: 'Track 2' }
+            ]
+          })
         })
       })
 
