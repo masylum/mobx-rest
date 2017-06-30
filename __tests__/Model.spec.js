@@ -482,7 +482,7 @@ describe('Model', () => {
         it('rolls back the changes', () => {
           return model.destroy().catch(() => {
             expect(collection.models.length).toBe(1)
-            expect(collection.at(0).get('name')).toBe(item.name)
+            expect(collection.at(0).toJS()).toEqual(item)
           })
         })
 
