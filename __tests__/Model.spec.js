@@ -27,6 +27,7 @@ describe('Model', () => {
   let collection
   let model
   let item
+  let spy
 
   function resolve (attr) {
     return () => {
@@ -42,6 +43,14 @@ describe('Model', () => {
     item = { id: 1, name: 'miles', album: 'kind of blue' }
     collection = new MyCollection([item])
     model = collection.at(0)
+  })
+
+  afterEach(() => {
+    if (spy) {
+      spy.mockReset()
+      spy.mockRestore()
+      spy = null
+    }
   })
 
   describe('isRequest', () => {
@@ -143,8 +152,8 @@ describe('Model', () => {
 
         it('sends merged attributes on the request', () => {
           const adapter = apiClient()
-          const spy = jest.spyOn(adapter, 'post')
 
+          spy = jest.spyOn(adapter, 'post')
           model.save({ name })
 
           expect(spy).toHaveBeenCalledTimes(1)
@@ -152,9 +161,6 @@ describe('Model', () => {
             name: 'dylan',
             album: 'kind of blue'
           })
-
-          spy.mockReset()
-          spy.mockRestore()
         })
       })
 
@@ -165,8 +171,8 @@ describe('Model', () => {
 
         it('sends merged attributes on the request', () => {
           const adapter = apiClient()
-          const spy = jest.spyOn(adapter, 'post')
 
+          spy = jest.spyOn(adapter, 'post')
           model.save({ name })
 
           expect(spy).toHaveBeenCalledTimes(1)
@@ -174,9 +180,6 @@ describe('Model', () => {
             name: 'dylan',
             album: 'kind of blue'
           })
-
-          spy.mockReset()
-          spy.mockRestore()
         })
 
         describe('if its optimistic (default)', () => {
