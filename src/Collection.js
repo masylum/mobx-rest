@@ -210,7 +210,7 @@ export default class Collection<T: Model> {
   ): Promise<*> {
     let model
     let attributes = attributesOrModel instanceof Model
-      ? attributesOrModel.attributes.toJS()
+      ? attributesOrModel.toJS()
       : attributesOrModel
     const label: Label = 'creating'
 
