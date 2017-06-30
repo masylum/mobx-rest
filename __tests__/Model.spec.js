@@ -40,7 +40,18 @@ describe('Model', () => {
   }
 
   beforeEach(() => {
-    item = { id: 1, name: 'miles', album: 'kind of blue' }
+    item = {
+      id: 1,
+      name: 'miles',
+      album: 'kind of blue',
+      tracks: [
+        { name: 'So What' },
+        { name: 'Freddie Freeloader' },
+        { name: 'Blue in Green' },
+        { name: 'All Blues' },
+        { name: 'Flamenco Sketches' }
+      ]
+    }
     collection = new MyCollection([item])
     model = collection.at(0)
   })
@@ -152,14 +163,17 @@ describe('Model', () => {
 
         it('sends merged attributes on the request', () => {
           const adapter = apiClient()
+          const attributes = { ...item }
+
+          delete attributes.id
 
           spy = jest.spyOn(adapter, 'post')
           model.save({ name })
 
           expect(spy).toHaveBeenCalledTimes(1)
           expect(spy.mock.calls[0][1]).toEqual({
-            name: 'dylan',
-            album: 'kind of blue'
+            ...attributes,
+            name: 'dylan'
           })
         })
       })
@@ -171,14 +185,17 @@ describe('Model', () => {
 
         it('sends merged attributes on the request', () => {
           const adapter = apiClient()
+          const attributes = { ...item }
+
+          delete attributes.id
 
           spy = jest.spyOn(adapter, 'post')
           model.save({ name })
 
           expect(spy).toHaveBeenCalledTimes(1)
           expect(spy.mock.calls[0][1]).toEqual({
-            name: 'dylan',
-            album: 'kind of blue'
+            ...attributes,
+            name: 'dylan'
           })
         })
 
