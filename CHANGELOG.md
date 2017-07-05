@@ -1,10 +1,16 @@
 # Changelog
 
+## `2.1.9`
+
+:bug:
+
+  - Fixed: Nested attributes couldn't be saved. (kudos to @rdiazv)
+
 ## `2.1.8`
 
 :bug:
 
-  - Fixed: Creating a new model didn't merge the attribute in some cases.
+  - Fixed: Creating a new model didn't merge the attribute in some cases. (kudos to @rdiazv)
 
 ## `2.1.7`
 
