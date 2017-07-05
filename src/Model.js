@@ -203,14 +203,14 @@ export default class Model {
       if (this.collection) {
         return this.collection.create(this, { optimistic })
       } else {
-        return this._create(this.attributes.toJS(), { optimistic })
+        return this._create(this.toJS(), { optimistic })
       }
     }
 
     let newAttributes
     let data
     const label: Label = 'updating'
-    const originalAttributes = this.attributes.toJS()
+    const originalAttributes = this.toJS()
 
     if (patch) {
       newAttributes = Object.assign({}, originalAttributes, attributes)

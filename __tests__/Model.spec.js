@@ -27,6 +27,7 @@ describe('Model', () => {
   let collection
   let model
   let item
+  let spy
 
   function resolve (attr) {
     return () => {
@@ -39,9 +40,28 @@ describe('Model', () => {
   }
 
   beforeEach(() => {
-    item = { id: 1, name: 'miles', album: 'kind of blue' }
+    item = {
+      id: 1,
+      name: 'miles',
+      album: 'kind of blue',
+      tracks: [
+        { name: 'So What' },
+        { name: 'Freddie Freeloader' },
+        { name: 'Blue in Green' },
+        { name: 'All Blues' },
+        { name: 'Flamenco Sketches' }
+      ]
+    }
     collection = new MyCollection([item])
     model = collection.at(0)
+  })
+
+  afterEach(() => {
+    if (spy) {
+      spy.mockReset()
+      spy.mockRestore()
+      spy = null
+    }
   })
 
   describe('isRequest', () => {
@@ -143,18 +163,18 @@ describe('Model', () => {
 
         it('sends merged attributes on the request', () => {
           const adapter = apiClient()
-          const spy = jest.spyOn(adapter, 'post')
+          const attributes = { ...item }
 
+          delete attributes.id
+
+          spy = jest.spyOn(adapter, 'post')
           model.save({ name })
 
           expect(spy).toHaveBeenCalledTimes(1)
           expect(spy.mock.calls[0][1]).toEqual({
-            name: 'dylan',
-            album: 'kind of blue'
+            ...attributes,
+            name: 'dylan'
           })
-
-          spy.mockReset()
-          spy.mockRestore()
         })
       })
 
@@ -165,18 +185,18 @@ describe('Model', () => {
 
         it('sends merged attributes on the request', () => {
           const adapter = apiClient()
-          const spy = jest.spyOn(adapter, 'post')
+          const attributes = { ...item }
 
+          delete attributes.id
+
+          spy = jest.spyOn(adapter, 'post')
           model.save({ name })
 
           expect(spy).toHaveBeenCalledTimes(1)
           expect(spy.mock.calls[0][1]).toEqual({
-            name: 'dylan',
-            album: 'kind of blue'
+            ...attributes,
+            name: 'dylan'
           })
-
-          spy.mockReset()
-          spy.mockRestore()
         })
 
         describe('if its optimistic (default)', () => {
@@ -282,6 +302,28 @@ describe('Model', () => {
           expect(model.get('album')).toBe(item.album)
           expect(model.request.label).toBe('updating')
         })
+
+        it('sends merged attributes on the request', () => {
+          const adapter = apiClient()
+
+          spy = jest.spyOn(adapter, 'put')
+          model.save({
+            name,
+            tracks: [
+              { name: 'Track 1' },
+              { name: 'Track 2' }
+            ]
+          })
+
+          expect(spy).toHaveBeenCalledTimes(1)
+          expect(spy.mock.calls[0][1]).toEqual({
+            name: 'dylan',
+            tracks: [
+              { name: 'Track 1' },
+              { name: 'Track 2' }
+            ]
+          })
+        })
       })
 
       describe('and its not patching', () => {
@@ -290,6 +332,29 @@ describe('Model', () => {
           expect(model.get('name')).toBe('dylan')
           expect(model.get('album')).toBe('kind of blue')
           expect(model.request.label).toBe('updating')
+        })
+
+        it('sends merged attributes on the request', () => {
+          const adapter = apiClient()
+
+          spy = jest.spyOn(adapter, 'put')
+          model.save({
+            name,
+            tracks: [
+              { name: 'Track 1' },
+              { name: 'Track 2' }
+            ]
+          }, { patch: false })
+
+          expect(spy).toHaveBeenCalledTimes(1)
+          expect(spy.mock.calls[0][1]).toEqual({
+            ...item,
+            name: 'dylan',
+            tracks: [
+              { name: 'Track 1' },
+              { name: 'Track 2' }
+            ]
+          })
         })
       })
 
@@ -417,7 +482,7 @@ describe('Model', () => {
         it('rolls back the changes', () => {
           return model.destroy().catch(() => {
             expect(collection.models.length).toBe(1)
-            expect(collection.at(0).get('name')).toBe(item.name)
+            expect(collection.at(0).toJS()).toEqual(item)
           })
         })
 
