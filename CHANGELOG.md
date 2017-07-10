@@ -1,5 +1,11 @@
 # Changelog
 
+## `2.2.0`
+
+:nail_care:
+
+  - Defined `mobx` as a `peerDependency`
+
 ## `2.1.9`
 
 :bug:
