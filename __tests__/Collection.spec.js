@@ -98,6 +98,16 @@ describe('Collection', () => {
     })
   })
 
+  describe('reset', () => {
+    it('reset a collection of models', () => {
+      const newItem = { id: 2, name: 'bob' }
+      collection.reset([newItem])
+
+      expect(collection.models.length).toBe(1)
+      expect(collection.get(2).get('name')).toBe(newItem.name)
+    })
+  })
+
   describe('remove', () => {
     it('removes a collection of models', () => {
       collection.remove([1])

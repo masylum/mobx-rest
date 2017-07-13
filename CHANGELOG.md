@@ -1,5 +1,11 @@
 # Changelog
 
+## `2.2.1`
+
+:tophat:
+
+  - Added `reset` for conveniently resetting a whole collection
+
 ## `2.2.0`
 
 :nail_care:

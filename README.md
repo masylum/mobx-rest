@@ -307,9 +307,21 @@ const pau = usersCollection.find({ name: 'pau' })
 pau.get('name') // => 'pau'
 ```
 
-#### `add(data: Object): Array<Model>`
+#### `add(data: Array<Object>): Array<Model>`
 
-Add a model with the given attributes.
+Adds models with the given array of attributes.
+
+```js
+usersCollection.add([{id: 1, name: 'foo'}])
+```
+
+#### `reset(data: Array<Object>): Array<Model>`
+
+Resets the collection with the given models.
+
+```js
+usersCollection.reset([{id: 1, name: 'foo'}])
+```
 
 #### `remove(ids: Array<number>): void`
 

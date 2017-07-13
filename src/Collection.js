@@ -150,6 +150,17 @@ export default class Collection<T: Model> {
   }
 
   /**
+   * Resets a collection of models.
+   * Returns the added models.
+   */
+  @action
+  reset (data: Array<{ [key: string]: any }>): Array<T> {
+    const models = data.map(d => this.build(d))
+    this.models = models
+    return models
+  }
+
+  /**
    * Removes the model with the given ids or uuids
    */
   @action
