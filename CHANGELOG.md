@@ -1,5 +1,12 @@
 # Changelog
 
+## `2.2.5`
+
+:nail_care:
+
+  - Remove flow-typed
+  - Improve bundle size with babel-lodash (kudos @ryedin)
+
 ## `2.2.4`
 
 :tophat:
@@ -17,7 +24,7 @@
 :tophat:
 
   - Added `length` for conveniently checking the length of the collection
-  
+
 ## `2.2.1`
 
 :tophat:
