@@ -21,8 +21,8 @@ An application state is usually divided into three realms:
   being pressed, a text input value, etc.
   - **Application state**: Sometimes we need components to share state between them and
   they are too far away to actually make them talk each other through props.
-  - **Resources state**: Other times, state is persisted in the server. We syncronize
-  that state through APIs that consume *resources*. One way to syncronize this state
+  - **Resources state**: Other times, state is persisted in the server. We synchronize
+  that state through APIs that consume *resources*. One way to synchronize this state
   is through REST.
 
 MobX is an excellent state management choice to deal with those three realms:
@@ -48,7 +48,7 @@ The demo is deployed [here](https://demo-wiimsnkpdy.now.sh/).
 
 A `Model` represents one resource. It's identified by a primary key (mandatory) and holds
 its attributes. You can create, update and destroy models in the client and then sync
-them with the server. A part from its attributes, a `Model` also holds the state of
+them with the server. Apart from its attributes, a `Model` also holds the state of
 the interactions with the server so you can react to those easily (showing loading states
 for instance).
 
@@ -108,9 +108,9 @@ Example: `file.isRequest('saving')`
 
 #### `isNew: boolean`
 
-Return whether that model has been syncronized with the server or not.
+Return whether that model has been synchronized with the server or not.
 Resources created in the client side (optimistically) don't have
-and `id` attribute yet (that's given by the server)
+an `id` attribute yet (that's given by the server)
 
 Example:
 
@@ -177,7 +177,7 @@ Example:
 
 ```js
 const company = new Company({ name: 'Teambox' })
-const promise = company.save({ name: 'Redbooth' }, { optimstic: false })
+const promise = company.save({ name: 'Redbooth' }, { optimistic: false })
 company.isRequest('saving') // => true
 company.get('name') // => 'Teambox'
 await promise
