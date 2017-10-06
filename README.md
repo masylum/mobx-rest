@@ -7,6 +7,21 @@ REST conventions for mobx.
 
 ![](https://media.giphy.com/media/b9QBHfcNpvqDK/giphy.gif)
 
+**Table of Contents**
+
+- [Installation](#installation)
+- [What is it?](#what-is-it)
+- [Full React example](#full-react-example)
+- [Documentation](#documentation)
+  - [Model](#model)
+  - [Collection](#collection)
+  - [apiClient](#apiclient)
+- [Simple Example](#simple-example)
+- [State shape](#state-shape)
+- [FAQ](#faq)
+- [Where is it used?](#where-is-it-used)
+- [License](#license)
+
 ## Installation
 
 ```
@@ -42,7 +57,7 @@ The demo is deployed [here](https://demo-wiimsnkpdy.now.sh/).
 
 ## Documentation
 
-`mobx-rest` is very simple and its source code can be read in 5 minutes.
+`mobx-rest` is fairly simple and its source code could be read in 5 minutes.
 
 ### `Model`
 
@@ -254,7 +269,7 @@ Return an array with the observable resources.
 Helper method that asks the collection whether there is an ongoing
 request with the given label.
 
-Example: 
+Example:
 
 ```js
 filesCollection.isRequest('saving')
@@ -265,7 +280,7 @@ filesCollection.isRequest('saving')
 Helper method that asks the collection whether there is any
 model in it.
 
-Example: 
+Example:
 
 ```js
 const promise = usersCollection.fetch()
@@ -288,7 +303,7 @@ Find a model (or not) with the given id.
 Helper method that filters the collection by the given conditions represented
 as a key value.
 
-Example: 
+Example:
 
 ```js
 const resolvedTasks = tasksCollection.filter({ resolved: true })
@@ -300,7 +315,7 @@ resolvedTasks.length // => 3
 Same as `filter` but it will halt and return when the first model matches
 the conditions.
 
-Example: 
+Example:
 
 ```js
 const pau = usersCollection.find({ name: 'pau' })
@@ -327,7 +342,7 @@ usersCollection.reset([{id: 1, name: 'foo'}])
 
 Remove any model with the given ids.
 
-Example: 
+Example:
 
 ```js
 usersCollection.remove([1, 2, 3])
@@ -406,10 +421,33 @@ Exactly the same as the model one, but at the collection level.
 ### `apiClient`
 
 This is the object that is going to make the `xhr` requests to interact with your API.
-There are two example implementations currently:
+There are currently two implementations:
 
-  - One using `jQuery` in the `mobx-rest-jquery-adapter` package.
-  - One using `fetch` in the `mobx-rest-fetch-adapter` package.
+  - One using `jQuery` in the `[mobx-rest-jquery-adapter](https://github.com/masylum/mobx-rest-jquery-adapter)` package.
+  - One using `fetch` in the `[mobx-rest-fetch-adapter](https://github.com/masylum/mobx-rest-fetch-adapter)` package.
+
+Initially you need to configure `apiClient()` with an adapter and the `apiPath`. You can also set additional options, like headers to send with all requests.
+
+For example, if you're using JWT and need to send it using the Authorization header, it could look like this:
+```
+const options = {
+  apiPath: window.env.apiUrl,
+}
+if (token) {
+  options.commonOptions = {
+    headers: {
+      Authorization: `Bearer ${token}`
+    }
+  }
+}
+apiClient(adapter, options)
+```
+
+All options:
+* **apiPath** (required): what do prepend for all model and collections URLs
+* **commonOptions**: settings to use for all requests
+  * **headers**: Additional request headers, like `Authorization`
+  * **tbd.**
 
 ## Simple Example
 
