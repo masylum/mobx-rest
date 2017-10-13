@@ -67,6 +67,23 @@ them with the server. Apart from its attributes, a `Model` also holds the state 
 the interactions with the server so you can react to those easily (showing loading states
 for instance).
 
+#### `constructor(attributes: Object)`
+
+Initialize the model with the given attributes.
+
+You can also overwrite it to provide default attributes like this:
+
+```js
+class User extends Model {
+  constructor(attributes) {
+    super(Object.assign({
+      token: null,
+      email_verified: false,
+    }, attributes))
+  }
+}
+```
+
 #### `attributes: ObservableMap`
 
 An `ObservableMap` that holds the attributes of the model.
@@ -84,10 +101,6 @@ A `Request` object that represents the state of the ongoing request, if any.
 #### `error`
 
 An `Error` object that represents the state of the failed request, if any.
-
-#### `constructor(attributes: Object)`
-
-Initialize the model with the given attributes.
 
 #### `toJS(): Object`
 
@@ -139,7 +152,20 @@ user.get('id') // => 1
 
 #### `get(attribute: string): any`
 
-Get the given attribute. If the attribute does not exist, it will throw.
+Get the given attribute. If the attribute does not exist, it will throw an error.
+
+If different resources have different schemas you can
+always use `has` to check whether a given attribute exists or not.
+
+Example:
+
+```js
+if (user.has('role')) {
+  return user.get('role')
+} else {
+  return 'basic'
+}
+```
 
 #### `has(attribute: string): boolean`
 
