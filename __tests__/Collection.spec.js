@@ -33,6 +33,14 @@ describe('Collection', () => {
     collection.error = errorObject
   })
 
+  describe('length getter', () => {
+    it('alias for models.length', () => {
+      expect(collection.length).toBe(1)
+      collection.remove([1])
+      expect(collection.length).toBe(0)
+    })
+  })
+
   describe('at', () => {
     it('finds a model at a given position', () => {
       expect(collection.at(0).get('name')).toBe(item.name)

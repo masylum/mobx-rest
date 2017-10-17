@@ -1,5 +1,5 @@
 // @flow
-import { observable, action, IObservableArray, runInAction, toJS } from 'mobx'
+import { observable, action, computed, IObservableArray, runInAction, toJS } from 'mobx'
 import Model from './Model'
 import {
   isEmpty,
@@ -23,6 +23,13 @@ export default class Collection<T: Model> {
 
   constructor (data: Array<{ [key: string]: any }> = []) {
     this.set(data)
+  }
+
+  /**
+   * Alias for models.length
+   */
+  @computed get length (): Number {
+    return this.models.length
   }
 
   /**
