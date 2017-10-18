@@ -510,6 +510,24 @@ describe('Model', () => {
           expect(model.error).toBe(null)
         })
       })
+
+      describe('when it succeeds with the new destroy signature', () => {
+        beforeEach(() => {
+          model.error = errorObject
+          resolve()()
+        })
+
+        it('nullifies the request', () => {
+          return model.destroy({ message: 'foo' }, { optimistic: true }).then(() => {
+            expect(model.request).toBe(null)
+          })
+        })
+
+        it('clears the error', async () => {
+          await model.save({ name })
+          expect(model.error).toBe(null)
+        })
+      })
     })
 
     describe('if its pessimistic', () => {

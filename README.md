@@ -225,9 +225,11 @@ await promise
 company.get('name') // => 'Redbooth'
 ```
 
-#### `destroy(options: Object): Promise`
+#### `destroy(attributes: Object, options: Object): Promise`
 
-Tells the API to destroy this resource.
+Tells the API to destroy this resource. It accepts some attributes
+as the first argument so you can use send extra information during
+the destroy process.
 
 Options:
 

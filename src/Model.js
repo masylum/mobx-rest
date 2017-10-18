@@ -310,14 +310,17 @@ export default class Model {
    * too
    */
   @action
-  async destroy ({ optimistic = true }: DestroyOptions = {}): Promise<*> {
+  async destroy (
+    attributes: {},
+    { optimistic = true }: DestroyOptions = {}
+  ): Promise<*> {
     if (!this.has(this.primaryKey) && this.collection) {
       this.collection.remove([this.optimisticId])
       return Promise.resolve()
     }
 
     const label: Label = 'destroying'
-    const { promise, abort } = apiClient().del(this.url())
+    const { abort, promise } = apiClient().del(this.url(), attributes)
 
     if (optimistic && this.collection) {
       this.collection.remove([this.id])
