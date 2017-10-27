@@ -1,5 +1,11 @@
 # Changelog
 
+## `2.2.2`
+
+:tophat:
+
+  - Added `length` for conveniently checking the length of the collection
+  
 ## `2.2.1`
 
 :tophat:
