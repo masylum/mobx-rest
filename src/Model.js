@@ -147,7 +147,7 @@ export default class Model {
    */
   @action
   reset (data: {}): void {
-    this.attributes = data
+    this.attributes.replace(data)
   }
 
   /**
