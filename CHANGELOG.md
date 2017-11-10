@@ -1,11 +1,22 @@
 # Changelog
 
+## `2.2.4`
+
+:tophat:
+
+  - Fixed `reset` on models. Use mobx `replace`
+
+## `2.2.3`
+
+:tophat:
+
+  - Added `reset` to models.
+
 ## `2.2.2`
 
 :tophat:
 
   - Added `length` for conveniently checking the length of the collection
-  - Added `reset` to models
   
 ## `2.2.1`
 
