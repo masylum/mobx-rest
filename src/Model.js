@@ -143,6 +143,14 @@ export default class Model {
   }
 
   /**
+   * Replace all attributes with new data
+   */
+  @action
+  reset (data: {}): void {
+    this.attributes = data
+  }
+
+  /**
    * Merge the given attributes with
    * the current ones
    */
@@ -175,7 +183,7 @@ export default class Model {
     }
 
     runInAction('fetch-done', () => {
-      this.set(data)
+      this.reset(data)
       this.request = null
       this.error = null
     })

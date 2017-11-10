@@ -148,6 +148,14 @@ describe('Model', () => {
     })
   })
 
+  describe('reset', () => {
+    const name = 'dylan'
+    it('erease everything', () => {
+      model.reset({ name })
+      expect(model.toJS()).toEqual({ name })
+    })
+  })
+
   describe('save', () => {
     const name = 'dylan'
 
@@ -594,7 +602,7 @@ describe('Model', () => {
 
       it('sets the response as attributes', () => {
         return model.fetch().then(() => {
-          expect(model.get('name')).toBe('bill')
+          expect(model.toJS()).toEqual({ name: 'bill' })
         })
       })
 
