@@ -5,6 +5,7 @@
 :tophat:
 
   - Added `length` for conveniently checking the length of the collection
+  - Added `reset` to models
   
 ## `2.2.1`
 
