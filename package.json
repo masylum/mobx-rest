@@ -69,7 +69,7 @@
     "build": "npm run build:clean && npm run build:lib && npm run build:flow",
     "prepublish": "npm run build",
     "jest": "BABEL_ENV=test NODE_PATH=src jest --no-cache",
-    "lint": "standard --verbose | snazzy",
+    "lint": "eslint --ext .jsx,.js --cache src/ __tests__/",
     "flow": "flow",
     "test": "npm run flow && npm run lint && npm run jest",
     "format": "prettier-standard --print-width 60 \"{src,__tests__}/**/*.js\"",
