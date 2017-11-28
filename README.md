@@ -275,7 +275,7 @@ Initializes the collection with the given resources.
 Abstract method that must be implemented if you want your collection
 and it's models to be able to interact with the API.
 
-#### `model(): Model`
+#### `model(attributes: Object): Model`
 
 Abstract method that tells which kind of `Model` objects this collection
 holds. This is used, for instance, when doing a `collection.create` so

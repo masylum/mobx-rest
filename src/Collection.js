@@ -37,7 +37,7 @@ export default class Collection<T: Model> {
   /**
    * Specifies the model class for that collection
    */
-  model (): Class<*> {
+  model (attributes: { [key: string]: any } = {}): Class<*> {
     return Model
   }
 
@@ -201,7 +201,7 @@ export default class Collection<T: Model> {
    * Creates a new model instance with the given attributes
    */
   build (attributes: { [key: string]: any } = {}): T {
-    const ModelClass = this.model()
+    const ModelClass = this.model(attributes)
     const model = new ModelClass(attributes)
     model.collection = this
 
