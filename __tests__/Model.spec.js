@@ -660,5 +660,15 @@ describe('Model', () => {
         expect(model.error).toBe(null)
       })
     })
+    describe('when http method is put', () => {
+      it('api client issues a put', () => {
+        const adapter = apiClient()
+
+        spy = jest.spyOn(adapter, 'put')
+        model.rpc('enable/1', {}, { method: 'put' })
+
+        expect(spy).toHaveBeenCalledTimes(1)
+      })
+    })
   })
 })
