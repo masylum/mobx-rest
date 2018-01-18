@@ -64,6 +64,17 @@ describe('Model', () => {
     }
   })
 
+  it('allows to define default model attributes', () => {
+    class ModelWithDefaults extends Model {
+      static defaultAttributes = {
+        someAttribute: 'test'
+      }
+    }
+
+    const newModel = new ModelWithDefaults()
+    expect(newModel.get('someAttribute')).toBe('test')
+  })
+
   describe('isRequest', () => {
     it('returns false if there is no request', () => {
       const newModel = new MyModel({})

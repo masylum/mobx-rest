@@ -22,6 +22,8 @@ import type {
 } from './types'
 
 export default class Model {
+  static defaultAttributes = {}
+
   @observable request: ?Request = null
   @observable error: ?ErrorObject = null
   attributes: ObservableMap
@@ -30,7 +32,10 @@ export default class Model {
   collection: ?Collection<*> = null
 
   constructor (attributes: { [key: string]: any } = {}) {
-    this.attributes = observable.map(attributes)
+    this.attributes = observable.map({
+      ...this.constructor.defaultAttributes,
+      ...attributes
+    })
   }
 
   /**
