@@ -1,6 +1,8 @@
 export default {
   resolver: resolve => {
-    resolve()
+    setTimeout(() => {
+      resolve()
+    })
   },
 
   _mock () {
