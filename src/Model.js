@@ -58,7 +58,7 @@ export default class Model {
    * @abstract
    */
   urlRoot () {
-    throw new Error('`url` method not implemented')
+    throw new Error('`urlRoot` method not implemented')
   }
 
   /**
