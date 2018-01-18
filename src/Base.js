@@ -14,14 +14,6 @@ export default class Base {
     throw new Error('You must implement this method')
   }
 
-  /**
-   * Questions whether the request exists
-   * and matches a certain label
-   */
-  isRequest (label: string): boolean {
-    return !!this.requests.find(request => request.labels.indexOf(label) !== -1)
-  }
-
   async withRequest (labels: string | Array<string>, promise: Promise<*>, abort: () => void): Promise<*> {
     if (typeof labels === 'string') {
       labels = [labels]
@@ -50,6 +42,14 @@ export default class Base {
     }
 
     return response
+  }
+
+  /**
+   * Questions whether the request exists
+   * and matches a certain label
+   */
+  isRequest (label: string): boolean {
+    return !!this.requests.find(request => request.labels.indexOf(label) !== -1)
   }
 
   /**
