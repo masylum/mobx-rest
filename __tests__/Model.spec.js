@@ -75,6 +75,23 @@ describe('Model', () => {
     expect(newModel.get('someAttribute')).toBe('test')
   })
 
+  describe('changedAttributes', () => {
+    it('return the attributes names that changed from the last sync', () => {
+      const newModel = new MyModel({
+        name: 'Name 1',
+        date: '1900-01-01',
+        phone: '123456789'
+      })
+
+      newModel.set({
+        name: 'Name 2',
+        phone: '987654321'
+      })
+
+      expect(newModel.changedAttributes).toEqual(['name', 'phone'])
+    })
+  })
+
   describe('isRequest', () => {
     it('returns false if there is no request', () => {
       const newModel = new MyModel({})

@@ -26,16 +26,21 @@ export default class Model {
 
   @observable request: ?Request = null
   @observable error: ?ErrorObject = null
+
   attributes: ObservableMap
+  commitedAttributes: ObservableMap
 
   optimisticId: OptimisticId = uniqueId('i_')
   collection: ?Collection<*> = null
 
   constructor (attributes: { [key: string]: any } = {}) {
-    this.attributes = observable.map({
+    const mergedAttributes = {
       ...this.constructor.defaultAttributes,
       ...attributes
-    })
+    }
+
+    this.attributes = observable.shallowMap(mergedAttributes)
+    this.commitedAttributes = observable.shallowMap(mergedAttributes)
   }
 
   /**
@@ -145,6 +150,22 @@ export default class Model {
     return this.has(this.primaryKey)
       ? this.get(this.primaryKey)
       : this.optimisticId
+  }
+
+  /**
+   *
+   */
+  @computed
+  get changedAttributes (): Array<string> {
+    const changed = []
+
+    this.commitedAttributes.keys().forEach(key => {
+      if (this.commitedAttributes.get(key) !== this.attributes.get(key)) {
+        changed.push(key)
+      }
+    })
+
+    return changed
   }
 
   /**
