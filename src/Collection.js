@@ -1,5 +1,5 @@
 // @flow
-import { observable, action, computed, IObservableArray, runInAction, toJS } from 'mobx'
+import { observable, action, computed, IObservableArray, toJS } from 'mobx'
 import Model from './Model'
 import {
   isEmpty,
@@ -7,7 +7,6 @@ import {
   isMatch,
   find,
   difference,
-  debounce,
   map,
   last
 } from 'lodash'

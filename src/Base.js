@@ -10,7 +10,7 @@ export default class Base {
    *
    * @abstract
    */
-  url(): string {
+  url (): string {
     throw new Error('You must implement this method')
   }
 

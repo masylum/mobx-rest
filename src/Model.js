@@ -175,7 +175,7 @@ export default class Model extends Base {
    * If an attribute is specified, returns true if it has changes.
    * If no attribute is specified, returns true if any attribute has changes.
    */
-  hasChanges (attribute?: string): bool {
+  hasChanges (attribute?: string): boolean {
     if (attribute) {
       return this.changedAttributes.indexOf(attribute) !== -1
     }

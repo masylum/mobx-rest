@@ -1,4 +1,4 @@
-import { Collection, apiClient, Request } from '../src'
+import { Collection, apiClient } from '../src'
 import MockApi from './mocks/api'
 import ErrorObject from '../src/ErrorObject'
 
