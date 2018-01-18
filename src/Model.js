@@ -169,6 +169,20 @@ export default class Model {
   }
 
   /**
+   * Gets the current changes.
+   */
+  @computed
+  get changes (): { [string]: mixed } {
+    const changes = {}
+
+    this.changedAttributes.forEach(key => {
+      changes[key] = this.get(key)
+    })
+
+    return changes
+  }
+
+  /**
    * If an attribute is specified, returns true if it has changes.
    * If no attribute is specified, returns true if any attribute has changes.
    */

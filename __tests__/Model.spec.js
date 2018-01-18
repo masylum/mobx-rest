@@ -159,6 +159,31 @@ describe('Model', () => {
     })
   })
 
+  describe('changes', () => {
+    it('returns an object with the current changes', () => {
+      const newModel = new MyModel({
+        name: 'Name 1',
+        date: '1900-01-01',
+        phone: '123456789'
+      })
+
+      newModel.set({
+        name: 'Name 2'
+      })
+
+      newModel.set({
+        name: 'Name 1',
+        date: '2000-01-01',
+        phone: '987654321'
+      })
+
+      expect(newModel.changes).toEqual({
+        date: '2000-01-01',
+        phone: '987654321'
+      })
+    })
+  })
+
   describe('isRequest', () => {
     it('returns false if there is no request', () => {
       const newModel = new MyModel({})
