@@ -1,13 +1,12 @@
 // @flow
 import { observable } from 'mobx'
-import type { Label } from './types'
 
 export default class Request {
-  label: Label
+  label: string
   abort: () => void
   @observable progress: number = 0
 
-  constructor (label: Label, abort: () => void, progress: number) {
+  constructor (label: string, abort: () => void, progress: number) {
     this.label = label
     this.abort = abort
     this.progress = progress

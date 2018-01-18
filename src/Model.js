@@ -4,27 +4,24 @@ import {
   action,
   ObservableMap,
   computed,
-  runInAction,
   toJS
 } from 'mobx'
 import Collection from './Collection'
-import { uniqueId, isString, debounce } from 'lodash'
+import { uniqueId, debounce } from 'lodash'
 import apiClient from './apiClient'
-import Request from './Request'
 import ErrorObject from './ErrorObject'
+import Base from './Base'
 import type {
   OptimisticId,
   Id,
-  Label,
   DestroyOptions,
   SaveOptions,
   CreateOptions
 } from './types'
 
-export default class Model {
+export default class Model extends Base {
   static defaultAttributes = {}
 
-  @observable request: ?Request = null
   @observable error: ?ErrorObject = null
 
   attributes: ObservableMap
@@ -34,6 +31,8 @@ export default class Model {
   collection: ?Collection<*> = null
 
   constructor (attributes: { [key: string]: any } = {}) {
+    super()
+
     const mergedAttributes = {
       ...this.constructor.defaultAttributes,
       ...attributes
@@ -92,16 +91,6 @@ export default class Model {
     } else {
       return `${urlRoot}/${this.get(this.primaryKey)}`
     }
-  }
-
-  /**
-   * Questions whether the request exists
-   * and matches a certain label
-   */
-  isRequest (label: Label): boolean {
-    if (!this.request) return false
-
-    return this.request.label === label
   }
 
   /**
@@ -201,10 +190,7 @@ export default class Model {
   reset (data?: {}): void {
     this.attributes.replace(
       data
-        ? {
-          ...this.constructor.defaultAttributes,
-          ...data
-        }
+        ? { ...this.constructor.defaultAttributes, ...data }
         : this.commitedAttributes
     )
   }
@@ -227,32 +213,14 @@ export default class Model {
    * Fetches the model from the backend.
    */
   @action
-  async fetch (options: { data?: {} } = {}): Promise<void> {
-    const label: Label = 'fetching'
+  fetch (options: { data?: {} } = {}): Promise<*> {
     const { abort, promise } = apiClient().get(this.url(), options.data)
 
-    this.request = new Request(label, abort, 0)
-
-    let data
-
-    try {
-      data = await promise
-    } catch (body) {
-      runInAction('fetch-error', () => {
-        this.error = new ErrorObject(label, body)
-        this.request = null
+    return this.withRequest('fetching', promise, abort)
+      .then(data => {
+        this.reset(data)
+        return data
       })
-
-      throw body
-    }
-
-    runInAction('fetch-done', () => {
-      this.reset(data)
-      this.request = null
-      this.error = null
-    })
-
-    return data
   }
 
   /**
@@ -266,7 +234,7 @@ export default class Model {
    * TODO: Add progress
    */
   @action
-  async save (
+  save (
     attributes: {},
     { optimistic = true, patch = true }: SaveOptions = {}
   ): Promise<*> {
@@ -281,7 +249,6 @@ export default class Model {
 
     let newAttributes
     let data
-    const label: Label = 'updating'
     const originalAttributes = this.toJS()
 
     if (patch) {
@@ -292,54 +259,29 @@ export default class Model {
       data = Object.assign({}, originalAttributes, attributes)
     }
 
-    const onProgress = debounce(function onProgress (progress) {
-      if (optimistic && this.request) {
-        this.request.progress = progress
-      }
-    }, 300)
-
-    const { promise, abort } = apiClient().put(this.url(), data, {
-      method: patch ? 'PATCH' : 'PUT',
-      onProgress
-    })
+    const { promise, abort } = apiClient().put(this.url(), data)
 
     if (optimistic) this.set(newAttributes)
 
-    this.request = new Request(label, abort, 0)
-
-    let response
-
-    try {
-      response = await promise
-    } catch (body) {
-      runInAction('save-fail', () => {
-        this.request = null
-        this.set(originalAttributes)
-        this.error = new ErrorObject(label, body)
+    return this.withRequest('updating', promise, abort)
+      .then(data => {
+        this.set(data)
+        return data
       })
-
-      throw isString(body) ? new Error(body) : body
-    }
-
-    runInAction('save-done', () => {
-      this.request = null
-      this.error = null
-      this.set(response)
-    })
-
-    return response
+      .catch(error => {
+        this.set(originalAttributes)
+        throw error
+      })
   }
 
   /**
    * Internal method that takes care of creating a model that does
    * not belong to a collection
    */
-  async _create (
+  _create (
     attributes: {},
     { optimistic = true }: CreateOptions = {}
   ): Promise<*> {
-    const label: Label = 'creating'
-
     const onProgress = debounce(function onProgress (progress) {
       if (optimistic && this.request) {
         this.request.progress = progress
@@ -350,30 +292,11 @@ export default class Model {
       onProgress
     })
 
-    if (optimistic) {
-      this.request = new Request(label, abort, 0)
-    }
-
-    let data: {}
-
-    try {
-      data = await promise
-    } catch (body) {
-      runInAction('create-error', () => {
-        this.error = new ErrorObject(label, body)
-        this.request = null
+    return this.withRequest('creating', promise, abort)
+      .then(data => {
+        this.set(data)
+        return data
       })
-
-      throw body
-    }
-
-    runInAction('create-done', () => {
-      this.set(data)
-      this.request = null
-      this.error = null
-    })
-
-    return data
   }
 
   /**
@@ -382,44 +305,31 @@ export default class Model {
    * too
    */
   @action
-  async destroy ({ optimistic = true }: DestroyOptions = {}): Promise<*> {
+  destroy ({ optimistic = true }: DestroyOptions = {}): Promise<*> {
     if (!this.has(this.primaryKey) && this.collection) {
       this.collection.remove([this.optimisticId])
       return Promise.resolve()
     }
 
-    const label: Label = 'destroying'
     const { promise, abort } = apiClient().del(this.url())
 
     if (optimistic && this.collection) {
       this.collection.remove([this.id])
     }
 
-    this.request = new Request(label, abort, 0)
-
-    try {
-      await promise
-    } catch (body) {
-      runInAction('destroy-fail', () => {
+    return this.withRequest('destroying', promise, abort)
+      .then(data => {
+        if (!optimistic && this.collection) {
+          this.collection.remove([this.id])
+        }
+        return data
+      })
+      .catch(error => {
         if (optimistic && this.collection) {
           this.collection.add([this.attributes.toJS()])
         }
-        this.error = new ErrorObject(label, body)
-        this.request = null
+        throw error
       })
-
-      throw body
-    }
-
-    runInAction('destroy-done', () => {
-      if (!optimistic && this.collection) {
-        this.collection.remove([this.id])
-      }
-      this.request = null
-      this.error = null
-    })
-
-    return null
   }
 
   /**
@@ -428,31 +338,12 @@ export default class Model {
    * your API.
    */
   @action
-  async rpc (method: string, body?: {}): Promise<*> {
-    const label: Label = 'updating' // TODO: Maybe differentiate?
+  rpc (method: string, options?: {}): Promise<*> {
     const { promise, abort } = apiClient().post(
       `${this.url()}/${method}`,
       body || {}
     )
 
-    this.request = new Request(label, abort, 0)
-
-    let response
-
-    try {
-      response = await promise
-    } catch (body) {
-      runInAction('accept-fail', () => {
-        this.request = null
-        this.error = new ErrorObject(label, body)
-      })
-
-      throw body
-    }
-
-    this.request = null
-    this.error = null
-
-    return response
+    return this.withRequest('updating', promise, abort)
   }
 }

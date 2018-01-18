@@ -1,11 +1,9 @@
 // @flow
-import type { Label } from './types'
-
 export default class ErrorObject {
-  label: Label
+  label: string
   body: {}
 
-  constructor (label: Label, body: {}) {
+  constructor (label: string, body: {}) {
     this.label = label
     this.body = body
   }

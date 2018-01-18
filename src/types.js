@@ -1,6 +1,4 @@
 // @flow
-export type Label = 'fetching' | 'creating' | 'updating' | 'destroying'
-
 export type OptimisticId = string
 export type Id = number | OptimisticId
 

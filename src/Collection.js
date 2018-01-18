@@ -14,14 +14,16 @@ import {
 import ErrorObject from './ErrorObject'
 import Request from './Request'
 import apiClient from './apiClient'
-import type { Label, CreateOptions, SetOptions, Id } from './types'
+import Base from './Base'
+import type { CreateOptions, SetOptions, Id } from './types'
 
-export default class Collection<T: Model> {
+export default class Collection<T: Model> extends Base {
   @observable request: ?Request = null
   @observable error: ?ErrorObject = null
   @observable models: IObservableArray<T> = []
 
   constructor (data: Array<{ [key: string]: any }> = []) {
+    super()
     this.set(data)
   }
 
@@ -62,16 +64,6 @@ export default class Collection<T: Model> {
    */
   toArray () {
     return this.models.slice()
-  }
-
-  /**
-   * Questions whether the request exists
-   * and matches a certain label
-   */
-  isRequest (label: Label): boolean {
-    if (!this.request) return false
-
-    return this.request.label === label
   }
 
   /**
@@ -230,59 +222,31 @@ export default class Collection<T: Model> {
     let attributes = attributesOrModel instanceof Model
       ? attributesOrModel.toJS()
       : attributesOrModel
-    const label: Label = 'creating'
 
-    const onProgress = debounce(function onProgress (progress) {
-      if (optimistic && model.request) {
-        model.request.progress = progress
-      }
-
-      if (this.request) {
-        this.request.progress = progress
-      }
-    }, 300)
-
-    const { abort, promise } = apiClient().post(this.url(), attributes, {
-      onProgress
-    })
+    const { abort, promise } = apiClient().post(this.url(), attributes)
 
     if (optimistic) {
       model = attributesOrModel instanceof Model
         ? attributesOrModel
         : last(this.add([attributesOrModel]))
-      model.request = new Request(label, abort, 0)
     }
 
-    this.request = new Request(label, abort, 0)
+    return this.withRequest('creating', promise, abort)
+      .then(data => {
+        if (model) {
+          model.set(data)
+        } else {
+          this.add([data])
+        }
 
-    let data: {}
-
-    try {
-      data = await promise
-    } catch (body) {
-      runInAction('create-error', () => {
+        return data
+      })
+      .catch(error => {
         if (model) {
           this.remove([model.id])
         }
-        this.error = new ErrorObject(label, body)
-        this.request = null
+        throw error
       })
-
-      throw body
-    }
-
-    runInAction('create-done', () => {
-      if (model) {
-        model.set(data)
-        model.request = null
-      } else {
-        this.add([data])
-      }
-      this.request = null
-      this.error = null
-    })
-
-    return data
   }
 
   /**
@@ -293,32 +257,14 @@ export default class Collection<T: Model> {
    * or removing.
    */
   @action
-  async fetch (options: SetOptions = {}): Promise<void> {
-    const label: Label = 'fetching'
+  fetch (options: SetOptions = {}): Promise<void> {
     const { abort, promise } = apiClient().get(this.url(), options.data)
 
-    this.request = new Request(label, abort, 0)
-
-    let data: Array<{ [key: string]: any }>
-
-    try {
-      data = await promise
-    } catch (body) {
-      runInAction('fetch-error', () => {
-        this.error = new ErrorObject(label, body)
-        this.request = null
+    return this.withRequest('fetching', promise, abort)
+      .then(data => {
+        this.set(data, options)
+        return data
       })
-
-      throw body
-    }
-
-    runInAction('fetch-done', () => {
-      this.set(data, options)
-      this.request = null
-      this.error = null
-    })
-
-    return data
   }
 
   /**
@@ -327,31 +273,12 @@ export default class Collection<T: Model> {
    * your API.
    */
   @action
-  async rpc (method: string, body?: {}): Promise<*> {
-    const label: Label = 'updating' // TODO: Maybe differentiate?
+  rpc (method: string, body?: {}): Promise<*> {
     const { promise, abort } = apiClient().post(
       `${this.url()}/${method}`,
       body || {}
     )
 
-    this.request = new Request(label, abort, 0)
-
-    let response
-
-    try {
-      response = await promise
-    } catch (body) {
-      runInAction('accept-fail', () => {
-        this.request = null
-        this.error = new ErrorObject(label, body)
-      })
-
-      throw body
-    }
-
-    this.request = null
-    this.error = null
-
-    return response
+    return this.withRequest('updating', promise, abort)
   }
 }

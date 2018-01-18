@@ -1,4 +1,4 @@
-import { Collection, Model, apiClient, Request } from '../src'
+import { Collection, Model, apiClient } from '../src'
 import MockApi from './mocks/api'
 import ErrorObject from '../src/ErrorObject'
 
@@ -192,13 +192,17 @@ describe('Model', () => {
 
     it('return false if the request is something different', () => {
       const newModel = new MyModel({})
-      newModel.request = new Request('creating', null, 0)
+
+      newModel.withRequest('creating', new Promise(() => { }))
+
       expect(newModel.isRequest('fetching')).toBe(false)
     })
 
     it('return true if the request is matching', () => {
       const newModel = new MyModel({})
-      newModel.request = new Request('fetching', null, 0)
+
+      newModel.withRequest('fetching', new Promise(() => {}))
+
       expect(newModel.isRequest('fetching')).toBe(true)
     })
   })
@@ -382,22 +386,21 @@ describe('Model', () => {
             model.save({ name })
             expect(model.get('name')).toBe('dylan')
             expect(model.get('album')).toBe(item.album)
-            expect(model.request.label).toBe('creating')
+            expect(model.isRequest('creating')).toBe(true)
           })
 
           describe('when it fails', () => {
             beforeEach(reject)
 
-            it('sets the error', () => {
-              return model.save({ name }).catch(() => {
-                expect(model.error.label).toBe('creating')
-                expect(model.error.body).toBe(error)
+            it('passes the error', () => {
+              return model.save({ name }).catch(response => {
+                expect(response).toBe(error)
               })
             })
 
-            it('nullifies the request', () => {
+            it('removes the request', () => {
               return model.save({ name }).catch(() => {
-                expect(model.request).toBe(null)
+                expect(model.isRequest('creating')).toBe(false)
               })
             })
           })
@@ -414,15 +417,10 @@ describe('Model', () => {
               })
             })
 
-            it('nullifies the request', () => {
+            it('removes the request', () => {
               return model.save({ name }).then(() => {
-                expect(model.request).toBe(null)
+                expect(model.isRequest('creating')).toBe(false)
               })
-            })
-
-            it('clears the error', async () => {
-              await model.save({ name })
-              expect(model.error).toBe(null)
             })
           })
         })
@@ -431,16 +429,15 @@ describe('Model', () => {
           describe('when it fails', () => {
             beforeEach(reject)
 
-            it('sets the error', () => {
-              return model.save({ name }, { optimistic: false }).catch(() => {
-                expect(model.error.label).toBe('creating')
-                expect(model.error.body).toBe(error)
+            it('passes the error', () => {
+              return model.save({ name }, { optimistic: false }).catch(response => {
+                expect(response).toBe(error)
               })
             })
 
-            it('nullifies the request', () => {
+            it('removes the request', () => {
               return model.save({ name }).catch(() => {
-                expect(model.request).toBe(null)
+                expect(model.isRequest('creating')).toBe(false)
               })
             })
           })
@@ -457,15 +454,10 @@ describe('Model', () => {
               })
             })
 
-            it('nullifies the request', () => {
+            it('removes the request', () => {
               return model.save({ name }).then(() => {
-                expect(model.request).toBe(null)
+                expect(model.isRequest('creating')).toBe(false)
               })
-            })
-
-            it('clears the error', async () => {
-              await model.save({ name })
-              expect(model.error).toBe(null)
             })
           })
         })
@@ -478,7 +470,7 @@ describe('Model', () => {
           model.save({ name })
           expect(model.get('name')).toBe('dylan')
           expect(model.get('album')).toBe(item.album)
-          expect(model.request.label).toBe('updating')
+          expect(model.isRequest('updating')).toBe(true)
         })
 
         it('sends merged attributes on the request', () => {
@@ -509,7 +501,7 @@ describe('Model', () => {
           model.save({ name }, { patch: false })
           expect(model.get('name')).toBe('dylan')
           expect(model.get('album')).toBe('kind of blue')
-          expect(model.request.label).toBe('updating')
+          expect(model.isRequest('updating')).toBe(true)
         })
 
         it('sends merged attributes on the request', () => {
@@ -539,10 +531,9 @@ describe('Model', () => {
       describe('when it fails', () => {
         beforeEach(reject)
 
-        it('sets the error', () => {
-          return model.save({ name }).catch(() => {
-            expect(model.error.label).toBe('updating')
-            expect(model.error.body).toBe(error)
+        it('passes the error', () => {
+          return model.save({ name }).catch(response => {
+            expect(response).toBe(error)
           })
         })
 
@@ -550,13 +541,13 @@ describe('Model', () => {
           return model.save({ name }).catch(() => {
             expect(model.get('name')).toBe(item.name)
             expect(model.get('album')).toBe(item.album)
-            expect(model.request).toBe(null)
+            expect(model.isRequest('updating')).toBe(false)
           })
         })
 
-        it('nullifies the request', () => {
+        it('removes the request', () => {
           return model.save({ name }).catch(() => {
-            expect(model.request).toBe(null)
+            expect(model.isRequest('updating')).toBe(false)
           })
         })
       })
@@ -573,15 +564,10 @@ describe('Model', () => {
           })
         })
 
-        it('nullifies the request', () => {
+        it('removes the request', () => {
           return model.save({ name }).then(() => {
-            expect(model.request).toBe(null)
+            expect(model.isRequest('updating')).toBe(false)
           })
-        })
-
-        it('clears the error', async () => {
-          await model.save({ name })
-          expect(model.error).toBe(null)
         })
       })
     })
@@ -590,16 +576,15 @@ describe('Model', () => {
       describe('when it fails', () => {
         beforeEach(reject)
 
-        it('sets the error', () => {
-          return model.save({ name }, { optimistic: false }).catch(() => {
-            expect(model.error.label).toBe('updating')
-            expect(model.error.body).toBe(error)
+        it('passes the error', () => {
+          return model.save({ name }, { optimistic: false }).catch(response => {
+            expect(response).toBe(error)
           })
         })
 
-        it('nullifies the request', () => {
+        it('removes the request', () => {
           return model.save({ name }).catch(() => {
-            expect(model.request).toBe(null)
+            expect(model.isRequest('updating')).toBe(false)
           })
         })
       })
@@ -616,15 +601,10 @@ describe('Model', () => {
           })
         })
 
-        it('nullifies the request', () => {
+        it('removes the request', () => {
           return model.save({ name }).then(() => {
-            expect(model.request).toBe(null)
+            expect(model.isRequest('updating')).toBe(false)
           })
-        })
-
-        it('clears the error', async () => {
-          await model.save({ name })
-          expect(model.error).toBe(null)
         })
       })
     })
@@ -650,23 +630,28 @@ describe('Model', () => {
       describe('when it fails', () => {
         beforeEach(reject)
 
-        it('sets the error', () => {
-          return model.destroy().catch(() => {
-            expect(model.error.label).toBe('destroying')
-            expect(model.error.body).toBe(error)
+        it('passes the error', () => {
+          expect.assertions(1)
+
+          return model.destroy().catch(response => {
+            expect(response).toBe(error)
           })
         })
 
         it('rolls back the changes', () => {
+          expect.assertions(2)
+
           return model.destroy().catch(() => {
             expect(collection.models.length).toBe(1)
             expect(collection.at(0).toJS()).toEqual(item)
           })
         })
 
-        it('nullifies the request', () => {
+        it('removes the request', () => {
+          expect.assertions(1)
+
           return model.destroy().catch(() => {
-            expect(model.request).toBe(null)
+            expect(model.isRequest('destroying')).toBe(false)
           })
         })
       })
@@ -677,15 +662,12 @@ describe('Model', () => {
           resolve()()
         })
 
-        it('nullifies the request', () => {
-          return model.destroy().then(() => {
-            expect(model.request).toBe(null)
-          })
-        })
+        it('removes the request', () => {
+          expect.assertions(1)
 
-        it('clears the error', async () => {
-          await model.save({ name })
-          expect(model.error).toBe(null)
+          return model.destroy().then(() => {
+            expect(model.isRequest('destroying')).toBe(false)
+          })
         })
       })
     })
@@ -694,22 +676,27 @@ describe('Model', () => {
       describe('when it fails', () => {
         beforeEach(reject)
 
-        it('sets the error', () => {
-          return model.destroy({ optimistic: false }).catch(() => {
-            expect(model.error.label).toBe('destroying')
-            expect(model.error.body).toBe(error)
+        it('passes the error', () => {
+          expect.assertions(1)
+
+          return model.destroy({ optimistic: false }).catch(response => {
+            expect(response).toBe(error)
           })
         })
 
         it('rolls back the changes', () => {
+          expect.assertions(1)
+
           return model.destroy({ optimistic: false }).catch(() => {
             expect(collection.models.length).toBe(1)
           })
         })
 
-        it('nullifies the request', () => {
+        it('removes the request', () => {
+          expect.assertions(1)
+
           return model.destroy({ optimistic: false }).catch(() => {
-            expect(model.request).toBe(null)
+            expect(model.isRequest('destroying')).toBe(false)
           })
         })
       })
@@ -721,20 +708,19 @@ describe('Model', () => {
         })
 
         it('applies changes', () => {
+          expect.assertions(1)
+
           return model.destroy({ optimistic: false }).then(() => {
             expect(collection.models.length).toBe(0)
           })
         })
 
-        it('nullifies the request', () => {
-          return model.destroy({ optimistic: false }).then(() => {
-            expect(model.request).toBe(null)
-          })
-        })
+        it('removes the request', () => {
+          expect.assertions(1)
 
-        it('clears the error', async () => {
-          await model.destroy({ optimistic: false })
-          expect(model.error).toBe(null)
+          return model.destroy({ optimistic: false }).then(() => {
+            expect(model.isRequest('destroying')).toBe(false)
+          })
         })
       })
     })
@@ -744,16 +730,19 @@ describe('Model', () => {
     describe('when it fails', () => {
       beforeEach(reject)
 
-      it('sets the error', () => {
-        return model.fetch().catch(() => {
-          expect(model.error.label).toBe('fetching')
-          expect(model.error.body).toBe(error)
+      it('passes the error', () => {
+        expect.assertions(1)
+
+        return model.fetch().catch(response => {
+          expect(response).toBe(error)
         })
       })
 
-      it('nullifies the request', () => {
+      it('removes the request', () => {
+        expect.assertions(1)
+
         return model.fetch().catch(() => {
-          expect(model.request).toBe(null)
+          expect(model.isRequest('fetching')).toBe(false)
         })
       })
     })
@@ -765,26 +754,27 @@ describe('Model', () => {
       })
 
       it('returns the response', () => {
+        expect.assertions(1)
+
         return model.fetch().then(response => {
           expect(response.name).toBe('bill')
         })
       })
 
       it('sets the response as attributes', () => {
+        expect.assertions(1)
+
         return model.fetch().then(() => {
           expect(model.toJS()).toEqual({ name: 'bill' })
         })
       })
 
-      it('nullifies the request', () => {
-        return model.fetch().then(() => {
-          expect(model.request).toBe(null)
-        })
-      })
+      it('removes the request', () => {
+        expect.assertions(1)
 
-      it('clears the error', async () => {
-        await model.fetch()
-        expect(model.error).toBe(null)
+        return model.fetch().then(() => {
+          expect(model.isRequest('fetching')).toBe(false)
+        })
       })
     })
   })
@@ -793,16 +783,15 @@ describe('Model', () => {
     describe('when it fails', () => {
       beforeEach(reject)
 
-      it('sets the error', () => {
-        return model.rpc('approve').catch(() => {
-          expect(model.error.label).toBe('updating')
-          expect(model.error.body).toBe(error)
+      it('passes the error', () => {
+        return model.rpc('approve').catch(response => {
+          expect(response).toBe(error)
         })
       })
 
-      it('nullifies the request', () => {
+      it('removes the request', () => {
         return model.rpc('approve').catch(() => {
-          expect(model.request).toBe(null)
+          expect(model.isRequest('updating')).toBe(false)
         })
       })
     })
@@ -819,15 +808,10 @@ describe('Model', () => {
         })
       })
 
-      it('nullifies the request', () => {
+      it('removes the request', () => {
         return model.rpc('approve').then(() => {
-          expect(model.request).toBe(null)
+          expect(model.isRequest('updating')).toBe(false)
         })
-      })
-
-      it('clears the error', async () => {
-        await model.rpc('approve')
-        expect(model.error).toBe(null)
       })
     })
   })

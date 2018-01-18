@@ -69,22 +69,6 @@ describe('Collection', () => {
     })
   })
 
-  describe('isRequest', () => {
-    it('returns false if there is no request', () => {
-      expect(collection.isRequest('fetching')).toBe(false)
-    })
-
-    it('returns false if the label does not match', () => {
-      collection.request = new Request('creating', null, 0)
-      expect(collection.isRequest('fetching')).toBe(false)
-    })
-
-    it('returns true otherwie', () => {
-      collection.request = new Request('fetching', null, 0)
-      expect(collection.isRequest('fetching')).toBe(true)
-    })
-  })
-
   describe('isEmpty', () => {
     it('returns false if there is an element', () => {
       expect(collection.isEmpty()).toBe(false)
@@ -132,19 +116,18 @@ describe('Collection', () => {
         collection.create(newItem)
         expect(collection.models.length).toBe(2)
         expect(collection.at(1).get('name')).toBe('bob')
-        expect(collection.at(1).request.label).toBe('creating')
+        expect(collection.isRequest('creating')).toBe(true)
       })
 
       describe('when it fails', () => {
         beforeEach(reject)
 
-        it('sets the error', async () => {
-          try {
-            await collection.create(newItem)
-          } catch (_error) {
-            expect(collection.error.label).toBe('creating')
-            expect(collection.error.body).toBe(error)
-          }
+        it('passes the error', () => {
+          expect.assertions(1)
+
+          return collection.create(newItem).catch(response => {
+            expect(response).toBe(error)
+          })
         })
 
         it('removes the model', async () => {
@@ -167,15 +150,10 @@ describe('Collection', () => {
           expect(collection.at(1).get('name')).toBe('dylan')
         })
 
-        it('nullifies the request', async () => {
+        it('removes the request', async () => {
           await collection.create(newItem)
           expect(collection.models.length).toBe(2)
-          expect(collection.at(1).request).toBe(null)
-        })
-
-        it('clears the error', async () => {
-          await collection.create(newItem)
-          expect(collection.error).toBe(null)
+          expect(collection.at(1).isRequest('creating')).toBe(false)
         })
       })
     })
@@ -184,13 +162,12 @@ describe('Collection', () => {
       describe('when it fails', () => {
         beforeEach(reject)
 
-        it('sets the error', async () => {
-          try {
-            await collection.create(newItem, { optimistic: false })
-          } catch (_error) {
-            expect(collection.error.label).toBe('creating')
-            expect(collection.error.body).toBe(error)
-          }
+        it('passes the error', () => {
+          expect.assertions(1)
+
+          return collection.create(newItem, { optimistic: false }).catch(response => {
+            expect(response).toBe(error)
+          })
         })
       })
 
@@ -214,19 +191,18 @@ describe('Collection', () => {
   describe('fetch', () => {
     it('sets the request', () => {
       collection.fetch()
-      expect(collection.request.label).toBe('fetching')
+      expect(collection.isRequest('fetching')).toBe(true)
     })
 
     describe('when it fails', () => {
       beforeEach(reject)
 
-      it('sets the error', async () => {
-        try {
-          await collection.fetch()
-        } catch (_error) {
-          expect(collection.error.label).toBe('fetching')
-          expect(collection.error.body).toBe(error)
-        }
+      it('passes the error', () => {
+        expect.assertions(1)
+
+        return collection.fetch().catch(response => {
+          expect(response).toBe(error)
+        })
       })
     })
 
@@ -240,11 +216,6 @@ describe('Collection', () => {
         await collection.fetch()
         expect(collection.models.length).toBe(2)
         expect(collection.at(1).get('name')).toBe('bob')
-      })
-
-      it('clears the error', async () => {
-        await collection.fetch()
-        expect(collection.error).toBe(null)
       })
     })
   })
@@ -312,19 +283,16 @@ describe('Collection', () => {
     describe('rpc', () => {
       it('sets the request', () => {
         collection.rpc('foo')
-        expect(collection.request.label).toBe('updating')
+        expect(collection.isRequest('updating')).toBe(true)
       })
 
       describe('when it fails', () => {
         beforeEach(reject)
 
-        it('sets the error', async () => {
-          try {
-            await collection.rpc('foo')
-          } catch (_error) {
-            expect(collection.error.label).toBe('updating')
-            expect(collection.error.body).toBe(error)
-          }
+        it('passes the error', () => {
+          return collection.rpc('foo').catch(response => {
+            expect(response).toBe(error)
+          })
         })
       })
 
@@ -339,11 +307,6 @@ describe('Collection', () => {
         it('return the data', async () => {
           const data = await collection.rpc('foo')
           expect(data).toBe(mockResponse)
-        })
-
-        it('clears the error', async () => {
-          await collection.rpc('foo')
-          expect(collection.error).toBe(null)
         })
       })
     })
