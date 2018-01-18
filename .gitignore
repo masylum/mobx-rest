@@ -2,3 +2,4 @@ lib/
 coverage/
 node_modules/
 flow-typed/
+.eslintcache
