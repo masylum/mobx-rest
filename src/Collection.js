@@ -266,19 +266,4 @@ export default class Collection<T: Model> extends Base {
         return data
       })
   }
-
-  /**
-   * Call an RPC action for all those
-   * non-REST endpoints that you may have in
-   * your API.
-   */
-  @action
-  rpc (method: string, body?: {}): Promise<*> {
-    const { promise, abort } = apiClient().post(
-      `${this.url()}/${method}`,
-      body || {}
-    )
-
-    return this.withRequest('updating', promise, abort)
-  }
 }

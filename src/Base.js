@@ -1,8 +1,18 @@
 // @flow
-import { observable, IObservableArray } from 'mobx'
+import { action, observable, IObservableArray } from 'mobx'
+import apiClient from './apiClient'
 
 export default class Base {
   @observable.shallow requests: IObservableArray = []
+
+  /**
+   * Returns the resource's url.
+   *
+   * @abstract
+   */
+  url(): string {
+    throw new Error('You must implement this method')
+  }
 
   /**
    * Questions whether the request exists
@@ -40,5 +50,17 @@ export default class Base {
     }
 
     return response
+  }
+
+  /**
+   * Call an RPC action for all those
+   * non-REST endpoints that you may have in
+   * your API.
+   */
+  @action
+  rpc (label: string, endpoint: string, options?: {}): Promise<*> {
+    const { promise, abort } = apiClient().post(`${this.url()}/${endpoint}`, options)
+
+    return this.withRequest(label, promise, abort)
   }
 }

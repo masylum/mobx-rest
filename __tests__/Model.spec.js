@@ -784,14 +784,14 @@ describe('Model', () => {
       beforeEach(reject)
 
       it('passes the error', () => {
-        return model.rpc('approve').catch(response => {
+        return model.rpc('approving', 'approve').catch(response => {
           expect(response).toBe(error)
         })
       })
 
       it('removes the request', () => {
-        return model.rpc('approve').catch(() => {
-          expect(model.isRequest('updating')).toBe(false)
+        return model.rpc('approving', 'approve').catch(() => {
+          expect(model.isRequest('approving')).toBe(false)
         })
       })
     })
@@ -803,14 +803,14 @@ describe('Model', () => {
       })
 
       it('returns the response', () => {
-        return model.rpc('approve').then(response => {
+        return model.rpc('approving', 'approve').then(response => {
           expect(response).toBe('foo')
         })
       })
 
       it('removes the request', () => {
-        return model.rpc('approve').then(() => {
-          expect(model.isRequest('updating')).toBe(false)
+        return model.rpc('approving', 'approve').then(() => {
+          expect(model.isRequest('approving')).toBe(false)
         })
       })
     })

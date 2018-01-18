@@ -282,15 +282,17 @@ describe('Collection', () => {
 
     describe('rpc', () => {
       it('sets the request', () => {
-        collection.rpc('foo')
-        expect(collection.isRequest('updating')).toBe(true)
+        collection.rpc('fooing', 'foo')
+        expect(collection.isRequest('fooing')).toBe(true)
       })
 
       describe('when it fails', () => {
         beforeEach(reject)
 
         it('passes the error', () => {
-          return collection.rpc('foo').catch(response => {
+          expect.assertions(1)
+
+          return collection.rpc('fooing', 'foo').catch(response => {
             expect(response).toBe(error)
           })
         })
@@ -305,7 +307,7 @@ describe('Collection', () => {
         })
 
         it('return the data', async () => {
-          const data = await collection.rpc('foo')
+          const data = await collection.rpc('fooing', 'foo')
           expect(data).toBe(mockResponse)
         })
       })
