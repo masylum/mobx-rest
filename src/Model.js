@@ -198,8 +198,20 @@ export default class Model {
    * Replace all attributes with new data
    */
   @action
-  reset (data: {}): void {
-    this.attributes.replace(data)
+  reset (data?: {}): void {
+    this.attributes.replace(
+      data
+        ? {
+          ...this.constructor.defaultAttributes,
+          ...data
+        }
+        : this.commitedAttributes
+    )
+  }
+
+  @action
+  clear (): void {
+    this.attributes.replace(this.constructor.defaultAttributes)
   }
 
   /**

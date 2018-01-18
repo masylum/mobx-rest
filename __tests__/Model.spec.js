@@ -268,11 +268,61 @@ describe('Model', () => {
     })
   })
 
-  describe('reset', () => {
-    const name = 'dylan'
-    it('erease everything', () => {
-      model.reset({ name })
-      expect(model.toJS()).toEqual({ name })
+  describe('reset(attributes)', () => {
+    describe('if attributes is specified', () => {
+      it('replaces the current attributes with the specified ones', () => {
+        model.reset({ hi: 'bye' })
+
+        expect(model.toJS()).toEqual({ hi: 'bye' })
+      })
+
+      it('respects the default attributes', () => {
+        class ModelWithDefaults extends Model {
+          static defaultAttributes = {
+            someAttribute: 'test'
+          }
+        }
+
+        const newModel = new ModelWithDefaults({
+          name: 'john'
+        })
+
+        newModel.reset({ phone: '1234567' })
+
+        expect(newModel.toJS()).toEqual({
+          someAttribute: 'test',
+          phone: '1234567'
+        })
+      })
+    })
+
+    describe('if attributes is not specified', () => {
+      it('replaces the current attributes with last commited ones', () => {
+        model.set({ name: 'test' })
+        model.reset()
+
+        expect(model.toJS()).toEqual(item)
+      })
+    })
+  })
+
+  describe('clear', () => {
+    it('replaces the current attributes with the default ones', () => {
+      class ModelWithDefaults extends Model {
+        static defaultAttributes = {
+          someAttribute: 'test'
+        }
+      }
+
+      const newModel = new ModelWithDefaults({
+        name: 'john'
+      })
+
+      newModel.clear()
+
+      expect(newModel.toJS()).toEqual({
+        someAttribute: 'test'
+      })
     })
   })
 
