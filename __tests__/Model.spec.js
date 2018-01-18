@@ -354,8 +354,10 @@ describe('Model', () => {
 
           expect(spy).toHaveBeenCalledTimes(1)
           expect(spy.mock.calls[0][1]).toEqual({
-            ...attributes,
-            name: 'dylan'
+            data: {
+              ...attributes,
+              name: 'dylan'
+            }
           })
         })
       })
@@ -376,8 +378,10 @@ describe('Model', () => {
 
           expect(spy).toHaveBeenCalledTimes(1)
           expect(spy.mock.calls[0][1]).toEqual({
-            ...attributes,
-            name: 'dylan'
+            data: {
+              ...attributes,
+              name: 'dylan'
+            }
           })
         })
 
@@ -487,11 +491,13 @@ describe('Model', () => {
 
           expect(spy).toHaveBeenCalledTimes(1)
           expect(spy.mock.calls[0][1]).toEqual({
-            name: 'dylan',
-            tracks: [
-              { name: 'Track 1' },
-              { name: 'Track 2' }
-            ]
+            data: {
+              name: 'dylan',
+              tracks: [
+                { name: 'Track 1' },
+                { name: 'Track 2' }
+              ]
+            }
           })
         })
       })
@@ -518,12 +524,14 @@ describe('Model', () => {
 
           expect(spy).toHaveBeenCalledTimes(1)
           expect(spy.mock.calls[0][1]).toEqual({
-            ...item,
-            name: 'dylan',
-            tracks: [
-              { name: 'Track 1' },
-              { name: 'Track 2' }
-            ]
+            data: {
+              ...item,
+              name: 'dylan',
+              tracks: [
+                { name: 'Track 1' },
+                { name: 'Track 2' }
+              ]
+            }
           })
         })
       })

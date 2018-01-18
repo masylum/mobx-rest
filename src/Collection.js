@@ -222,7 +222,7 @@ export default class Collection<T: Model> extends Base {
       ? attributesOrModel.toJS()
       : attributesOrModel
 
-    const { abort, promise } = apiClient().post(this.url(), attributes)
+    const { abort, promise } = apiClient().post(this.url(), { data: attributes })
 
     if (optimistic) {
       model = attributesOrModel instanceof Model
@@ -257,7 +257,7 @@ export default class Collection<T: Model> extends Base {
    */
   @action
   fetch (options: SetOptions = {}): Promise<void> {
-    const { abort, promise } = apiClient().get(this.url(), options.data)
+    const { abort, promise } = apiClient().get(this.url(), options)
 
     return this.withRequest('fetching', promise, abort)
       .then(data => {

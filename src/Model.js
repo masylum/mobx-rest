@@ -7,7 +7,7 @@ import {
   toJS
 } from 'mobx'
 import Collection from './Collection'
-import { uniqueId, debounce } from 'lodash'
+import { uniqueId } from 'lodash'
 import apiClient from './apiClient'
 import ErrorObject from './ErrorObject'
 import Base from './Base'
@@ -214,7 +214,7 @@ export default class Model extends Base {
    */
   @action
   fetch (options: { data?: {} } = {}): Promise<*> {
-    const { abort, promise } = apiClient().get(this.url(), options.data)
+    const { abort, promise } = apiClient().get(this.url(), options)
 
     return this.withRequest('fetching', promise, abort)
       .then(data => {
@@ -259,7 +259,7 @@ export default class Model extends Base {
       data = Object.assign({}, originalAttributes, attributes)
     }
 
-    const { promise, abort } = apiClient().put(this.url(), data)
+    const { promise, abort } = apiClient().put(this.url(), { data })
 
     if (optimistic) this.set(newAttributes)
 
@@ -282,15 +282,7 @@ export default class Model extends Base {
     attributes: {},
     { optimistic = true }: CreateOptions = {}
   ): Promise<*> {
-    const onProgress = debounce(function onProgress (progress) {
-      if (optimistic && this.request) {
-        this.request.progress = progress
-      }
-    }, 300)
-
-    const { abort, promise } = apiClient().post(this.url(), attributes, {
-      onProgress
-    })
+    const { abort, promise } = apiClient().post(this.url(), { data: attributes })
 
     return this.withRequest('creating', promise, abort)
       .then(data => {
