@@ -9,6 +9,12 @@
   "license": "MIT",
   "jest": {
     "collectCoverage": true,
+    "coverageReporters": [
+      "json",
+      "lcov",
+      "text-summary",
+      "html"
+    ],
     "testRegex": "/__tests__/.*\\.spec\\.js$",
     "collectCoverageFrom": [
       "src/**/*.js"
