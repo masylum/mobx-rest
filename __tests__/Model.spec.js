@@ -92,6 +92,73 @@ describe('Model', () => {
     })
   })
 
+  describe('hasChanges(attribute)', () => {
+    describe('if an attribute is specified', () => {
+      it('returns true if the specified attribute has changes', () => {
+        const newModel = new MyModel({
+          name: 'Name 1',
+          date: '1900-01-01',
+          phone: '123456789'
+        })
+
+        newModel.set({ name: 'Name 2' })
+
+        expect(newModel.hasChanges('name')).toBe(true)
+      })
+
+      it('returns false if the specified attribute has no changes', () => {
+        const newModel = new MyModel({
+          name: 'Name 1',
+          date: '1900-01-01',
+          phone: '123456789'
+        })
+
+        newModel.set({ name: 'Name 2' })
+
+        expect(newModel.hasChanges('date')).toBe(false)
+      })
+
+      describe('if no attribute is specified', () => {
+        it('returns true if any attribute has changes', () => {
+          const newModel = new MyModel({
+            name: 'Name 1',
+            date: '1900-01-01',
+            phone: '123456789'
+          })
+
+          newModel.set({ name: 'Name 2' })
+
+          expect(newModel.hasChanges()).toBe(true)
+        })
+
+        it('returns false if no attributes have changes', () => {
+          const newModel = new MyModel({
+            name: 'Name 1',
+            date: '1900-01-01',
+            phone: '123456789'
+          })
+
+          expect(newModel.hasChanges()).toBe(false)
+        })
+      })
+    })
+
+    it('returns an object with the current changes', () => {
+      const newModel = new MyModel({
+        name: 'Name 1',
+        date: '1900-01-01',
+        phone: '123456789'
+      })
+
+      newModel.set({
+        name: 'Name 2',
+        phone: '987654321'
+      })
+
+      expect(newModel.changedAttributes).toEqual(['name', 'phone'])
+    })
+  })
+
   describe('isRequest', () => {
     it('returns false if there is no request', () => {
       const newModel = new MyModel({})

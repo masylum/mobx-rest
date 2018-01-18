@@ -153,7 +153,7 @@ export default class Model {
   }
 
   /**
-   *
+   * Get an array with the attributes names that have changed.
    */
   @computed
   get changedAttributes (): Array<string> {
@@ -166,6 +166,18 @@ export default class Model {
     })
 
     return changed
+  }
+
+  /**
+   * If an attribute is specified, returns true if it has changes.
+   * If no attribute is specified, returns true if any attribute has changes.
+   */
+  hasChanges (attribute?: string): bool {
+    if (attribute) {
+      return this.changedAttributes.indexOf(attribute) !== -1
+    }
+
+    return this.changedAttributes.length > 0
   }
 
   /**
