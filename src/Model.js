@@ -67,23 +67,21 @@ export default class Model extends Base {
    * @abstract
    */
   urlRoot () {
-    throw new Error('`urlRoot` method not implemented')
+    return null
   }
 
   /**
    * Return the url for this given REST resource
    */
   url (): string {
-    let urlRoot
+    let urlRoot = this.urlRoot()
 
-    if (this.collection) {
+    if (!urlRoot && this.collection) {
       urlRoot = this.collection.url()
-    } else {
-      urlRoot = this.urlRoot()
     }
 
     if (!urlRoot) {
-      throw new Error('Either implement `urlRoot` or assign a collection')
+      throw new Error('implement `urlRoot` method or `url` on the collection')
     }
 
     if (this.isNew) {
@@ -141,15 +139,11 @@ export default class Model extends Base {
       : this.optimisticId
   }
 
-  /**
-   * Get an array with the attributes names that have changed.
-   */
-  @computed
-  get changedAttributes (): Array<string> {
+  getChangedAttributesAgainst(attributes): Array<string> {
     const changed = []
 
     this.commitedAttributes.keys().forEach(key => {
-      if (this.commitedAttributes.get(key) !== this.attributes.get(key)) {
+      if (this.commitedAttributes.get(key) !== attributes.get(key)) {
         changed.push(key)
       }
     })
@@ -157,18 +151,30 @@ export default class Model extends Base {
     return changed
   }
 
+  getChangesAgainst(attributes): { [string]: mixed } {
+    const changes = {}
+
+    this.getChangedAttributesAgainst(attributes).forEach(key => {
+      changes[key] = attributes.get(key)
+    })
+
+    return changes
+  }
+
+  /**
+   * Get an array with the attributes names that have changed.
+   */
+  @computed
+  get changedAttributes (): Array<string> {
+    return this.getChangedAttributesAgainst(this.attributes)
+  }
+
   /**
    * Gets the current changes.
    */
   @computed
   get changes (): { [string]: mixed } {
-    const changes = {}
-
-    this.changedAttributes.forEach(key => {
-      changes[key] = this.get(key)
-    })
-
-    return changes
+    return this.getChangesAgainst(this.attributes)
   }
 
   /**
@@ -246,58 +252,39 @@ export default class Model extends Base {
   @action
   save (
     attributes: {},
-    { optimistic = true, patch = true }: SaveOptions = {}
+    { optimistic = true, patch = false }: SaveOptions = {}
   ): Promise<*> {
-    if (!this.has(this.primaryKey)) {
-      this.set(Object.assign({}, attributes))
-      if (this.collection) {
-        return this.collection.create(this, { optimistic })
-      } else {
-        return this._create(this.toJS(), { optimistic })
-      }
-    }
+    const currentAttributes = this.toJS()
+    const mergedAttributes = { ...currentAttributes, ...attributes }
+    const label = this.isNew ? 'creating' : 'updating'
+    const data = (!this.isNew && patch)
+      ? this.getChangesAgainst(observable.map(mergedAttributes))
+      : mergedAttributes
 
-    let newAttributes
-    let data
-    const originalAttributes = this.toJS()
+    let method
 
-    if (patch) {
-      newAttributes = Object.assign({}, originalAttributes, attributes)
-      data = Object.assign({}, attributes)
+    if (this.isNew) {
+      method = 'post'
+    } else if (patch) {
+      method = 'patch'
     } else {
-      newAttributes = Object.assign({}, attributes)
-      data = Object.assign({}, originalAttributes, attributes)
+      method = 'put'
     }
 
-    const { promise, abort } = apiClient().put(this.url(), { data })
+    if (optimistic) {
+      this.set(attributes)
+    }
 
-    if (optimistic) this.set(newAttributes)
+    const { promise, abort } = apiClient()[method](this.url(), { data })
 
-    return this.withRequest('updating', promise, abort)
+    return this.withRequest(['saving', label], promise, abort)
       .then(data => {
         this.set(data)
         return data
       })
       .catch(error => {
-        this.set(originalAttributes)
+        this.set(currentAttributes)
         throw error
-      })
-  }
-
-  /**
-   * Internal method that takes care of creating a model that does
-   * not belong to a collection
-   */
-  _create (
-    attributes: {},
-    { optimistic = true }: CreateOptions = {}
-  ): Promise<*> {
-    const { abort, promise } = apiClient().post(this.url(), { data: attributes })
-
-    return this.withRequest('creating', promise, abort)
-      .then(data => {
-        this.set(data)
-        return data
       })
   }
 
@@ -308,8 +295,12 @@ export default class Model extends Base {
    */
   @action
   destroy ({ optimistic = true }: DestroyOptions = {}): Promise<*> {
-    if (!this.has(this.primaryKey) && this.collection) {
-      this.collection.remove([this.optimisticId])
+    if (this.isNew && this.collection) {
+      this.collection.remove([this.id])
+      return Promise.resolve()
+    }
+
+    if (this.isNew) {
       return Promise.resolve()
     }
 
@@ -328,7 +319,7 @@ export default class Model extends Base {
       })
       .catch(error => {
         if (optimistic && this.collection) {
-          this.collection.add([this.attributes.toJS()])
+          this.collection.add([this.toJS()])
         }
         throw error
       })

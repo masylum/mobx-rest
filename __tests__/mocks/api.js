@@ -1,14 +1,24 @@
+let resolvePromise
+let rejectPromise
+
 export default {
-  resolver: resolve => {
-    setTimeout(() => {
-      resolve()
-    })
+  resolvePromise (...args) {
+    resolvePromise(...args)
+  },
+
+  rejectPromise (...args) {
+    rejectPromise(...args)
   },
 
   _mock () {
+    const promise = new Promise((resolve, reject) => {
+      resolvePromise = resolve
+      rejectPromise = reject
+    })
+
     return {
       abort: () => {},
-      promise: new Promise(this.resolver)
+      promise
     }
   },
 
@@ -31,6 +41,10 @@ export default {
   },
 
   put () {
+    return this._mock()
+  },
+
+  patch () {
     return this._mock()
   },
 
