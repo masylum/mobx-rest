@@ -183,6 +183,16 @@ export default class Model extends Base {
     return this.changedAttributes.length > 0
   }
 
+  @action
+  commitChanges (): void {
+    this.commitedAttributes.replace(this.attributes)
+  }
+
+  @action
+  discardChanges(): void {
+    this.attributes.replace(this.commitedAttributes)
+  }
+
   /**
    * Replace all attributes with new data
    */
