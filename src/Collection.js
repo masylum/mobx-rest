@@ -63,7 +63,7 @@ export default class Collection extends Base {
   /**
    * Alias of slice
    */
-  toArray(): Array<Model> {
+  toArray (): Array<Model> {
     return this.slice()
   }
 

@@ -1,6 +1,5 @@
 import Base from '../src/Base'
 import apiClient from '../src/apiClient'
-import Request from '../src/Request'
 import MockApi from './mocks/api'
 
 apiClient(MockApi)
@@ -19,10 +18,10 @@ describe(Base, () => {
   })
 
   describe('withRequest(labels, promise, abort)', () => {
-    it('returns a Request', () => {
+    it('returns a Request promise', () => {
       const request = model.withRequest('fetching', Promise.resolve())
 
-      expect(request).toBeInstanceOf(Request)
+      expect(request).toBeInstanceOf(Promise)
     })
 
     it('tracks the request while is pending', () => {
@@ -74,31 +73,20 @@ describe(Base, () => {
 
   describe('getRequest(label)', () => {
     it('returns the first request of the specified label', () => {
-      const promise = new Promise(() => {})
+      const request = model.withRequest('fetching', new Promise(() => {}))
 
-      model.withRequest('fetching', promise)
-
-      const request = model.getRequest('fetching')
-
-      expect(request).toEqual(expect.objectContaining({
-        promise
-      }))
+      expect(model.getRequest('fetching')).toBe(request)
     })
   })
 
   describe('getAllRequests(label)', () => {
     it('returns all request of the specified label', () => {
-      const promise1 = new Promise(() => { })
-      const promise2 = new Promise(() => { })
+      const request1 = model.withRequest('fetching', new Promise(() => {}))
+      const request2 = model.withRequest('fetching', new Promise(() => {}))
 
-      model.withRequest('fetching', promise1)
-      model.withRequest('fetching', promise2)
-
-      const requests = model.getAllRequests('fetching')
-
-      expect(requests).toEqual([
-        expect.objectContaining({ promise: promise1 }),
-        expect.objectContaining({ promise: promise2 })
+      expect(model.getAllRequests('fetching')).toEqual([
+        request1,
+        request2
       ])
     })
   })
@@ -130,8 +118,8 @@ describe(Base, () => {
       })
     })
 
-    it('returns a Request', () => {
-      expect(request).toBeInstanceOf(Request)
+    it('returns a Request promise', () => {
+      expect(request).toBeInstanceOf(Promise)
     })
 
     it('sends a request using the endpoint suffix', () => {

@@ -21,8 +21,7 @@ export default class Base {
     }
 
     const request = new Request({
-      labels,
-      promise: new Promise((resolve, reject) => {
+      resolver: (resolve, reject) => {
         promise
           .then(response => {
             this.requests.remove(request)
@@ -34,7 +33,8 @@ export default class Base {
             throw error
           })
           .catch(reject)
-      }),
+      },
+      labels,
       abort
     })
 
@@ -65,7 +65,7 @@ export default class Base {
    * your API.
    */
   @action
-  rpc (label: string, endpoint: string, options?: {}): Promise<*> {
+  rpc (label: string, endpoint: string, options?: {}): Request {
     const { promise, abort } = apiClient().post(`${this.url()}/${endpoint}`, options)
 
     return this.withRequest(label, promise, abort)

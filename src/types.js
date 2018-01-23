@@ -24,7 +24,7 @@ export type Response = {
 
 export type RequestOptions = {
   abort?: () => void,
-  promise: Promise<*>,
+  resolver: (resolve: (any) => any, reject: (any) => any) => any,
   progress?: number,
   labels: Array<string>
 }
@@ -37,11 +37,11 @@ export type SetOptions = {
 }
 
 export type GetOptions = {
-  mustGet?: boolean,
+  required?: boolean,
 }
 
 export type FindOptions = {
-  mustFind?: boolean,
+  required?: boolean,
 }
 
 export type Adapter = {
