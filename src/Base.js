@@ -20,20 +20,17 @@ export default class Base {
       labels = [labels]
     }
 
-    const request = new Request({
-      resolver: (resolve, reject) => {
-        promise
-          .then(response => {
-            this.requests.remove(request)
-            return response
-          })
-          .then(resolve)
-          .catch(error => {
-            this.requests.remove(request)
-            throw error
-          })
-          .catch(reject)
-      },
+    const handledPromise = promise
+      .then(response => {
+        this.requests.remove(request)
+        return response
+      })
+      .catch(error => {
+        this.requests.remove(request)
+        throw error
+      })
+
+    const request = new Request(handledPromise, {
       labels,
       abort
     })

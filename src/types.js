@@ -1,6 +1,7 @@
 // @flow
 export type OptimisticId = string
 export type Id = number | OptimisticId
+export type RequestState = 'pending' | 'fulfilled' | 'rejected'
 
 export type CreateOptions = {
   optimistic?: boolean,
@@ -24,7 +25,6 @@ export type Response = {
 
 export type RequestOptions = {
   abort?: () => void,
-  resolver: (resolve: (any) => any, reject: (any) => any) => any,
   progress?: number,
   labels: Array<string>
 }
