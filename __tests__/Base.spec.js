@@ -1,5 +1,6 @@
 import Base from '../src/Base'
 import apiClient from '../src/apiClient'
+import Request from '../src/Request'
 import MockApi from './mocks/api'
 
 apiClient(MockApi)
@@ -18,22 +19,18 @@ describe(Base, () => {
   })
 
   describe('withRequest(labels, promise, abort)', () => {
-    it('returns a promise', () => {
-      const promise = model.withRequest('fetching', Promise.resolve())
+    it('returns a Request', () => {
+      const request = model.withRequest('fetching', Promise.resolve())
 
-      expect(promise).toBeInstanceOf(Promise)
+      expect(request).toBeInstanceOf(Request)
     })
 
     it('tracks the request while is pending', () => {
       const abort = () => {}
-      const promise = model.withRequest('fetching', new Promise(() => {}), abort)
+      const request = model.withRequest('fetching', new Promise(() => {}), abort)
 
       expect(model.requests.length).toBe(1)
-      expect(model.requests[0]).toEqual({
-        labels: ['fetching'],
-        abort,
-        promise
-      })
+      expect(model.requests[0]).toBe(request)
     })
 
     it('allows to assign multiple labels for the request', () => {
@@ -122,19 +119,19 @@ describe(Base, () => {
   })
 
   describe('rpc(label, endpoint, options)', () => {
-    let promise
+    let request
     let spy
 
     beforeEach(() => {
       model.url = () => '/api'
       spy = jest.spyOn(apiClient(), 'post')
-      promise = model.rpc('searching', 'search', {
+      request = model.rpc('searching', 'search', {
         method: 'GET'
       })
     })
 
-    it('returns a promise', () => {
-      expect(promise).toBeInstanceOf(Promise)
+    it('returns a Request', () => {
+      expect(request).toBeInstanceOf(Request)
     })
 
     it('sends a request using the endpoint suffix', () => {

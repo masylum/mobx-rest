@@ -15,34 +15,32 @@ export default class Base {
     throw new Error('You must implement this method')
   }
 
-  async withRequest (labels: string | Array<string>, promise: Promise<*>, abort?: () => void): Promise<*> {
+  withRequest (labels: string | Array<string>, promise: Promise<*>, abort?: () => void): Request {
     if (typeof labels === 'string') {
       labels = [labels]
     }
 
-    let response
-    let error
     const request = new Request({
       labels,
-      promise,
+      promise: new Promise((resolve, reject) => {
+        promise
+          .then(response => {
+            this.requests.remove(request)
+            return response
+          })
+          .then(resolve)
+          .catch(error => {
+            this.requests.remove(request)
+            throw error
+          })
+          .catch(reject)
+      }),
       abort
     })
 
     this.requests.push(request)
 
-    try {
-      response = await promise
-    } catch (errorResponse) {
-      error = errorResponse
-    }
-
-    this.requests.remove(request)
-
-    if (error) {
-      throw error
-    }
-
-    return response
+    return request
   }
 
   getRequest (label: string): ?Request {
