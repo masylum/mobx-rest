@@ -52,6 +52,17 @@ describe(Collection, () => {
     })
   })
 
+  describe('toArray()', () => {
+    it('returns a shallow defensive copy of the models array', () => {
+      const models = collection.toArray()
+
+      models.pop()
+
+      expect(models.length).toBe(1)
+      expect(collection.models.length).toBe(2)
+    })
+  })
+
   describe('slice()', () => {
     it('returns a shallow defensive copy of the models array', () => {
       const models = collection.slice()

@@ -65,6 +65,13 @@ export default class Collection extends Base {
   }
 
   /**
+   * Alias of slice
+   */
+  toArray(): Array<Model> {
+    return this.slice()
+  }
+
+  /**
    * Returns a defensive shallow array representation
    * of the collection
    */
