@@ -108,10 +108,10 @@ export default class Collection extends Base {
   /**
    * Get a resource with the given id or uuid
    */
-  get (id: Id, { mustGet = false }: GetOptions = {}): ?Model {
+  get (id: Id, { required = false }: GetOptions = {}): ?Model {
     const model = this.models.find(item => item.id === id)
 
-    if (!model && mustGet) {
+    if (!model && required) {
       throw Error(`Invariant: Model must be found with id: ${id}`)
     }
 
@@ -132,14 +132,14 @@ export default class Collection extends Base {
   /**
    * Finds an element with the given matcher
    */
-  find (query: { [key: string]: mixed } | (Model) => boolean, { mustFind = false }: FindOptions = {}): ?Model {
+  find (query: { [key: string]: mixed } | (Model) => boolean, { required = false }: FindOptions = {}): ?Model {
     const model = find(this.models, (model) => {
       return typeof query === 'function'
         ? query(model)
         : isMatch(model.toJS(), query)
     })
 
-    if (!model && mustFind) {
+    if (!model && required) {
       throw Error(`Invariant: Model must be found`)
     }
 

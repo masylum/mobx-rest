@@ -108,20 +108,20 @@ describe(Collection, () => {
     })
   })
 
-  describe('get(id, { mustGet = false })', () => {
+  describe('get(id, { required = false })', () => {
     it('returns the model with the specified id', () => {
       expect(collection.get(2)).toBe(collection.models[1])
     })
 
     describe('if the model is not found', () => {
-      describe('if mustGet', () => {
+      describe('if required', () => {
         it('throws', () => {
-          expect(() => collection.get(3, { mustGet: true }))
+          expect(() => collection.get(3, { required: true }))
             .toThrow('Invariant: Model must be found with id: 3')
         })
       })
 
-      describe('if not mustGet', () => {
+      describe('if not required', () => {
         it('return undefined', () => {
           expect(collection.get(3)).toBeUndefined()
         })
@@ -191,14 +191,14 @@ describe(Collection, () => {
     })
 
     describe('if the model is not found', () => {
-      describe('if mustFind', () => {
+      describe('if required', () => {
         it('throws', () => {
-          expect(() => collection.find({ phone: '9999' }, { mustFind: true }))
+          expect(() => collection.find({ phone: '9999' }, { required: true }))
             .toThrow('Invariant: Model must be found')
         })
       })
 
-      describe('if not mustFind', () => {
+      describe('if not required', () => {
         it('return undefined', () => {
           expect(collection.find({ phone: '9999' })).toBeUndefined()
         })
