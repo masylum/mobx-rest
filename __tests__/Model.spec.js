@@ -287,7 +287,7 @@ describe(Model, () => {
   })
 
   describe('discardChanges()', () => {
-    it('reverts to the last commited attributes', () => {
+    it('reverts to the last committed attributes', () => {
       const model = new Model({ phone: '1234' })
 
       model.set({ phone: '5678' })
@@ -328,7 +328,7 @@ describe(Model, () => {
     })
 
     describe('if attributes is not specified', () => {
-      it('replaces the current attributes with last commited ones', () => {
+      it('replaces the current attributes with last committed ones', () => {
         const model = new Model({ email: 'test@test.com' })
 
         model.set({ name: 'test' })

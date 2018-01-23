@@ -24,7 +24,7 @@ export default class Model extends Base {
   @observable error: ?ErrorObject = null
 
   attributes: ObservableMap
-  commitedAttributes: ObservableMap
+  committedAttributes: ObservableMap
 
   optimisticId: OptimisticId = uniqueId('i_')
   collection: ?Collection = null
@@ -38,7 +38,7 @@ export default class Model extends Base {
     }
 
     this.attributes = observable.shallowMap(mergedAttributes)
-    this.commitedAttributes = observable.shallowMap(mergedAttributes)
+    this.committedAttributes = observable.shallowMap(mergedAttributes)
   }
 
   /**
@@ -141,8 +141,8 @@ export default class Model extends Base {
   getChangedAttributesAgainst (attributes: ObservableMap): Array<string> {
     const changed = []
 
-    this.commitedAttributes.keys().forEach(key => {
-      if (this.commitedAttributes.get(key) !== attributes.get(key)) {
+    this.committedAttributes.keys().forEach(key => {
+      if (this.committedAttributes.get(key) !== attributes.get(key)) {
         changed.push(key)
       }
     })
@@ -190,12 +190,12 @@ export default class Model extends Base {
 
   @action
   commitChanges (): void {
-    this.commitedAttributes.replace(this.attributes)
+    this.committedAttributes.replace(this.attributes)
   }
 
   @action
   discardChanges (): void {
-    this.attributes.replace(this.commitedAttributes)
+    this.attributes.replace(this.committedAttributes)
   }
 
   /**
@@ -206,7 +206,7 @@ export default class Model extends Base {
     this.attributes.replace(
       data
         ? { ...this.constructor.defaultAttributes, ...data }
-        : this.commitedAttributes
+        : this.committedAttributes
     )
   }
 
