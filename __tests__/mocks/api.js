@@ -26,18 +26,8 @@ export default {
     return this._mock()
   },
 
-  post (_path, _attributes, options) {
-    const ret = this._mock()
-
-    // HACK
-    ret.promise
-      .then(() => {
-        options.onProgress(100)
-        options.onProgress.flush()
-      })
-      .catch(() => {})
-
-    return ret
+  post () {
+    return this._mock()
   },
 
   put () {

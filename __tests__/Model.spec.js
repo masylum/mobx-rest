@@ -731,17 +731,19 @@ describe(Model, () => {
       describe('if the request succeds', () => {
         describe('if not optimistic and belongs to a collection', () => {
           it('removes itself from the collection', async () => {
-            model.collection = new Collection()
-            model.collection.models.push(model)
+            const collection = new Collection()
+
+            model.collection = collection
+            collection.models.push(model)
 
             const promise = model.destroy({ optimistic: false })
 
-            expect(model.collection.length).toBe(1)
+            expect(collection.length).toBe(1)
 
             MockApi.resolvePromise({})
             await promise
 
-            expect(model.collection.length).toBe(0)
+            expect(collection.length).toBe(0)
           })
         })
 
@@ -762,19 +764,21 @@ describe(Model, () => {
       describe('if the request fails', () => {
         describe('if optimistic and belongs to a collection', () => {
           it('adds itself to the collection again', async () => {
-            model.collection = new Collection()
-            model.collection.models.push(model)
+            const collection = new Collection()
+
+            model.collection = collection
+            collection.models.push(model)
 
             const promise = model.destroy({ optimistic: true })
 
-            expect(model.collection.length).toBe(0)
+            expect(collection.length).toBe(0)
 
             MockApi.rejectPromise('Conflict')
 
             try {
               await promise
             } catch (_error) {
-              expect(model.collection.length).toBe(1)
+              expect(collection.length).toBe(1)
             }
           })
         })

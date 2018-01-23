@@ -1,315 +1,596 @@
-import { Collection, apiClient } from '../src'
+import Model from '../src/Model'
+import Collection from '../src/Collection'
+import apiClient from '../src/apiClient'
 import MockApi from './mocks/api'
-import ErrorObject from '../src/ErrorObject'
-
-const error = 'boom!'
-const errorObject = new ErrorObject('fetch', error)
 
 apiClient(MockApi)
 
-class MyCollection extends Collection {
-  url () {
-    return '/resources'
-  }
-}
-
-describe('Collection', () => {
+describe(Collection, () => {
   let collection
-  let item
-
-  function resolve (attr) {
-    return () => {
-      apiClient().resolver = resolve => resolve(attr)
-    }
-  }
-
-  function reject () {
-    apiClient().resolver = (_resolve, reject) => reject(error)
-  }
 
   beforeEach(() => {
-    item = { id: 1, name: 'miles' }
-    collection = new MyCollection([item])
-    collection.error = errorObject
+    collection = new Collection([
+      { id: 1, phone: '1234' },
+      { id: 2, phone: '5678' }
+    ])
   })
 
-  describe('length getter', () => {
-    it('alias for models.length', () => {
-      expect(collection.length).toBe(1)
-      collection.remove([1])
-      expect(collection.length).toBe(0)
+  describe('length', () => {
+    it('returns the number of models', () => {
+      expect(collection.length).toBe(2)
     })
   })
 
-  describe('at', () => {
-    it('finds a model at a given position', () => {
-      expect(collection.at(0).get('name')).toBe(item.name)
+  describe('url()', () => {
+    it('throws', () => {
+      expect(() => collection.url()).toThrow('You must implement this method')
     })
   })
 
-  describe('get', () => {
-    it('finds a model with the given id', () => {
-      expect(collection.at(0).get('name')).toBe(item.name)
+  describe('toJS()', () => {
+    it('returns a plain representation of the models array', () => {
+      expect(collection.toJS()).toEqual([
+        { id: 1, phone: '1234' },
+        { id: 2, phone: '5678' }
+      ])
     })
   })
 
-  describe('filter', () => {
-    it('filters a collection with the given conditions', () => {
-      expect(collection.filter({ name: 'miles' })[0].get('name')).toBe(
-        item.name
-      )
-      expect(collection.filter({ name: 'bob' }).length).toBe(0)
+  describe('map(callback)', () => {
+    it('aliases `models.map`', () => {
+      expect(collection.map(model => model.id)).toEqual([1, 2])
     })
   })
 
-  describe('find', () => {
-    it('filters a collection with the given conditions', () => {
-      expect(collection.find({ name: 'miles' }).get('name')).toBe(item.name)
-      expect(collection.find({ name: 'bob' })).toBeUndefined()
+  describe('forEach(callback)', () => {
+    it('aliases `models.forEach`', () => {
+      const ids = []
+      const response = collection.forEach(model => ids.push(model.id))
+
+      expect(response).not.toBeDefined()
+      expect(ids).toEqual([1, 2])
+    })
+  })
+
+  describe('slice()', () => {
+    it('returns a shallow defensive copy of the models array', () => {
+      const models = collection.slice()
+
+      models.pop()
+
+      expect(models.length).toBe(1)
+      expect(collection.models.length).toBe(2)
+    })
+  })
+
+  describe('peek()', () => {
+    it('returns a performant shallow copy of the models array', () => {
+      const models = collection.peek()
+
+      models.pop()
+
+      expect(models.length).toBe(1)
+      expect(collection.models.length).toBe(1)
+    })
+  })
+
+  describe('model()', () => {
+    it('returns the default model class', () => {
+      expect(collection.model()).toBe(Model)
     })
   })
 
   describe('isEmpty', () => {
-    it('returns false if there is an element', () => {
-      expect(collection.isEmpty()).toBe(false)
+    it('returns true if the models collection is empty', () => {
+      collection.reset([])
+      expect(collection.isEmpty).toBe(true)
     })
 
-    it('returns true otherwise', () => {
-      collection.remove([1])
-      expect(collection.isEmpty()).toBe(true)
-    })
-  })
-
-  describe('add', () => {
-    it('adds a collection of models', () => {
-      const newItem = { id: 2, name: 'bob' }
-      collection.add([newItem])
-
-      expect(collection.models.length).toBe(2)
-      expect(collection.get(2).get('name')).toBe(newItem.name)
+    it('returns false if the models collection is not empty', () => {
+      expect(collection.isEmpty).toBe(false)
     })
   })
 
-  describe('reset', () => {
-    it('reset a collection of models', () => {
-      const newItem = { id: 2, name: 'bob' }
-      collection.reset([newItem])
-
-      expect(collection.models.length).toBe(1)
-      expect(collection.get(2).get('name')).toBe(newItem.name)
+  describe('at(index)', () => {
+    it('returns the model at the specified index', () => {
+      expect(collection.at(1)).toBe(collection.models[1])
     })
   })
 
-  describe('remove', () => {
-    it('removes a collection of models', () => {
-      collection.remove([1])
-
-      expect(collection.models.length).toBe(0)
+  describe('get(id, { mustGet = false })', () => {
+    it('returns the model with the specified id', () => {
+      expect(collection.get(2)).toBe(collection.models[1])
     })
-  })
 
-  describe('create', () => {
-    const newItem = { name: 'bob' }
-
-    describe('if its optimistic (default)', () => {
-      it('it adds the model straight away', () => {
-        collection.create(newItem)
-        expect(collection.models.length).toBe(2)
-        expect(collection.at(1).get('name')).toBe('bob')
-        expect(collection.isRequest('creating')).toBe(true)
+    describe('if the model is not found', () => {
+      describe('if mustGet', () => {
+        it('throws', () => {
+          expect(() => collection.get(3, { mustGet: true }))
+            .toThrow('Invariant: Model must be found with id: 3')
+        })
       })
 
-      describe('when it fails', () => {
-        beforeEach(reject)
-
-        it('passes the error', () => {
-          expect.assertions(1)
-
-          return collection.create(newItem).catch(response => {
-            expect(response).toBe(error)
-          })
+      describe('if not mustGet', () => {
+        it('return undefined', () => {
+          expect(collection.get(3)).toBeUndefined()
         })
+      })
+    })
+  })
 
-        it('removes the model', async () => {
+  describe('filter(query)', () => {
+    beforeEach(() => {
+      collection.reset([
+        { id: 1, phone: '1234', email: 'test1@test.com' },
+        { id: 2, phone: '1234', email: 'test2@test.com' },
+        { id: 3, phone: '5678', email: 'test2@test.com' },
+        { id: 4, phone: '1234', email: 'test1@test.com' }
+      ])
+    })
+
+    describe('if query is an object', () => {
+      it('returns the models that matches that attributes', () => {
+        expect(collection.filter({
+          phone: '1234',
+          email: 'test1@test.com'
+        })).toEqual([
+          collection.at(0),
+          collection.at(3)
+        ])
+      })
+    })
+
+    describe('if query is a function', () => {
+      it('returns the models that returns true on the callback', () => {
+        expect(collection.filter(model =>
+          model.get('email') === 'test2@test.com'
+        )).toEqual([
+          collection.at(1),
+          collection.at(2)
+        ])
+      })
+    })
+  })
+
+  describe('find(query)', () => {
+    beforeEach(() => {
+      collection.reset([
+        { id: 1, phone: '1234', email: 'test1@test.com' },
+        { id: 2, phone: '1234', email: 'test2@test.com' },
+        { id: 3, phone: '5678', email: 'test2@test.com' },
+        { id: 4, phone: '1234', email: 'test1@test.com' }
+      ])
+    })
+
+    describe('if query is an object', () => {
+      it('returns the first model that matches that attributes', () => {
+        expect(collection.find({
+          phone: '1234',
+          email: 'test1@test.com'
+        })).toEqual(collection.at(0))
+      })
+    })
+
+    describe('if query is a function', () => {
+      it('returns the first model that returns true on the callback', () => {
+        expect(collection.find(model =>
+          model.get('email') === 'test2@test.com'
+        )).toEqual(collection.at(1))
+      })
+    })
+
+    describe('if the model is not found', () => {
+      describe('if mustFind', () => {
+        it('throws', () => {
+          expect(() => collection.find({ phone: '9999' }, { mustFind: true }))
+            .toThrow('Invariant: Model must be found')
+        })
+      })
+
+      describe('if not mustFind', () => {
+        it('return undefined', () => {
+          expect(collection.find({ phone: '9999' })).toBeUndefined()
+        })
+      })
+    })
+  })
+
+  describe('add(model)', () => {
+    beforeEach(() => {
+      collection.reset([])
+    })
+
+    it('adds the model to the collection', () => {
+      const model = new Model()
+
+      collection.add(model)
+
+      expect(collection.at(0)).toBe(model)
+    })
+
+    describe('if the model is not an instance of the collection model class', () => {
+      it('throws', () => {
+        class MyModel1 extends Model {}
+        class MyModel2 extends Model {}
+        const model = new MyModel1()
+
+        collection.model = () => MyModel2
+
+        expect(() => collection.add(model)).toThrow('The model must be an instance of MyModel2')
+      })
+    })
+
+    describe('if the model is a plain object', () => {
+      it('creates a new instance of the collection model class', () => {
+        const attributes = { phone: '1234' }
+
+        collection.add(attributes)
+
+        expect(collection.at(0)).toBeInstanceOf(Model)
+        expect(collection.at(0).toJS()).toEqual(attributes)
+      })
+    })
+
+    describe('if model is an array', () => {
+      it('adds every model to the collection', () => {
+        const models = [
+          new Model(),
+          new Model()
+        ]
+
+        collection.add(models)
+
+        expect(collection.at(0)).toBe(models[0])
+        expect(collection.at(1)).toBe(models[1])
+      })
+    })
+  })
+
+  describe('reset(data)', () => {
+    it('replaces the collection models', () => {
+      collection.add({})
+      collection.reset([{}, {}, {}])
+
+      expect(collection.length).toBe(3)
+
+      collection.forEach(model =>
+        expect(model).toBeInstanceOf(Model)
+      )
+    })
+  })
+
+  describe('remove(data)', () => {
+    it('removes the specified id from the collection', () => {
+      collection.reset([
+        { id: 1 },
+        { id: 2 }
+      ])
+      collection.remove(1)
+
+      expect(collection.length).toBe(1)
+      expect(collection.at(0).id).toBe(2)
+    })
+
+    it('removes the collection reference from the removed models', () => {
+      const model = new Model({ id: 1 })
+
+      collection.reset([model])
+
+      expect(model.collection).toBe(collection)
+      collection.remove(1)
+      expect(model.collection).toBeUndefined()
+    })
+
+    describe('if the id is not registered', () => {
+      it('don\'t throws', () => {
+        collection.reset([{ id: 1 }])
+
+        expect(() => collection.remove(2)).not.toThrow()
+        expect(collection.length).toBe(1)
+      })
+    })
+
+    describe('if data is an array', () => {
+      it('removes all the specified ids', () => {
+        collection.reset([
+          { id: 1 },
+          { id: 2 },
+          { id: 3 }
+        ])
+        collection.remove([1, 2])
+
+        expect(collection.length).toBe(1)
+        expect(collection.at(0).id).toBe(3)
+      })
+    })
+
+    describe('if data is a model assigned to this collection', () => {
+      it('removes the model from the collection', () => {
+        collection.reset([
+          { id: 1 },
+          { id: 2 }
+        ])
+
+        const model = collection.get(1)
+
+        collection.remove(model)
+
+        expect(collection.length).toBe(1)
+        expect(collection.at(0).id).toBe(2)
+        expect(model.collection).toBeUndefined()
+      })
+    })
+  })
+
+  describe('set(data, { add = true, change = true, remove = true })', () => {
+    describe('if data has new models', () => {
+      describe('if add = true', () => {
+        it('adds the new models', () => {
+          collection.reset([{ id: 1 }])
+          collection.set(
+            [{ id: 2 }, { id: 3 }],
+            { add: true, change: false, remove: false }
+          )
+
+          expect(collection.toJS()).toEqual([
+            { id: 1 }, { id: 2 }, { id: 3 }
+          ])
+        })
+      })
+
+      describe('if add = false', () => {
+        it('ignores the new models', () => {
+          collection.reset([{ id: 1 }])
+          collection.set(
+            [{ id: 2 }, { id: 3 }],
+            { add: false, change: false, remove: false }
+          )
+
+          expect(collection.toJS()).toEqual([
+            { id: 1 }
+          ])
+        })
+      })
+    })
+
+    describe('if data has existing models', () => {
+      describe('if change = true', () => {
+        it('updates the existing models', () => {
+          collection.reset([
+            { id: 1, phone: '1234' },
+            { id: 2, phone: '5678' }
+          ])
+          collection.set(
+            [{ id: 1, phone: '8888' }, { id: 2, phone: '9999' }],
+            { add: false, change: true, remove: false }
+          )
+
+          expect(collection.toJS()).toEqual([
+            { id: 1, phone: '8888' },
+            { id: 2, phone: '9999' }
+          ])
+        })
+      })
+
+      describe('if change = false', () => {
+        it('ignores the existing models', () => {
+          collection.reset([
+            { id: 1, phone: '1234' },
+            { id: 2, phone: '5678' }
+          ])
+          collection.set(
+            [{ id: 1, phone: '8888' }, { id: 2, phone: '9999' }],
+            { add: false, change: false, remove: false }
+          )
+
+          expect(collection.toJS()).toEqual([
+            { id: 1, phone: '1234' },
+            { id: 2, phone: '5678' }
+          ])
+        })
+      })
+    })
+
+    describe('if data has missing models', () => {
+      describe('if remove = true', () => {
+        it('removes the missing models', () => {
+          collection.reset([{ id: 1 }, { id: 2 }])
+          collection.set(
+            [{ id: 2 }],
+            { add: false, change: false, remove: true }
+          )
+
+          expect(collection.toJS()).toEqual([
+            { id: 2 }
+          ])
+        })
+      })
+
+      describe('if remove = false', () => {
+        it('ignores the missing models', () => {
+          collection.reset([{ id: 1 }, { id: 2 }])
+          collection.set(
+            [{ id: 2 }],
+            { add: false, change: false, remove: false }
+          )
+
+          expect(collection.toJS()).toEqual([
+            { id: 1 }, { id: 2 }
+          ])
+        })
+      })
+    })
+  })
+
+  describe('build(data)', () => {
+    it('returns an instance of the collection model', () => {
+      class MyModel extends Model {}
+
+      collection.model = () => MyModel
+
+      const model = collection.build({ phone: '1234' })
+
+      expect(model).toBeInstanceOf(MyModel)
+      expect(model.toJS()).toEqual({ phone: '1234' })
+    })
+
+    describe('if the data is already an instance of the model', () => {
+      it('returns the same instance', () => {
+        const model = new Model()
+
+        expect(collection.build(model)).toBe(model)
+      })
+
+      it('assigns the collection to the model', () => {
+        const model = new Model()
+
+        collection.build(model)
+
+        expect(model.collection).toBe(collection)
+      })
+    })
+
+    describe('if the data is a different model instance', () => {
+      it('throws', () => {
+        class MyModel1 extends Model {}
+        class MyModel2 extends Model {}
+        const model = new MyModel1()
+
+        collection.model = () => MyModel2
+
+        expect(() => collection.add(model)).toThrow('The model must be an instance of MyModel2')
+      })
+    })
+
+    describe('if attributes is not defined', () => {
+      it('builds a models with the default attributes', () => {
+        const model = collection.build()
+
+        expect(model.toJS()).toEqual({})
+      })
+    })
+  })
+
+  describe('create(attributes, { optimistic = true })', () => {
+    beforeEach(() => {
+      collection.url = () => '/resources'
+      collection.reset([])
+      jest.spyOn(apiClient(), 'post')
+    })
+
+    afterEach(() => {
+      apiClient().post.mockRestore()
+    })
+
+    it('builds a model and saves it', async () => {
+      const attributes = { phone: '1234' }
+      const promise = collection.create(attributes)
+
+      MockApi.resolvePromise({ id: 1, phone: '1234' })
+      await promise
+
+      expect(collection.length).toBe(1)
+      expect(collection.at(0).toJS()).toEqual({ id: 1, phone: '1234' })
+    })
+
+    describe('if optimistic', () => {
+      it('immediately adds the new model to the collection', () => {
+        const attributes = { phone: '1234' }
+
+        collection.create(attributes, { optimistic: true })
+
+        expect(collection.length).toBe(1)
+        expect(collection.at(0).toJS()).toEqual({ phone: '1234' })
+      })
+    })
+
+    describe('if the request succeeds', () => {
+      describe('if not optimistic', () => {
+        it('adds the new model to the collection', async () => {
+          const promise = collection.create({}, { optimistic: false })
+
+          expect(collection.length).toBe(0)
+          MockApi.resolvePromise({})
+          await promise
+          expect(collection.length).toBe(1)
+        })
+      })
+    })
+
+    describe('if the request fails', () => {
+      describe('if optimistic', () => {
+        it('removes the model from the collection', async () => {
+          const promise = collection.create({}, { optimistic: true })
+
+          expect(collection.length).toBe(1)
+          MockApi.rejectPromise('Conflict')
+
           try {
-            await collection.create(newItem)
+            await promise
           } catch (_error) {
-            expect(collection.models.length).toBe(1)
+            expect(collection.length).toBe(0)
           }
         })
       })
 
-      describe('when it succeeds', () => {
-        beforeEach(() => {
-          resolve({ id: 2, name: 'dylan' })()
-        })
+      it('throws the request response', async () => {
+        const promise = collection.create({}, { optimistic: false })
 
-        it('updates the data from the server', async () => {
-          await collection.create(newItem)
-          expect(collection.models.length).toBe(2)
-          expect(collection.at(1).get('name')).toBe('dylan')
-        })
+        MockApi.rejectPromise('Conflict')
 
-        it('removes the request', async () => {
-          await collection.create(newItem)
-          expect(collection.models.length).toBe(2)
-          expect(collection.at(1).isRequest('creating')).toBe(false)
-        })
-      })
-    })
-
-    describe('if its pessimistic', () => {
-      describe('when it fails', () => {
-        beforeEach(reject)
-
-        it('passes the error', () => {
-          expect.assertions(1)
-
-          return collection.create(newItem, { optimistic: false }).catch(response => {
-            expect(response).toBe(error)
-          })
-        })
-      })
-
-      describe('when it succeeds', () => {
-        beforeEach(() => {
-          resolve({ id: 2, name: 'dylan' })()
-        })
-
-        it('adds data from the server', async () => {
-          try {
-            await collection.create(newItem, { optimistic: false })
-          } catch (_error) {
-            expect(collection.models.length).toBe(2)
-            expect(collection.at(1).get('name')).toBe('dylan')
-          }
-        })
+        try {
+          await promise
+        } catch (error) {
+          expect(error).toBe('Conflict')
+        }
       })
     })
   })
 
-  describe('fetch', () => {
-    it('sets the request', () => {
-      collection.fetch()
+  describe('fetch(options)', () => {
+    let spy
+    let promise
+    let options
+
+    beforeEach(() => {
+      collection.url = () => '/resources'
+      spy = jest.spyOn(apiClient(), 'get')
+      options = {
+        data: {
+          full: true
+        }
+      }
+      promise = collection.fetch(options)
+    })
+
+    afterEach(() => {
+      apiClient().get.mockRestore()
+    })
+
+    it('makes a get request to the model url', () => {
+      expect(spy).toHaveBeenCalled()
+    })
+
+    it('passes the options to the api client', () => {
+      expect(spy.mock.calls[0][1]).toBe(options)
+    })
+
+    it('tracks the request with the "fetching" label', () => {
       expect(collection.isRequest('fetching')).toBe(true)
     })
 
-    describe('when it fails', () => {
-      beforeEach(reject)
-
-      it('passes the error', () => {
-        expect.assertions(1)
-
-        return collection.fetch().catch(response => {
-          expect(response).toBe(error)
-        })
-      })
+    it('works without passing options', () => {
+      expect(() => collection.fetch()).not.toThrow()
     })
 
-    describe('when it succeeds', () => {
-      beforeEach(() => {
-        collection.error = errorObject
-        resolve([item, { id: 2, name: 'bob' }])()
-      })
+    describe('if the request succeeds', () => {
+      it('sets the response data passing the same options', async () => {
+        const response = []
 
-      it('sets the data', async () => {
-        await collection.fetch()
-        expect(collection.models.length).toBe(2)
-        expect(collection.at(1).get('name')).toBe('bob')
-      })
-    })
-  })
-
-  describe('set', () => {
-    describe('by default', () => {
-      it('adds missing models', () => {
-        const newItem = { id: 2, name: 'bob' }
-        collection.set([item, newItem])
-
-        expect(collection.models.length).toBe(2)
-        expect(collection.get(2).get('name')).toBe(newItem.name)
-      })
-
-      it('updates existing models', () => {
-        const updatedItem = { id: 1, name: 'coltrane' }
-        const newItem = { id: 2, name: 'bob' }
-        collection.set([updatedItem, newItem])
-
-        expect(collection.models.length).toBe(2)
-        expect(collection.get(1).get('name')).toBe(updatedItem.name)
-        expect(collection.get(2).get('name')).toBe(newItem.name)
-      })
-
-      it('removes non-existing models', () => {
-        const newItem = { id: 2, name: 'bob' }
-        collection.set([newItem])
-
-        expect(collection.models.length).toBe(1)
-        expect(collection.get(2).get('name')).toBe(newItem.name)
-      })
-    })
-
-    describe('if `add` setting is off', () => {
-      it('does not add missing models', () => {
-        const newItem = { id: 2, name: 'bob' }
-        collection.set([item, newItem], { add: false })
-
-        expect(collection.models.length).toBe(1)
-      })
-    })
-
-    describe('if `change` setting is off', () => {
-      it('does not update existing models', () => {
-        const updatedItem = { id: 1, name: 'coltrane' }
-        const newItem = { id: 2, name: 'bob' }
-        collection.set([updatedItem, newItem], { change: false })
-
-        expect(collection.models.length).toBe(2)
-        expect(collection.get(1).get('name')).toBe(item.name)
-        expect(collection.get(2).get('name')).toBe(newItem.name)
-      })
-    })
-
-    describe('if `remove` setting is off', () => {
-      it('does not remove any models', () => {
-        const newItem = { id: 2, name: 'bob' }
-        collection.set([newItem], { remove: false })
-
-        expect(collection.models.length).toBe(2)
-        expect(collection.get(2).get('name')).toBe(newItem.name)
-      })
-    })
-
-    describe('rpc', () => {
-      it('sets the request', () => {
-        collection.rpc('fooing', 'foo')
-        expect(collection.isRequest('fooing')).toBe(true)
-      })
-
-      describe('when it fails', () => {
-        beforeEach(reject)
-
-        it('passes the error', () => {
-          expect.assertions(1)
-
-          return collection.rpc('fooing', 'foo').catch(response => {
-            expect(response).toBe(error)
-          })
-        })
-      })
-
-      describe('when it succeeds', () => {
-        const mockResponse = [item, { id: 2, name: 'bob' }]
-
-        beforeEach(() => {
-          collection.error = errorObject
-          resolve(mockResponse)()
-        })
-
-        it('return the data', async () => {
-          const data = await collection.rpc('fooing', 'foo')
-          expect(data).toBe(mockResponse)
-        })
+        jest.spyOn(collection, 'set')
+        MockApi.resolvePromise(response)
+        await promise
+        expect(collection.set).toHaveBeenCalledWith(response, options)
       })
     })
   })

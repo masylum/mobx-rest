@@ -295,8 +295,10 @@ export default class Model extends Base {
    */
   @action
   destroy ({ optimistic = true }: DestroyOptions = {}): Promise<*> {
-    if (this.isNew && this.collection) {
-      this.collection.remove([this.id])
+    const collection = this.collection
+
+    if (this.isNew && collection) {
+      collection.remove([this.id])
       return Promise.resolve()
     }
 
@@ -306,20 +308,20 @@ export default class Model extends Base {
 
     const { promise, abort } = apiClient().del(this.url())
 
-    if (optimistic && this.collection) {
-      this.collection.remove([this.id])
+    if (optimistic && collection) {
+      collection.remove([this.id])
     }
 
     return this.withRequest('destroying', promise, abort)
       .then(data => {
-        if (!optimistic && this.collection) {
-          this.collection.remove([this.id])
+        if (!optimistic && collection) {
+          collection.remove([this.id])
         }
         return data
       })
       .catch(error => {
-        if (optimistic && this.collection) {
-          this.collection.add([this.toJS()])
+        if (optimistic && collection) {
+          collection.add([this.toJS()])
         }
         throw error
       })

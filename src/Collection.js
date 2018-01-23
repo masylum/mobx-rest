@@ -2,7 +2,8 @@
 import { observable, action, computed, IObservableArray, toJS } from 'mobx'
 import Model from './Model'
 import {
-  isEmpty,
+  isFunction,
+  isArray,
   filter,
   isMatch,
   find,
@@ -29,8 +30,23 @@ export default class Collection<T: Model> extends Base {
   /**
    * Alias for models.length
    */
-  @computed get length (): Number {
+  @computed
+  get length (): Number {
     return this.models.length
+  }
+
+  /**
+   * Alias for models.map
+   */
+  map (callback): Array<*> {
+    return this.models.map(callback)
+  }
+
+  /**
+   * Alias for models.forEach
+   */
+  forEach (callback): Array<*> {
+    return this.models.forEach(callback)
   }
 
   /**
@@ -54,22 +70,31 @@ export default class Collection<T: Model> extends Base {
    * of the collection
    */
   toJS () {
-    return toJS(this.models)
+    return this.models.map(model => model.toJS())
+  }
+
+  /**
+   * Returns a defensive shallow array representation
+   * of the collection
+   */
+  slice () {
+    return this.models.slice()
   }
 
   /**
    * Returns a shallow array representation
    * of the collection
    */
-  toArray () {
-    return this.models.slice()
+  peek () {
+    return this.models.peek()
   }
 
   /**
    * Wether the collection is empty
    */
-  isEmpty (): boolean {
-    return isEmpty(this.models)
+  @computed
+  get isEmpty (): boolean {
+    return this.length === 0
   }
 
   /**
@@ -89,17 +114,12 @@ export default class Collection<T: Model> extends Base {
   /**
    * Get a resource with the given id or uuid
    */
-  get (id: Id): ?T {
-    return this.models.find(item => item.id === id)
-  }
+  get (id: Id, { mustGet = false } = {}): ?T {
+    const model = this.models.find(item => item.id === id)
 
-  /**
-   * The whinny version of the `get` method
-   */
-  mustGet (id: Id): T {
-    const model = this.get(id)
-
-    if (!model) throw Error(`Invariant: Model must be found with id: ${id}`)
+    if (!model && mustGet) {
+      throw Error(`Invariant: Model must be found with id: ${id}`)
+    }
 
     return model
   }
@@ -107,55 +127,49 @@ export default class Collection<T: Model> extends Base {
   /**
    * Get resources matching criteria
    */
-  filter (query: { [key: string]: any } = {}): Array<T> {
-    return filter(this.models, ({ attributes }) => {
-      return isMatch(attributes.toJS(), query)
+  filter (query: { [key: string]: any }): Array<T> {
+    return filter(this.models, (model) => {
+      return isFunction(query)
+        ? query(model)
+        : isMatch(model.toJS(), query)
     })
   }
 
   /**
    * Finds an element with the given matcher
    */
-  find (query: { [key: string]: mixed }): ?T {
-    return find(this.models, ({ attributes }) => {
-      return isMatch(attributes.toJS(), query)
+  find (query: { [key: string]: mixed }, { mustFind = false } = {}): ?T {
+    const model = find(this.models, (model) => {
+      return isFunction(query)
+        ? query(model)
+        : isMatch(model.toJS(), query)
     })
-  }
 
-  /**
-   * The whinny version of `find`
-   */
-  mustFind (query: { [key: string]: mixed }): T {
-    const model = this.find(query)
-
-    if (!model) {
-      const conditions = JSON.stringify(query)
-      throw Error(`Invariant: Model must be found with: ${conditions}`)
+    if (!model && mustFind) {
+      throw Error(`Invariant: Model must be found`)
     }
 
     return model
   }
 
   /**
-   * Adds a collection of models.
-   * Returns the added models.
+   * Adds a model or collection of models.
    */
   @action
   add (data: Array<{ [key: string]: any }>): Array<T> {
-    const models = data.map(d => this.build(d))
-    this.models.push(...models)
-    return models
+    if (!isArray(data)) {
+      data = [data]
+    }
+
+    this.models.push(...data.map(this.build))
   }
 
   /**
-   * Resets a collection of models.
-   * Returns the added models.
+   * Resets the collection of models.
    */
   @action
   reset (data: Array<{ [key: string]: any }>): Array<T> {
-    const models = data.map(d => this.build(d))
-    this.models = models
-    return models
+    this.models.replace(data.map(this.build))
   }
 
   /**
@@ -163,11 +177,23 @@ export default class Collection<T: Model> extends Base {
    */
   @action
   remove (ids: Array<Id>): void {
+    if (!isArray(ids)) {
+      ids = [ids]
+    }
+
     ids.forEach(id => {
-      const model = this.get(id)
+      let model
+
+      if (id instanceof Model && id.collection === this) {
+        model = id
+      } else {
+        model = this.get(id)
+      }
+
       if (!model) return
 
       this.models.splice(this.models.indexOf(model), 1)
+      model.collection = undefined
     })
   }
 
@@ -198,8 +224,18 @@ export default class Collection<T: Model> extends Base {
   /**
    * Creates a new model instance with the given attributes
    */
-  build (attributes: { [key: string]: any } = {}): T {
+  build = (attributes: { [key: string]: any } = {}): T => {
     const ModelClass = this.model()
+
+    if (attributes instanceof ModelClass) {
+      attributes.collection = this
+      return attributes
+    }
+
+    if (attributes instanceof Model) {
+      throw new Error(`The model must be an instance of ${ModelClass.name}`)
+    }
+
     const model = new ModelClass(attributes)
     model.collection = this
 
@@ -217,32 +253,23 @@ export default class Collection<T: Model> extends Base {
     attributesOrModel: { [key: string]: any } | Model,
     { optimistic = true }: CreateOptions = {}
   ): Promise<*> {
-    let model
-    let attributes = attributesOrModel instanceof Model
-      ? attributesOrModel.toJS()
-      : attributesOrModel
-
-    const { abort, promise } = apiClient().post(this.url(), { data: attributes })
+    const model = this.build(attributesOrModel)
+    const promise = model.save()
 
     if (optimistic) {
-      model = attributesOrModel instanceof Model
-        ? attributesOrModel
-        : last(this.add([attributesOrModel]))
+      this.add(model)
     }
 
-    return this.withRequest('creating', promise, abort)
-      .then(data => {
-        if (model) {
-          model.set(data)
-        } else {
-          this.add([data])
+    return this.withRequest('creating', promise)
+      .then(response => {
+        if (!optimistic) {
+          this.add(model)
         }
-
-        return data
+        return response
       })
       .catch(error => {
-        if (model) {
-          this.remove([model.id])
+        if (optimistic) {
+          this.remove(model)
         }
         throw error
       })
