@@ -15,8 +15,7 @@ import type {
   OptimisticId,
   Id,
   DestroyOptions,
-  SaveOptions,
-  CreateOptions
+  SaveOptions
 } from './types'
 
 export default class Model extends Base {
@@ -28,7 +27,7 @@ export default class Model extends Base {
   commitedAttributes: ObservableMap
 
   optimisticId: OptimisticId = uniqueId('i_')
-  collection: ?Collection<*> = null
+  collection: ?Collection = null
 
   constructor (attributes: { [key: string]: any } = {}) {
     super()
@@ -139,7 +138,7 @@ export default class Model extends Base {
       : this.optimisticId
   }
 
-  getChangedAttributesAgainst(attributes): Array<string> {
+  getChangedAttributesAgainst (attributes: ObservableMap): Array<string> {
     const changed = []
 
     this.commitedAttributes.keys().forEach(key => {
@@ -151,7 +150,7 @@ export default class Model extends Base {
     return changed
   }
 
-  getChangesAgainst(attributes): { [string]: mixed } {
+  getChangesAgainst (attributes: ObservableMap): { [string]: mixed } {
     const changes = {}
 
     this.getChangedAttributesAgainst(attributes).forEach(key => {
@@ -195,7 +194,7 @@ export default class Model extends Base {
   }
 
   @action
-  discardChanges(): void {
+  discardChanges (): void {
     this.attributes.replace(this.commitedAttributes)
   }
 
@@ -251,7 +250,7 @@ export default class Model extends Base {
    */
   @action
   save (
-    attributes: {},
+    attributes: {} = {},
     { optimistic = true, patch = false }: SaveOptions = {}
   ): Promise<*> {
     const currentAttributes = this.toJS()
@@ -298,7 +297,7 @@ export default class Model extends Base {
     const collection = this.collection
 
     if (this.isNew && collection) {
-      collection.remove([this.id])
+      collection.remove(this)
       return Promise.resolve()
     }
 
@@ -309,19 +308,19 @@ export default class Model extends Base {
     const { promise, abort } = apiClient().del(this.url())
 
     if (optimistic && collection) {
-      collection.remove([this.id])
+      collection.remove(this)
     }
 
     return this.withRequest('destroying', promise, abort)
       .then(data => {
         if (!optimistic && collection) {
-          collection.remove([this.id])
+          collection.remove(this)
         }
         return data
       })
       .catch(error => {
         if (optimistic && collection) {
-          collection.add([this.toJS()])
+          collection.add(this)
         }
         throw error
       })

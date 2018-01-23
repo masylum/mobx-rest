@@ -29,8 +29,17 @@ export type SetOptions = {
   data?: {}
 }
 
+export type GetOptions = {
+  mustGet?: boolean,
+}
+
+export type FindOptions = {
+  mustFind?: boolean,
+}
+
 export type Adapter = {
   get(path: string, options?: {}): Response,
+  patch(path: string, options?: {}): Response,
   post(path: string, options?: {}): Response,
   put(path: string, options?: {}): Response,
   del(path: string, options?: {}): Response

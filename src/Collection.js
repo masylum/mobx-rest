@@ -1,26 +1,17 @@
 // @flow
-import { observable, action, computed, IObservableArray, toJS } from 'mobx'
+import { observable, action, computed, IObservableArray } from 'mobx'
 import Model from './Model'
-import {
-  isFunction,
-  isArray,
-  filter,
-  isMatch,
-  find,
-  difference,
-  map,
-  last
-} from 'lodash'
+import { filter, isMatch, find, difference, map } from 'lodash'
 import ErrorObject from './ErrorObject'
 import Request from './Request'
 import apiClient from './apiClient'
 import Base from './Base'
-import type { CreateOptions, SetOptions, Id } from './types'
+import type { CreateOptions, SetOptions, GetOptions, FindOptions, Id } from './types'
 
-export default class Collection<T: Model> extends Base {
+export default class Collection extends Base {
   @observable request: ?Request = null
   @observable error: ?ErrorObject = null
-  @observable models: IObservableArray<T> = []
+  @observable models: IObservableArray<Model> = []
 
   constructor (data: Array<{ [key: string]: any }> = []) {
     super()
@@ -38,14 +29,14 @@ export default class Collection<T: Model> extends Base {
   /**
    * Alias for models.map
    */
-  map (callback): Array<*> {
+  map (callback: (model: Model) => mixed): Array<*> {
     return this.models.map(callback)
   }
 
   /**
    * Alias for models.forEach
    */
-  forEach (callback): Array<*> {
+  forEach (callback: (model: Model) => void): void {
     return this.models.forEach(callback)
   }
 
@@ -69,7 +60,7 @@ export default class Collection<T: Model> extends Base {
    * Returns a JSON representation
    * of the collection
    */
-  toJS () {
+  toJS (): Array<{ [string]: mixed }> {
     return this.models.map(model => model.toJS())
   }
 
@@ -77,7 +68,7 @@ export default class Collection<T: Model> extends Base {
    * Returns a defensive shallow array representation
    * of the collection
    */
-  slice () {
+  slice (): Array<Model> {
     return this.models.slice()
   }
 
@@ -85,7 +76,7 @@ export default class Collection<T: Model> extends Base {
    * Returns a shallow array representation
    * of the collection
    */
-  peek () {
+  peek (): Array<Model> {
     return this.models.peek()
   }
 
@@ -107,14 +98,14 @@ export default class Collection<T: Model> extends Base {
   /**
    * Get a resource at a given position
    */
-  at (index: number): ?T {
+  at (index: number): ?Model {
     return this.models[index]
   }
 
   /**
    * Get a resource with the given id or uuid
    */
-  get (id: Id, { mustGet = false } = {}): ?T {
+  get (id: Id, { mustGet = false }: GetOptions = {}): ?Model {
     const model = this.models.find(item => item.id === id)
 
     if (!model && mustGet) {
@@ -127,9 +118,9 @@ export default class Collection<T: Model> extends Base {
   /**
    * Get resources matching criteria
    */
-  filter (query: { [key: string]: any }): Array<T> {
+  filter (query: { [key: string]: any } | (Model) => boolean): Array<Model> {
     return filter(this.models, (model) => {
-      return isFunction(query)
+      return typeof query === 'function'
         ? query(model)
         : isMatch(model.toJS(), query)
     })
@@ -138,9 +129,9 @@ export default class Collection<T: Model> extends Base {
   /**
    * Finds an element with the given matcher
    */
-  find (query: { [key: string]: mixed }, { mustFind = false } = {}): ?T {
+  find (query: { [key: string]: mixed } | (Model) => boolean, { mustFind = false }: FindOptions = {}): ?Model {
     const model = find(this.models, (model) => {
-      return isFunction(query)
+      return typeof query === 'function'
         ? query(model)
         : isMatch(model.toJS(), query)
     })
@@ -156,8 +147,8 @@ export default class Collection<T: Model> extends Base {
    * Adds a model or collection of models.
    */
   @action
-  add (data: Array<{ [key: string]: any }>): Array<T> {
-    if (!isArray(data)) {
+  add (data: Array<{ [key: string]: any } | Model> | { [key: string]: any } | Model): void {
+    if (!Array.isArray(data)) {
       data = [data]
     }
 
@@ -168,7 +159,7 @@ export default class Collection<T: Model> extends Base {
    * Resets the collection of models.
    */
   @action
-  reset (data: Array<{ [key: string]: any }>): Array<T> {
+  reset (data: Array<{ [key: string]: any } | Model>): void {
     this.models.replace(data.map(this.build))
   }
 
@@ -176,8 +167,8 @@ export default class Collection<T: Model> extends Base {
    * Removes the model with the given ids or uuids
    */
   @action
-  remove (ids: Array<Id>): void {
-    if (!isArray(ids)) {
+  remove (ids: Id | Model | Array<Id | Model>): void {
+    if (!Array.isArray(ids)) {
       ids = [ids]
     }
 
@@ -186,13 +177,18 @@ export default class Collection<T: Model> extends Base {
 
       if (id instanceof Model && id.collection === this) {
         model = id
-      } else {
+      } else if (typeof id === 'number') {
         model = this.get(id)
       }
 
       if (!model) return
 
-      this.models.splice(this.models.indexOf(model), 1)
+      const index = this.models.indexOf(model)
+
+      if (index !== -1) {
+        this.models.splice(index, 1)
+      }
+
       model.collection = undefined
     })
   }
@@ -224,7 +220,7 @@ export default class Collection<T: Model> extends Base {
   /**
    * Creates a new model instance with the given attributes
    */
-  build = (attributes: { [key: string]: any } = {}): T => {
+  build = (attributes: { [key: string]: any } = {}): Model => {
     const ModelClass = this.model()
 
     if (attributes instanceof ModelClass) {
