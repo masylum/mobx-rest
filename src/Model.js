@@ -206,13 +206,8 @@ export default class Model extends Base {
     this.attributes.replace(
       data
         ? { ...this.constructor.defaultAttributes, ...data }
-        : this.committedAttributes
+        : this.constructor.defaultAttributes
     )
-  }
-
-  @action
-  clear (): void {
-    this.attributes.replace(this.constructor.defaultAttributes)
   }
 
   /**

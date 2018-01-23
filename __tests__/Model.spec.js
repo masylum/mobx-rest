@@ -328,29 +328,18 @@ describe(Model, () => {
     })
 
     describe('if attributes is not specified', () => {
-      it('replaces the current attributes with last committed ones', () => {
-        const model = new Model({ email: 'test@test.com' })
+      it('replaces the current attributes with the default ones', () => {
+        class MyModel extends Model {
+          static defaultAttributes = {
+            someAttribute: 'test'
+          }
+        }
+        const model = new MyModel({ email: 'test@test.com' })
 
-        model.set({ name: 'test' })
         model.reset()
 
-        expect(model.toJS()).toEqual({ email: 'test@test.com' })
+        expect(model.toJS()).toEqual({ someAttribute: 'test' })
       })
-    })
-  })
-
-  describe('clear()', () => {
-    it('replaces the current attributes with the default ones', () => {
-      class MyModel extends Model {
-        static defaultAttributes = {
-          someAttribute: 'test'
-        }
-      }
-      const model = new MyModel({ name: 'john' })
-
-      model.clear()
-
-      expect(model.toJS()).toEqual({ someAttribute: 'test' })
     })
   })
 
