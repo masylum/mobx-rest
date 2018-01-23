@@ -9,7 +9,6 @@ import {
 import Collection from './Collection'
 import { uniqueId } from 'lodash'
 import apiClient from './apiClient'
-import ErrorObject from './ErrorObject'
 import Base from './Base'
 import type {
   OptimisticId,
@@ -20,8 +19,6 @@ import type {
 
 export default class Model extends Base {
   static defaultAttributes = {}
-
-  @observable error: ?ErrorObject = null
 
   attributes: ObservableMap
   committedAttributes: ObservableMap

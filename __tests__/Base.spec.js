@@ -75,6 +75,37 @@ describe(Base, () => {
     })
   })
 
+  describe('getRequest(label)', () => {
+    it('returns the first request of the specified label', () => {
+      const promise = new Promise(() => {})
+
+      model.withRequest('fetching', promise)
+
+      const request = model.getRequest('fetching')
+
+      expect(request).toEqual(expect.objectContaining({
+        promise
+      }))
+    })
+  })
+
+  describe('getAllRequests(label)', () => {
+    it('returns all request of the specified label', () => {
+      const promise1 = new Promise(() => { })
+      const promise2 = new Promise(() => { })
+
+      model.withRequest('fetching', promise1)
+      model.withRequest('fetching', promise2)
+
+      const requests = model.getAllRequests('fetching')
+
+      expect(requests).toEqual([
+        expect.objectContaining({ promise: promise1 }),
+        expect.objectContaining({ promise: promise2 })
+      ])
+    })
+  })
+
   describe('isRequest(label)', () => {
     beforeEach(() => {
       model.withRequest('fetching', new Promise(() => {}))

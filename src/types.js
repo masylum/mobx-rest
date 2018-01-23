@@ -22,6 +22,13 @@ export type Response = {
   promise: Promise<*>
 }
 
+export type RequestOptions = {
+  abort?: () => void,
+  promise: Promise<*>,
+  progress?: number,
+  labels: Array<string>
+}
+
 export type SetOptions = {
   add?: boolean,
   change?: boolean,

@@ -1,6 +1,7 @@
 // @flow
 import { action, observable, IObservableArray } from 'mobx'
 import apiClient from './apiClient'
+import Request from './Request'
 
 export default class Base {
   @observable.shallow requests: IObservableArray = []
@@ -21,11 +22,11 @@ export default class Base {
 
     let response
     let error
-    const request = {
+    const request = new Request({
       labels,
       promise,
       abort
-    }
+    })
 
     this.requests.push(request)
 
@@ -44,12 +45,20 @@ export default class Base {
     return response
   }
 
+  getRequest (label: string): ?Request {
+    return this.requests.find(request => request.labels.indexOf(label) !== -1)
+  }
+
+  getAllRequests (label: string): Array<Request> {
+    return this.requests.filter(request => request.labels.indexOf(label) !== -1)
+  }
+
   /**
    * Questions whether the request exists
    * and matches a certain label
    */
   isRequest (label: string): boolean {
-    return !!this.requests.find(request => request.labels.indexOf(label) !== -1)
+    return !!this.getRequest(label)
   }
 
   /**
