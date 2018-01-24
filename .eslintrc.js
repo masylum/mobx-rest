@@ -25,6 +25,7 @@ module.exports = {
 
   rules: {
     'object-curly-spacing': ['warn', 'always'],
+    'prefer-promise-reject-errors': 'off',
     'no-duplicate-imports': 'off',
     'flowtype/no-weak-types': [0, {
       'any': false,

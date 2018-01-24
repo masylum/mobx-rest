@@ -2,6 +2,7 @@
 import { action, observable, IObservableArray } from 'mobx'
 import apiClient from './apiClient'
 import Request from './Request'
+import ErrorObject from './ErrorObject'
 
 export default class Base {
   @observable.shallow requests: IObservableArray = []
@@ -27,7 +28,7 @@ export default class Base {
       })
       .catch(error => {
         this.requests.remove(request)
-        throw error
+        throw new ErrorObject(error)
       })
 
     const request = new Request(handledPromise, {

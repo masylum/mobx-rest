@@ -783,8 +783,8 @@ describe(Model, () => {
 
             try {
               await promise
-            } catch (error) {
-              expect(error).toBe('Conflict')
+            } catch (errorObject) {
+              expect(errorObject.error).toBe('Conflict')
             }
           })
         })

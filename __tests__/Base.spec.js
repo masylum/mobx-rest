@@ -1,4 +1,5 @@
 import Base from '../src/Base'
+import ErrorObject from '../src/ErrorObject'
 import apiClient from '../src/apiClient'
 import MockApi from './mocks/api'
 
@@ -62,11 +63,20 @@ describe(Base, () => {
         }
       })
 
-      it('throws the promise rejection reason', async () => {
-        const error = 'Not found'
-        const promise = model.withRequest('fetching', Promise.reject(error))
+      it('throws a ErrorObject', async () => {
+        const promise = model.withRequest('fetching', Promise.reject({
+          error: 'Not found',
+          requestResponse: {
+            status: 404
+          }
+        }))
 
-        await expect(promise).rejects.toBe(error)
+        try {
+          await promise
+        } catch (requestError) {
+          expect(requestError).toBeInstanceOf(ErrorObject)
+          expect(requestError.error).toBe('Not found')
+        }
       })
     })
   })

@@ -1,10 +1,10 @@
 // @flow
 export default class ErrorObject {
-  label: string
-  body: {}
+  requestResponse: mixed
+  error: mixed
 
-  constructor (label: string, body: {}) {
-    this.label = label
-    this.body = body
+  constructor ({ requestResponse, error }: { requestResponse: mixed, error: mixed }) {
+    this.requestResponse = requestResponse
+    this.error = error
   }
 }

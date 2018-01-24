@@ -6,8 +6,11 @@ export default {
     resolvePromise(...args)
   },
 
-  rejectPromise (...args) {
-    rejectPromise(...args)
+  rejectPromise (error, requestResponse = {}) {
+    rejectPromise({
+      error,
+      requestResponse
+    })
   },
 
   _mock () {
