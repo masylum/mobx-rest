@@ -8,7 +8,7 @@ export default class Request extends Promise {
   @observable progress: ?number
   @observable state: RequestState
 
-  constructor(promise: Promise, { labels, abort, progress = 0 }?: RequestOptions = {}) {
+  constructor (promise: Promise<*>, { labels, abort, progress = 0 }: RequestOptions = {}) {
     super((resolve, reject) => promise.then(resolve).catch(reject))
 
     this.state = 'pending'
