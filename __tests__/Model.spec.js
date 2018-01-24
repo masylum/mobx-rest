@@ -23,6 +23,18 @@ describe(Model, () => {
     })
   })
 
+  it('sets the initial attributes as committed', () => {
+    const model = new Model({
+      firstName: 'John',
+      lastName: 'Doe'
+    })
+
+    expect(model.committedAttributes.toJS()).toEqual({
+      firstName: 'John',
+      lastName: 'Doe'
+    })
+  })
+
   it('allows to define default attributes', () => {
     class MyModel extends Model {
       static defaultAttributes = {
@@ -409,6 +421,12 @@ describe(Model, () => {
         await promise
         expect(model.toJS()).toEqual({ id: 2, name: 'John' })
       })
+
+      it('sets the new attributes as committed', async () => {
+        MockApi.resolvePromise({ id: 2, name: 'John' })
+        await promise
+        expect(model.committedAttributes.toJS()).toEqual({ id: 2, name: 'John' })
+      })
     })
   })
 
@@ -618,6 +636,32 @@ describe(Model, () => {
         await promise
 
         expect(model.toJS()).toEqual({
+          id: 2,
+          name: 'John',
+          email: 'john@test.com',
+          phone: '5678'
+        })
+      })
+
+      it('sets the new attributes as committed', async () => {
+        const promise = model.save({ phone: '5678' })
+
+        expect(model.committedAttributes.toJS()).toEqual({
+          name: 'John',
+          email: 'john@test.com',
+          phone: '1234'
+        })
+
+        MockApi.resolvePromise({
+          id: 2,
+          name: 'John',
+          email: 'john@test.com',
+          phone: '5678'
+        })
+
+        await promise
+
+        expect(model.committedAttributes.toJS()).toEqual({
           id: 2,
           name: 'John',
           email: 'john@test.com',

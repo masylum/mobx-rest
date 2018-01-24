@@ -226,6 +226,7 @@ export default class Model extends Base {
     return this.withRequest('fetching', promise, abort)
       .then(data => {
         this.reset(data)
+        this.commitChanges()
         return data
       })
   }
@@ -271,6 +272,7 @@ export default class Model extends Base {
     return this.withRequest(['saving', label], promise, abort)
       .then(data => {
         this.set(data)
+        this.commitChanges()
         return data
       })
       .catch(error => {
