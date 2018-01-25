@@ -57,7 +57,7 @@ describe(Base, () => {
     describe('if the promise fails', () => {
       it('stops tracking the request', async () => {
         try {
-          await model.withRequest('fetching', Promise.reject(new Error()))
+          await model.withRequest('fetching', Promise.reject())
         } catch (_error) {
           expect(model.requests.length).toBe(0)
         }
