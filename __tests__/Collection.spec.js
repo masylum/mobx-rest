@@ -331,6 +331,12 @@ describe(Collection, () => {
         expect(model.collection).toBeUndefined()
       })
     })
+
+    describe('if data is anything else', () => {
+      it('don\'t throw', () => {
+        expect(() => collection.remove('invalid')).not.toThrow()
+      })
+    })
   })
 
   describe('set(data, { add = true, change = true, remove = true })', () => {

@@ -186,12 +186,7 @@ export default class Collection extends Base {
 
       if (!model) return
 
-      const index = this.models.indexOf(model)
-
-      if (index !== -1) {
-        this.models.splice(index, 1)
-      }
-
+      this.models.splice(this.models.indexOf(model), 1)
       model.collection = undefined
     })
   }
