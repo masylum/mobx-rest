@@ -35,8 +35,8 @@ export default class Model extends Base {
       ...attributes
     }
 
-    this.attributes = observable.shallowMap(mergedAttributes)
-    this.committedAttributes = observable.shallowMap(mergedAttributes)
+    this.attributes = observable.map(mergedAttributes)
+    this.committedAttributes = observable.map(mergedAttributes)
   }
 
   /**
