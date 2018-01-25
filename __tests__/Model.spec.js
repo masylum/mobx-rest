@@ -668,6 +668,60 @@ describe(Model, () => {
           phone: '5678'
         })
       })
+
+      describe('if changes were made during the request', () => {
+        describe('if keepChanges = false', () => {
+          it('should override the changes with the response', async () => {
+            const promise = model.save({ phone: '5678' }, { keepChanges: false })
+
+            model.set({ phone: '999' })
+
+            MockApi.resolvePromise({
+              id: 2,
+              name: 'John',
+              email: 'john@test.com',
+              phone: '5678'
+            })
+
+            await promise
+
+            expect(model.toJS()).toEqual({
+              id: 2,
+              name: 'John',
+              email: 'john@test.com',
+              phone: '5678'
+            })
+          })
+        })
+
+        describe('if keepChanges = true', () => {
+          it('should keep the changes', async () => {
+            const promise = model.save({ phone: '5678' }, { keepChanges: true })
+
+            model.set({ phone: '999' })
+
+            MockApi.resolvePromise({
+              id: 2,
+              name: 'John',
+              email: 'john@test.com',
+              phone: '5678'
+            })
+
+            await promise
+
+            expect(model.toJS()).toEqual({
+              id: 2,
+              name: 'John',
+              email: 'john@test.com',
+              phone: '999'
+            })
+
+            expect(model.changes).toEqual({
+              phone: '999'
+            })
+          })
+        })
+      })
     })
 
     describe('if the request fails', () => {

@@ -15,7 +15,8 @@ export type DestroyOptions = {
 export type SaveOptions = {
   optimistic?: boolean,
   patch?: boolean,
-  onProgress?: () => mixed
+  onProgress?: () => mixed,
+  keepChanges?: boolean
 }
 
 export type Response = {

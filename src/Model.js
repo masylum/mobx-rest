@@ -4,10 +4,11 @@ import {
   action,
   ObservableMap,
   computed,
-  toJS
+  toJS,
+  runInAction
 } from 'mobx'
 import Collection from './Collection'
-import { uniqueId } from 'lodash'
+import { uniqueId, union } from 'lodash'
 import apiClient from './apiClient'
 import Base from './Base'
 import type {
@@ -135,34 +136,12 @@ export default class Model extends Base {
       : this.optimisticId
   }
 
-  getChangedAttributesAgainst (attributes: ObservableMap): Array<string> {
-    const changed = []
-
-    this.committedAttributes.keys().forEach(key => {
-      if (this.committedAttributes.get(key) !== attributes.get(key)) {
-        changed.push(key)
-      }
-    })
-
-    return changed
-  }
-
-  getChangesAgainst (attributes: ObservableMap): { [string]: mixed } {
-    const changes = {}
-
-    this.getChangedAttributesAgainst(attributes).forEach(key => {
-      changes[key] = attributes.get(key)
-    })
-
-    return changes
-  }
-
   /**
    * Get an array with the attributes names that have changed.
    */
   @computed
   get changedAttributes (): Array<string> {
-    return this.getChangedAttributesAgainst(this.attributes)
+    return getChangedAttributesBetween(this.committedAttributes.toJS(), this.attributes.toJS())
   }
 
   /**
@@ -170,7 +149,7 @@ export default class Model extends Base {
    */
   @computed
   get changes (): { [string]: mixed } {
-    return this.getChangesAgainst(this.attributes)
+    return getChangesBetween(this.committedAttributes.toJS(), this.attributes.toJS())
   }
 
   /**
@@ -244,13 +223,13 @@ export default class Model extends Base {
   @action
   save (
     attributes: {} = {},
-    { optimistic = true, patch = false }: SaveOptions = {}
+    { optimistic = true, patch = false, keepChanges = true }: SaveOptions = {}
   ): Promise<*> {
     const currentAttributes = this.toJS()
     const mergedAttributes = { ...currentAttributes, ...attributes }
     const label = this.isNew ? 'creating' : 'updating'
     const data = (!this.isNew && patch)
-      ? this.getChangesAgainst(observable.map(mergedAttributes))
+      ? getChangesBetween(this.committedAttributes.toJS(), mergedAttributes)
       : mergedAttributes
 
     let method
@@ -271,8 +250,17 @@ export default class Model extends Base {
 
     return this.withRequest(['saving', label], promise, abort)
       .then(data => {
-        this.set(data)
-        this.commitChanges()
+        const changes = getChangesBetween(currentAttributes, this.attributes.toJS())
+
+        runInAction('save success', () => {
+          this.set(data)
+          this.commitChanges()
+
+          if (keepChanges) {
+            this.set(changes)
+          }
+        })
+
         return data
       })
       .catch(error => {
@@ -319,4 +307,23 @@ export default class Model extends Base {
         throw error
       })
   }
+}
+
+const getChangedAttributesBetween = (source: {}, target: {}): Array<string> => {
+  const keys = union(
+    Object.keys(source),
+    Object.keys(target)
+  )
+
+  return keys.filter(key => source[key] !== target[key])
+}
+
+const getChangesBetween = (source: {}, target: {}): { [string]: mixed } => {
+  const changes = {}
+
+  getChangedAttributesBetween(source, target).forEach(key => {
+    changes[key] = target[key]
+  })
+
+  return changes
 }
