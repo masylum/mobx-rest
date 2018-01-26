@@ -424,10 +424,11 @@ describe(Model, () => {
     })
 
     describe('if the request succeeds', () => {
-      it('replaces the current data with the response', async () => {
+      it('merges the current data with the response', async () => {
+        model.set({ last_name: 'Doe' })
         MockApi.resolvePromise({ id: 2, name: 'John' })
         await promise
-        expect(model.toJS()).toEqual({ id: 2, name: 'John' })
+        expect(model.toJS()).toEqual({ id: 2, name: 'John', last_name: 'Doe' })
       })
 
       it('sets the new attributes as committed', async () => {

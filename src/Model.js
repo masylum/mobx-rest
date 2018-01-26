@@ -204,7 +204,7 @@ export default class Model extends Base {
 
     return this.withRequest('fetching', promise, abort)
       .then(data => {
-        this.reset(data)
+        this.set(data)
         this.commitChanges()
         return data
       })
