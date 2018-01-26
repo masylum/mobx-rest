@@ -21,8 +21,8 @@ import type {
 export default class Model extends Base {
   static defaultAttributes = {}
 
-  attributes: ObservableMap
-  committedAttributes: ObservableMap
+  attributes: ObservableMap = observable.map()
+  committedAttributes: ObservableMap = observable.map()
 
   optimisticId: OptimisticId = uniqueId('i_')
   collection: ?Collection = null
@@ -35,8 +35,8 @@ export default class Model extends Base {
       ...attributes
     }
 
-    this.attributes = observable.map(mergedAttributes)
-    this.committedAttributes = observable.map(mergedAttributes)
+    this.attributes.replace(mergedAttributes)
+    this.commitChanges()
   }
 
   /**
@@ -166,12 +166,12 @@ export default class Model extends Base {
 
   @action
   commitChanges (): void {
-    this.committedAttributes.replace(this.attributes)
+    this.committedAttributes.replace(toJS(this.attributes))
   }
 
   @action
   discardChanges (): void {
-    this.attributes.replace(this.committedAttributes)
+    this.attributes.replace(toJS(this.committedAttributes))
   }
 
   /**

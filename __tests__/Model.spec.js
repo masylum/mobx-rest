@@ -296,6 +296,14 @@ describe(Model, () => {
       expect(model.hasChanges()).toBe(false)
       expect(model.get('phone')).toBe('5678')
     })
+
+    it('makes a copy of the current attributes', () => {
+      const model = new Model({
+        nested: { phone: '1234' }
+      })
+
+      expect(model.attributes.get('nested')).not.toBe(model.committedAttributes.get('nested'))
+    })
   })
 
   describe('discardChanges()', () => {
