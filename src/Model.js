@@ -246,7 +246,7 @@ export default class Model extends Base {
       this.set(attributes)
     }
 
-    const { promise, abort } = apiClient()[method](this.url(), { data })
+    const { promise, abort } = apiClient()[method](this.url(), data)
 
     return this.withRequest(['saving', label], promise, abort)
       .then(data => {

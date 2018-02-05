@@ -467,11 +467,9 @@ describe(Model, () => {
         it('sends the current attributes', () => {
           model.save()
           expect(spy.mock.calls[0][1]).toEqual({
-            data: {
-              name: 'John',
-              email: 'john@test.com',
-              phone: '1234'
-            }
+            name: 'John',
+            email: 'john@test.com',
+            phone: '1234'
           })
         })
       })
@@ -481,11 +479,9 @@ describe(Model, () => {
           model.save({ phone: '5678' })
 
           expect(spy.mock.calls[0][1]).toEqual({
-            data: {
-              name: 'John',
-              email: 'john@test.com',
-              phone: '5678'
-            }
+            name: 'John',
+            email: 'john@test.com',
+            phone: '5678'
           })
         })
 
@@ -531,9 +527,7 @@ describe(Model, () => {
             model.save({}, { patch: true })
 
             expect(spy.mock.calls[0][1]).toEqual({
-              data: {
-                phone: '5678'
-              }
+              phone: '5678'
             })
           })
         })
@@ -543,9 +537,7 @@ describe(Model, () => {
             model.save({ phone: '5678' }, { patch: true })
 
             expect(spy.mock.calls[0][1]).toEqual({
-              data: {
-                phone: '5678'
-              }
+              phone: '5678'
             })
           })
 
@@ -585,12 +577,10 @@ describe(Model, () => {
             model.save({}, { patch: false })
 
             expect(spy.mock.calls[0][1]).toEqual({
-              data: {
-                id: 2,
-                name: 'John',
-                email: 'john@test.com',
-                phone: '1234'
-              }
+              id: 2,
+              name: 'John',
+              email: 'john@test.com',
+              phone: '1234'
             })
           })
         })
@@ -600,12 +590,10 @@ describe(Model, () => {
             model.save({ phone: '5678' }, { patch: false })
 
             expect(spy.mock.calls[0][1]).toEqual({
-              data: {
-                id: 2,
-                name: 'John',
-                email: 'john@test.com',
-                phone: '5678'
-              }
+              id: 2,
+              name: 'John',
+              email: 'john@test.com',
+              phone: '5678'
             })
           })
 
