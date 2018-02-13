@@ -25,7 +25,7 @@ export type Response = {
 }
 
 export type RequestOptions = {
-  abort?: () => void,
+  abort: ?() => void,
   progress?: number,
   labels: Array<string>
 }

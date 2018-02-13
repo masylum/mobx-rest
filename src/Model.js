@@ -11,6 +11,7 @@ import Collection from './Collection'
 import { uniqueId, union } from 'lodash'
 import apiClient from './apiClient'
 import Base from './Base'
+import Request from './Request'
 import type {
   OptimisticId,
   Id,
@@ -199,15 +200,17 @@ export default class Model extends Base {
    * Fetches the model from the backend.
    */
   @action
-  fetch (options: { data?: {} } = {}): Promise<*> {
+  fetch (options: { data?: {} } = {}): Request {
     const { abort, promise } = apiClient().get(this.url(), options)
 
-    return this.withRequest('fetching', promise, abort)
+    promise
       .then(data => {
         this.set(data)
         this.commitChanges()
         return data
       })
+
+    return this.withRequest('fetching', promise, abort)
   }
 
   /**
@@ -224,7 +227,7 @@ export default class Model extends Base {
   save (
     attributes: {} = {},
     { optimistic = true, patch = false, keepChanges = true }: SaveOptions = {}
-  ): Promise<*> {
+  ): Request {
     const currentAttributes = this.toJS()
     const mergedAttributes = { ...currentAttributes, ...attributes }
     const label = this.isNew ? 'creating' : 'updating'
@@ -248,7 +251,7 @@ export default class Model extends Base {
 
     const { promise, abort } = apiClient()[method](this.url(), data)
 
-    return this.withRequest(['saving', label], promise, abort)
+    promise
       .then(data => {
         const changes = getChangesBetween(currentAttributes, this.attributes.toJS())
 
@@ -267,6 +270,8 @@ export default class Model extends Base {
         this.set(currentAttributes)
         throw error
       })
+
+    return this.withRequest(['saving', label], promise, abort)
   }
 
   /**
@@ -275,16 +280,16 @@ export default class Model extends Base {
    * too
    */
   @action
-  destroy ({ optimistic = true }: DestroyOptions = {}): Promise<*> {
+  destroy ({ optimistic = true }: DestroyOptions = {}): Request {
     const collection = this.collection
 
     if (this.isNew && collection) {
       collection.remove(this)
-      return Promise.resolve()
+      return new Request(Promise.resolve())
     }
 
     if (this.isNew) {
-      return Promise.resolve()
+      return new Request(Promise.resolve())
     }
 
     const { promise, abort } = apiClient().del(this.url())
@@ -293,7 +298,7 @@ export default class Model extends Base {
       collection.remove(this)
     }
 
-    return this.withRequest('destroying', promise, abort)
+    promise
       .then(data => {
         if (!optimistic && collection) {
           collection.remove(this)
@@ -306,6 +311,8 @@ export default class Model extends Base {
         }
         throw error
       })
+
+    return this.withRequest('destroying', promise, abort)
   }
 }
 

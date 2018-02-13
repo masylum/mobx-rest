@@ -4,6 +4,7 @@ import Model from './Model'
 import { filter, isMatch, find, difference, map } from 'lodash'
 import apiClient from './apiClient'
 import Base from './Base'
+import Request from './Request'
 import type { CreateOptions, SetOptions, GetOptions, FindOptions, Id } from './types'
 
 export default class Collection extends Base {
@@ -243,18 +244,18 @@ export default class Collection extends Base {
    * can be tuned.
    */
   @action
-  async create (
+  create (
     attributesOrModel: { [key: string]: any } | Model,
     { optimistic = true }: CreateOptions = {}
-  ): Promise<*> {
+  ): Request {
     const model = this.build(attributesOrModel)
-    const promise = model.save()
+    const { abort, promise } = model.save()
 
     if (optimistic) {
       this.add(model)
     }
 
-    return this.withRequest('creating', promise)
+    promise
       .then(response => {
         if (!optimistic) {
           this.add(model)
@@ -267,6 +268,8 @@ export default class Collection extends Base {
         }
         throw error
       })
+
+    return this.withRequest('creating', promise, abort)
   }
 
   /**
@@ -277,13 +280,15 @@ export default class Collection extends Base {
    * or removing.
    */
   @action
-  fetch (options: SetOptions = {}): Promise<void> {
+  fetch (options: SetOptions = {}): Request {
     const { abort, promise } = apiClient().get(this.url(), options)
 
-    return this.withRequest('fetching', promise, abort)
+    promise
       .then(data => {
         this.set(data, options)
         return data
       })
+
+    return this.withRequest('fetching', promise, abort)
   }
 }

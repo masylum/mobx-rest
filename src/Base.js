@@ -16,7 +16,7 @@ export default class Base {
     throw new Error('You must implement this method')
   }
 
-  withRequest (labels: string | Array<string>, promise: Promise<*>, abort?: () => void): Request {
+  withRequest (labels: string | Array<string>, promise: Promise<*>, abort: ?() => void): Request {
     if (typeof labels === 'string') {
       labels = [labels]
     }
