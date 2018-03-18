@@ -447,11 +447,11 @@ Exactly the same as the model one, but at the collection level.
 ### `apiClient`
 
 This is the object that is going to make the `xhr` requests to interact with your API.
-There are currently two implementations:
+There are currently three implementations:
 
   - One using `jQuery` in the [mobx-rest-jquery-adapter](https://github.com/masylum/mobx-rest-jquery-adapter) package.
   - One using `fetch` in the [mobx-rest-fetch-adapter](https://github.com/masylum/mobx-rest-fetch-adapter) package.
-
+  - One Using `axios` in the [mobx-rest-axios-adapter](https://github.com/IranTIP/mobx-rest-axios-adapter) package
 Initially you need to configure `apiClient()` with an adapter and the `apiPath`. You can also set additional options, like headers to send with all requests.
 
 For example, if you're using JWT and need to send it using the Authorization header, it could look like this:
