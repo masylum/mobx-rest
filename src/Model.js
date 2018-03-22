@@ -225,15 +225,20 @@ export default class Model extends Base {
    */
   @action
   save (
-    attributes: {} = {},
+    attributes?: {},
     { optimistic = true, patch = false, keepChanges = true, ...otherOptions }: SaveOptions = {}
   ): Request {
     const currentAttributes = this.toJS()
-    const mergedAttributes = { ...currentAttributes, ...attributes }
     const label = this.isNew ? 'creating' : 'updating'
-    const data = (!this.isNew && patch)
-      ? getChangesBetween(this.committedAttributes.toJS(), mergedAttributes)
-      : mergedAttributes
+    let data
+
+    if (patch && attributes) {
+      data = attributes
+    } else if (patch) {
+      data = this.changes
+    } else {
+      data = { ...currentAttributes, ...attributes }
+    }
 
     let method
 
@@ -246,7 +251,7 @@ export default class Model extends Base {
     }
 
     if (optimistic) {
-      this.set(attributes)
+      this.set(attributes || {})
     }
 
     const { promise, abort } = apiClient()[method](this.url(), data, otherOptions)

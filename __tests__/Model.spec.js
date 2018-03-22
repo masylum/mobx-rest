@@ -531,7 +531,7 @@ describe(Model, () => {
         describe('if attributes are not specified', () => {
           it('sends the changes compared to the current attributes', () => {
             model.set({ phone: '5678' })
-            model.save({}, { patch: true })
+            model.save(null, { patch: true })
 
             expect(spy.mock.calls[0][1]).toEqual({
               phone: '5678'
@@ -540,7 +540,7 @@ describe(Model, () => {
         })
 
         describe('if attributes are specified', () => {
-          it('sends the changes compared to the merged attributes', () => {
+          it('sends specified attributes', () => {
             model.save({ phone: '5678' }, { patch: true })
 
             expect(spy.mock.calls[0][1]).toEqual({
