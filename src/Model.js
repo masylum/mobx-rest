@@ -200,8 +200,8 @@ export default class Model extends Base {
    * Fetches the model from the backend.
    */
   @action
-  fetch (options: { data?: {} } = {}): Request {
-    const { abort, promise } = apiClient().get(this.url(), options)
+  fetch ({ data, ...otherOptions }: { data?: {} } = {}): Request {
+    const { abort, promise } = apiClient().get(this.url(), data, otherOptions)
 
     promise
       .then(data => {
@@ -226,7 +226,7 @@ export default class Model extends Base {
   @action
   save (
     attributes: {} = {},
-    { optimistic = true, patch = false, keepChanges = true }: SaveOptions = {}
+    { optimistic = true, patch = false, keepChanges = true, ...otherOptions }: SaveOptions = {}
   ): Request {
     const currentAttributes = this.toJS()
     const mergedAttributes = { ...currentAttributes, ...attributes }
@@ -249,7 +249,7 @@ export default class Model extends Base {
       this.set(attributes)
     }
 
-    const { promise, abort } = apiClient()[method](this.url(), data)
+    const { promise, abort } = apiClient()[method](this.url(), data, otherOptions)
 
     promise
       .then(data => {
@@ -280,7 +280,7 @@ export default class Model extends Base {
    * too
    */
   @action
-  destroy ({ optimistic = true }: DestroyOptions = {}): Request {
+  destroy ({ optimistic = true, ...otherOptions }: DestroyOptions = {}): Request {
     const collection = this.collection
 
     if (this.isNew && collection) {
@@ -292,7 +292,7 @@ export default class Model extends Base {
       return new Request(Promise.resolve())
     }
 
-    const { promise, abort } = apiClient().del(this.url())
+    const { promise, abort } = apiClient().del(this.url(), otherOptions)
 
     if (optimistic && collection) {
       collection.remove(this)

@@ -395,7 +395,8 @@ describe(Model, () => {
       promise = model.fetch({
         data: {
           full: true
-        }
+        },
+        method: 'HEAD'
       })
     })
 
@@ -409,9 +410,7 @@ describe(Model, () => {
 
     it('passes the options to the api client', () => {
       expect(spy.mock.calls[0][1]).toEqual({
-        data: {
-          full: true
-        }
+        full: true
       })
     })
 
@@ -435,6 +434,14 @@ describe(Model, () => {
         MockApi.resolvePromise({ id: 2, name: 'John' })
         await promise
         expect(model.committedAttributes.toJS()).toEqual({ id: 2, name: 'John' })
+      })
+    })
+
+    describe('if other options are specified', () => {
+      it('they must be passed to the adapter', () => {
+        expect(spy.mock.calls[0][2]).toEqual({
+          method: 'HEAD'
+        })
       })
     })
   })
@@ -609,6 +616,26 @@ describe(Model, () => {
               })
             })
           })
+        })
+      })
+    })
+
+    describe('if other options are specified', () => {
+      let spy
+
+      beforeEach(() => {
+        spy = jest.spyOn(apiClient(), 'post')
+      })
+
+      afterEach(() => {
+        apiClient().post.mockRestore()
+      })
+
+      it('they must be passed to the adapter', () => {
+        model.save(undefined, { method: 'HEAD' })
+
+        expect(spy).toHaveBeenCalledWith(expect.anything(), expect.anything(), {
+          method: 'HEAD'
         })
       })
     })
@@ -841,6 +868,16 @@ describe(Model, () => {
             MockApi.resolvePromise({})
 
             await promise
+          })
+        })
+      })
+
+      describe('if other options are specified', () => {
+        it('they must be passed to the adapter', () => {
+          model.destroy({ method: 'OPTIONS' })
+
+          expect(spy.mock.calls[0][1]).toEqual({
+            method: 'OPTIONS'
           })
         })
       })
