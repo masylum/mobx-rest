@@ -46,9 +46,9 @@ export type FindOptions = {
 }
 
 export type Adapter = {
-  get(path: string, options?: {}): Response,
-  patch(path: string, options?: {}): Response,
-  post(path: string, options?: {}): Response,
-  put(path: string, options?: {}): Response,
+  get(path: string, data?: {}, options?: {}): Response,
+  patch(path: string, data?: {}, options?: {}): Response,
+  post(path: string, data?: {}, options?: {}): Response,
+  put(path: string, data?: {}, options?: {}): Response,
   del(path: string, options?: {}): Response
 }
