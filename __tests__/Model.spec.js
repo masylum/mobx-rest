@@ -181,15 +181,22 @@ describe(Model, () => {
       const model = new Model({
         name: 'Name 1',
         date: '1900-01-01',
-        phone: '123456789'
+        phone: '123456789',
+        address: {
+          street: 'Somewhere',
+          number: 1
+        }
       })
 
       model.set({
         name: 'Name 2',
-        phone: '987654321'
+        phone: '987654321',
+        address: {
+          number: 2
+        }
       })
 
-      expect(model.changedAttributes).toEqual(['name', 'phone'])
+      expect(model.changedAttributes).toEqual(['name', 'phone', 'address'])
     })
   })
 
@@ -265,7 +272,11 @@ describe(Model, () => {
       const model = new Model({
         name: 'Name 1',
         date: '1900-01-01',
-        phone: '123456789'
+        phone: '123456789',
+        address: {
+          street: 'Somewhere',
+          number: 1
+        }
       })
 
       model.set({
@@ -278,9 +289,14 @@ describe(Model, () => {
         phone: '987654321'
       })
 
+      model.get('address').number = 2
+
       expect(model.changes).toEqual({
         date: '2000-01-01',
-        phone: '987654321'
+        phone: '987654321',
+        address: {
+          number: 2
+        }
       })
     })
   })

@@ -8,7 +8,7 @@ import {
   runInAction
 } from 'mobx'
 import Collection from './Collection'
-import { uniqueId, union } from 'lodash'
+import { uniqueId, union, isEqual, isPlainObject } from 'lodash'
 import apiClient from './apiClient'
 import Base from './Base'
 import Request from './Request'
@@ -142,7 +142,7 @@ export default class Model extends Base {
    */
   @computed
   get changedAttributes (): Array<string> {
-    return getChangedAttributesBetween(this.committedAttributes.toJS(), this.attributes.toJS())
+    return getChangedAttributesBetween(toJS(this.committedAttributes), toJS(this.attributes))
   }
 
   /**
@@ -150,7 +150,7 @@ export default class Model extends Base {
    */
   @computed
   get changes (): { [string]: mixed } {
-    return getChangesBetween(this.committedAttributes.toJS(), this.attributes.toJS())
+    return getChangesBetween(toJS(this.committedAttributes), toJS(this.attributes))
   }
 
   /**
@@ -258,7 +258,7 @@ export default class Model extends Base {
 
     promise
       .then(data => {
-        const changes = getChangesBetween(currentAttributes, this.attributes.toJS())
+        const changes = getChangesBetween(currentAttributes, toJS(this.attributes))
 
         runInAction('save success', () => {
           this.set(data)
@@ -327,14 +327,16 @@ const getChangedAttributesBetween = (source: {}, target: {}): Array<string> => {
     Object.keys(target)
   )
 
-  return keys.filter(key => source[key] !== target[key])
+  return keys.filter(key => !isEqual(source[key], target[key]))
 }
 
 const getChangesBetween = (source: {}, target: {}): { [string]: mixed } => {
   const changes = {}
 
   getChangedAttributesBetween(source, target).forEach(key => {
-    changes[key] = target[key]
+    changes[key] = isPlainObject(source[key]) && isPlainObject(target[key])
+      ? getChangesBetween(source[key], target[key])
+      : target[key]
   })
 
   return changes
