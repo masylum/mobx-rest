@@ -32,7 +32,7 @@ npm install mobx-rest --save
 
 An application state is usually divided into three realms:
 
-  - **Component state**: Each state can have their own state, like a button
+  - **Component state**: Each component can have their own state, like a button
   being pressed, a text input value, etc.
   - **Application state**: Sometimes we need components to share state between them and
   they are too far away to actually make them talk each other through props.
