@@ -20,6 +20,8 @@ import type {
   SaveOptions
 } from './types'
 
+const dontMergeArrays = (_oldArray, newArray) => newArray
+
 export default class Model extends Base {
   static defaultAttributes = {}
 
@@ -215,6 +217,16 @@ export default class Model extends Base {
   }
 
   /**
+   * Merges old attributes with new ones.
+   * By default it doesn't merge arrays.
+   */
+  applyPatchChanges (oldAttributes: {}, changes: {}): {} {
+    return deepmerge(oldAttributes, changes, {
+      arrayMerge: dontMergeArrays
+    })
+  }
+
+  /**
    * Saves the resource on the backend.
    *
    * If the item has a `primaryKey` it updates it,
@@ -237,10 +249,8 @@ export default class Model extends Base {
       data = attributes
     } else if (patch) {
       data = this.changes
-    } else if (attributes) {
-      data = deepmerge(currentAttributes, attributes)
     } else {
-      data = currentAttributes
+      data = { ...currentAttributes, ...attributes }
     }
 
     let method
@@ -255,7 +265,7 @@ export default class Model extends Base {
 
     if (optimistic && attributes) {
       this.set(patch
-        ? deepmerge(currentAttributes, attributes)
+        ? this.applyPatchChanges(currentAttributes, attributes)
         : attributes
       )
     }
@@ -271,7 +281,7 @@ export default class Model extends Base {
           this.commitChanges()
 
           if (keepChanges) {
-            this.set(deepmerge(data, changes))
+            this.set(this.applyPatchChanges(data, changes))
           }
         })
 

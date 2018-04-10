@@ -834,6 +834,40 @@ describe(Model, () => {
               }
             })
           })
+
+          it('shouldn\'t merge arrays', async () => {
+            model.set({
+              numbers: [0, 1, 2]
+            })
+
+            model.commitChanges()
+
+            const promise = model.save({
+              numbers: [3, 4, 5]
+            }, { keepChanges: true })
+
+            model.get('numbers')[0] = 6
+
+            MockApi.resolvePromise({
+              email: 'john@test.com',
+              name: 'John',
+              phone: '1234',
+              numbers: [3, 4, 5]
+            })
+
+            await promise
+
+            expect(model.toJS()).toEqual({
+              email: 'john@test.com',
+              name: 'John',
+              phone: '1234',
+              numbers: [6, 4, 5]
+            })
+
+            expect(model.changes).toEqual({
+              numbers: [6, 4, 5]
+            })
+          })
         })
       })
     })
