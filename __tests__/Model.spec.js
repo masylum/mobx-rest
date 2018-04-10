@@ -760,6 +760,80 @@ describe(Model, () => {
               phone: '999'
             })
           })
+
+          it('should keep complex values changes', async () => {
+            model.set({
+              addresses: {
+                address1: {
+                  street: 'Street 1',
+                  number: 1111
+                },
+                address2: {
+                  street: 'Street 2',
+                  number: 2222
+                }
+              }
+            })
+
+            model.commitChanges()
+
+            const promise = model.save({
+              addresses: {
+                address1: {
+                  street: 'Street 1',
+                  number: 3333
+                },
+                address2: {
+                  street: 'Street 2',
+                  number: 2222
+                }
+              }
+            }, { keepChanges: true })
+
+            model.get('addresses').address2.number = 4444
+
+            MockApi.resolvePromise({
+              email: 'john@test.com',
+              name: 'John',
+              phone: '1234',
+              addresses: {
+                address1: {
+                  street: 'Street 1',
+                  number: 3333
+                },
+                address2: {
+                  street: 'Street 2',
+                  number: 2222
+                }
+              }
+            })
+
+            await promise
+
+            expect(model.toJS()).toEqual({
+              email: 'john@test.com',
+              name: 'John',
+              phone: '1234',
+              addresses: {
+                address1: {
+                  street: 'Street 1',
+                  number: 3333
+                },
+                address2: {
+                  street: 'Street 2',
+                  number: 4444
+                }
+              }
+            })
+
+            expect(model.changes).toEqual({
+              addresses: {
+                address2: {
+                  number: 4444
+                }
+              }
+            })
+          })
         })
       })
     })

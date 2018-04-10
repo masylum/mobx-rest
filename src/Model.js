@@ -7,8 +7,9 @@ import {
   toJS,
   runInAction
 } from 'mobx'
-import Collection from './Collection'
 import { uniqueId, union, isEqual, isPlainObject } from 'lodash'
+import deepmerge from 'deepmerge'
+import Collection from './Collection'
 import apiClient from './apiClient'
 import Base from './Base'
 import Request from './Request'
@@ -236,8 +237,10 @@ export default class Model extends Base {
       data = attributes
     } else if (patch) {
       data = this.changes
+    } else if (attributes) {
+      data = deepmerge(currentAttributes, attributes)
     } else {
-      data = { ...currentAttributes, ...attributes }
+      data = currentAttributes
     }
 
     let method
@@ -250,8 +253,11 @@ export default class Model extends Base {
       method = 'put'
     }
 
-    if (optimistic) {
-      this.set(attributes || {})
+    if (optimistic && attributes) {
+      this.set(patch
+        ? deepmerge(currentAttributes, attributes)
+        : attributes
+      )
     }
 
     const { promise, abort } = apiClient()[method](this.url(), data, otherOptions)
@@ -265,7 +271,7 @@ export default class Model extends Base {
           this.commitChanges()
 
           if (keepChanges) {
-            this.set(changes)
+            this.set(deepmerge(data, changes))
           }
         })
 
