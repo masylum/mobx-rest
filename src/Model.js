@@ -18,8 +18,12 @@ import type {
   Label,
   DestroyOptions,
   SaveOptions,
-  CreateOptions
+  CreateOptions,
+  RPCOptions,
+  HTTPMethod
 } from './types'
+
+const VALID_RPC_METHODS = ['post', 'put']
 
 export default class Model {
   @observable request: ?Request = null
@@ -364,10 +368,11 @@ export default class Model {
    * your API.
    */
   @action
-  async rpc (method: string, body?: {}): Promise<*> {
+  async rpc (path: string, body?: {}, { method = 'post' }: RPCOptions = {}): Promise<*> {
     const label: Label = 'updating' // TODO: Maybe differentiate?
-    const { promise, abort } = apiClient().post(
-      `${this.url()}/${method}`,
+    method = this.isValidRPCMethod(method) ? method : 'post'
+    const { promise, abort } = apiClient()[method](
+      `${this.url()}/${path}`,
       body || {}
     )
 
@@ -390,5 +395,13 @@ export default class Model {
     this.error = null
 
     return response
+  }
+
+  /**
+   * Wether method can be used in RPC
+   * actions
+   */
+  isValidRPCMethod (method: HTTPMethod) {
+    return VALID_RPC_METHODS.indexOf(method) >= 0
   }
 }

@@ -1,5 +1,6 @@
 // @flow
 export type Label = 'fetching' | 'creating' | 'updating' | 'destroying'
+export type HTTPMethod = 'get' | 'post' | 'put' | 'del' | 'patch'
 
 export type OptimisticId = string
 export type Id = number | OptimisticId
@@ -36,4 +37,8 @@ export type Adapter = {
   post(path: string, data?: {}, options?: {}): Response,
   put(path: string, data?: {}, options?: {}): Response,
   del(path: string, options?: {}): Response
+}
+
+export type RPCOptions = {
+  method?: HTTPMethod
 }
