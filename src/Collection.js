@@ -42,6 +42,14 @@ export default class Collection<T: Model> {
   }
 
   /**
+   * Returns a corresponding URL of a remote procedure call.
+   *
+   */
+  rpcUrl (method: string): string {
+    return `${this.url()}/${method}`;
+  }
+
+  /**
    * Specifies the model class for that collection
    */
   model (): Class<*> {
@@ -330,7 +338,7 @@ export default class Collection<T: Model> {
   async rpc (method: string, body?: {}): Promise<*> {
     const label: Label = 'updating' // TODO: Maybe differentiate?
     const { promise, abort } = apiClient().post(
-      `${this.url()}/${method}`,
+      this.rpcUrl(method),
       body || {}
     )
 
