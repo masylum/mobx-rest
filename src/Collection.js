@@ -46,7 +46,7 @@ export default class Collection<T: Model> {
    *
    */
   rpcUrl (method: string): string {
-    return `${this.url()}/${method}`;
+    return `${this.url()}/${method}`
   }
 
   /**
