@@ -526,7 +526,7 @@ class Task extends React.Component {
 
 @observer
 class Tasks extends React.Component {
-  componentWillMount () {
+  componentDidMount () {
     // This will call `/api/tasks?all=true`
     tasksCollection.fetch({ data: { all: true } })
   }
