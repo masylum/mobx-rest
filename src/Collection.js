@@ -49,7 +49,7 @@ export default class Collection extends Base {
   /**
    * Specifies the model class for that collection
    */
-  model (): Class<*> {
+  model (attributes: { [key: string]: any } = {}): Class<*> {
     return Model
   }
 
@@ -220,17 +220,12 @@ export default class Collection extends Base {
    * Creates a new model instance with the given attributes
    */
   build = (attributes: { [key: string]: any } = {}): Model => {
-    const ModelClass = this.model()
-
-    if (attributes instanceof ModelClass) {
+    if (attributes instanceof Model) {
       attributes.collection = this
       return attributes
     }
 
-    if (attributes instanceof Model) {
-      throw new Error(`The model must be an instance of ${ModelClass.name}`)
-    }
-
+    const ModelClass = this.model(attributes)
     const model = new ModelClass(attributes)
     model.collection = this
 

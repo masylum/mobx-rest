@@ -219,18 +219,6 @@ describe(Collection, () => {
       expect(collection.at(0)).toBe(model)
     })
 
-    describe('if the model is not an instance of the collection model class', () => {
-      it('throws', () => {
-        class MyModel1 extends Model {}
-        class MyModel2 extends Model {}
-        const model = new MyModel1()
-
-        collection.model = () => MyModel2
-
-        expect(() => collection.add(model)).toThrow('The model must be an instance of MyModel2')
-      })
-    })
-
     describe('if the model is a plain object', () => {
       it('creates a new instance of the collection model class', () => {
         const attributes = { phone: '1234' }
@@ -464,18 +452,6 @@ describe(Collection, () => {
         collection.build(model)
 
         expect(model.collection).toBe(collection)
-      })
-    })
-
-    describe('if the data is a different model instance', () => {
-      it('throws', () => {
-        class MyModel1 extends Model {}
-        class MyModel2 extends Model {}
-        const model = new MyModel1()
-
-        collection.model = () => MyModel2
-
-        expect(() => collection.add(model)).toThrow('The model must be an instance of MyModel2')
       })
     })
 
