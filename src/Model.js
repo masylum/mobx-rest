@@ -100,7 +100,7 @@ export default class Model extends Base {
    */
   @computed
   get isNew (): boolean {
-    return !this.has(this.primaryKey)
+    return !this.has(this.primaryKey) || !this.get(this.primaryKey)
   }
 
   /**

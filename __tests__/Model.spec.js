@@ -146,6 +146,36 @@ describe(Model, () => {
     })
   })
 
+  describe('isNew', () => {
+    describe('if the primary key attribute exists', () => {
+      describe('if the primary key attribute has a value', () => {
+        it('returns false', () => {
+          const model = new Model({ id: 123 })
+
+          expect(model.isNew).toBe(false)
+        })
+      })
+
+      describe('if the primary key attribute is null or undefined', () => {
+        it('returns true', () => {
+          const model1 = new Model({ id: null })
+          const model2 = new Model({ id: undefined })
+
+          expect(model1.isNew).toBe(true)
+          expect(model2.isNew).toBe(true)
+        })
+      })
+    })
+
+    describe('if the primary key attribute doesn\'t exist', () => {
+      it('returns true', () => {
+        const model = new Model()
+
+        expect(model.isNew).toBe(true)
+      })
+    })
+  })
+
   describe('id', () => {
     describe('if the model has an id attribute', () => {
       it('returns its value', () => {
