@@ -7,7 +7,7 @@ import {
   toJS,
   runInAction
 } from 'mobx'
-import { uniqueId, union, isEqual, isPlainObject } from 'lodash'
+import { uniqueId, union, isEqual, isPlainObject, includes } from 'lodash'
 import deepmerge from 'deepmerge'
 import Collection from './Collection'
 import apiClient from './apiClient'
@@ -162,7 +162,7 @@ export default class Model extends Base {
    */
   hasChanges (attribute?: string): boolean {
     if (attribute) {
-      return this.changedAttributes.indexOf(attribute) !== -1
+      return _.includes(this.changedAttributes, attribute)
     }
 
     return this.changedAttributes.length > 0
@@ -239,7 +239,7 @@ export default class Model extends Base {
   @action
   save (
     attributes?: {},
-    { optimistic = true, patch = false, keepChanges = true, ...otherOptions }: SaveOptions = {}
+    { optimistic = true, patch = false, keepChanges = false, ...otherOptions }: SaveOptions = {}
   ): Request {
     const currentAttributes = this.toJS()
     const label = this.isNew ? 'creating' : 'updating'

@@ -1,5 +1,20 @@
 # Changelog
 
+## `3.0.0.beta`
+
+  - [x] Fixed Collection types.
+  - [x] Rollback default `keepChanges` behaviour.
+  - [ ] Brought back onProgress for file uploaders.
+  - [ ] Documented new APIs
+  - [ ] Update the mobx-rest-example
+
+## `3.0.0.alpha`
+
+:sparkles:
+
+Full description here: https://github.com/masylum/mobx-rest/pull/39
+Kudos to @rdiazv
+
 ## `2.2.5`
 
 :nail_care:

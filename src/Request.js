@@ -13,7 +13,7 @@ export default class Request {
     this.state = 'pending'
     this.labels = labels
     this.abort = abort
-    this.progress = progress
+    this.progress = progress = 0
     this.promise = promise
 
     promise

@@ -7,8 +7,8 @@ import Base from './Base'
 import Request from './Request'
 import type { CreateOptions, SetOptions, GetOptions, FindOptions, Id } from './types'
 
-export default class Collection extends Base {
-  @observable models: IObservableArray<Model> = []
+export default class Collection<T: Model> extends Base {
+  @observable models: IObservableArray<T> = []
 
   constructor (data: Array<{ [key: string]: any }> = []) {
     super()
@@ -26,14 +26,14 @@ export default class Collection extends Base {
   /**
    * Alias for models.map
    */
-  map (callback: (model: Model) => mixed): Array<*> {
+  map (callback: (model: T) => mixed): Array<*> {
     return this.models.map(callback)
   }
 
   /**
    * Alias for models.forEach
    */
-  forEach (callback: (model: Model) => void): void {
+  forEach (callback: (model: T) => void): void {
     return this.models.forEach(callback)
   }
 
@@ -64,7 +64,7 @@ export default class Collection extends Base {
   /**
    * Alias of slice
    */
-  toArray (): Array<Model> {
+  toArray (): Array<T> {
     return this.slice()
   }
 
@@ -72,7 +72,7 @@ export default class Collection extends Base {
    * Returns a defensive shallow array representation
    * of the collection
    */
-  slice (): Array<Model> {
+  slice (): Array<T> {
     return this.models.slice()
   }
 
@@ -80,7 +80,7 @@ export default class Collection extends Base {
    * Returns a shallow array representation
    * of the collection
    */
-  peek (): Array<Model> {
+  peek (): Array<T> {
     return this.models.peek()
   }
 
@@ -102,14 +102,14 @@ export default class Collection extends Base {
   /**
    * Get a resource at a given position
    */
-  at (index: number): ?Model {
+  at (index: number): ?T {
     return this.models[index]
   }
 
   /**
    * Get a resource with the given id or uuid
    */
-  get (id: Id, { required = false }: GetOptions = {}): ?Model {
+  get (id: Id, { required = false }: GetOptions = {}): ?T {
     const model = this.models.find(item => item.id === id)
 
     if (!model && required) {
@@ -122,7 +122,7 @@ export default class Collection extends Base {
   /**
    * Get resources matching criteria
    */
-  filter (query: { [key: string]: any } | (Model) => boolean): Array<Model> {
+  filter (query: { [key: string]: any } | (T) => boolean): Array<T> {
     return filter(this.models, (model) => {
       return typeof query === 'function'
         ? query(model)
@@ -133,7 +133,7 @@ export default class Collection extends Base {
   /**
    * Finds an element with the given matcher
    */
-  find (query: { [key: string]: mixed } | (Model) => boolean, { required = false }: FindOptions = {}): ?Model {
+  find (query: { [key: string]: mixed } | (T) => boolean, { required = false }: FindOptions = {}): ?T {
     const model = find(this.models, (model) => {
       return typeof query === 'function'
         ? query(model)
@@ -151,7 +151,7 @@ export default class Collection extends Base {
    * Adds a model or collection of models.
    */
   @action
-  add (data: Array<{ [key: string]: any } | Model> | { [key: string]: any } | Model): void {
+  add (data: Array<{ [key: string]: any } | T> | { [key: string]: any } | T): void {
     if (!Array.isArray(data)) {
       data = [data]
     }
@@ -163,7 +163,7 @@ export default class Collection extends Base {
    * Resets the collection of models.
    */
   @action
-  reset (data: Array<{ [key: string]: any } | Model>): void {
+  reset (data: Array<{ [key: string]: any } | T>): void {
     this.models.replace(data.map(this.build))
   }
 
@@ -171,7 +171,7 @@ export default class Collection extends Base {
    * Removes the model with the given ids or uuids
    */
   @action
-  remove (ids: Id | Model | Array<Id | Model>): void {
+  remove (ids: Id | T | Array<Id | T>): void {
     if (!Array.isArray(ids)) {
       ids = [ids]
     }
@@ -219,7 +219,7 @@ export default class Collection extends Base {
   /**
    * Creates a new model instance with the given attributes
    */
-  build = (attributes: { [key: string]: any } = {}): Model => {
+  build = (attributes: { [key: string]: any } = {}): T => {
     if (attributes instanceof Model) {
       attributes.collection = this
       return attributes
@@ -240,11 +240,11 @@ export default class Collection extends Base {
    */
   @action
   create (
-    attributesOrModel: { [key: string]: any } | Model,
+    attributesOrModel: { [key: string]: any } | T,
     { optimistic = true }: CreateOptions = {}
   ): Request {
     const model = this.build(attributesOrModel)
-    const { abort, promise } = model.save()
+    const { abort, promise } = model.save() // TODO: Progress?
 
     if (optimistic) {
       this.add(model)

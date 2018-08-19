@@ -3,9 +3,10 @@ import { action, observable, IObservableArray } from 'mobx'
 import apiClient from './apiClient'
 import Request from './Request'
 import ErrorObject from './ErrorObject'
+import { includes } from 'lodash'
 
 export default class Base {
-  @observable.shallow requests: IObservableArray = []
+  @observable.shallow requests: IObservableArray<Request> = []
 
   /**
    * Returns the resource's url.
@@ -16,7 +17,11 @@ export default class Base {
     throw new Error('You must implement this method')
   }
 
-  withRequest (labels: string | Array<string>, promise: Promise<*>, abort: ?() => void): Request {
+  withRequest (
+    labels: string | Array<string>,
+    promise: Promise<*>,
+    abort: ?() => void
+  ): Request {
     if (typeof labels === 'string') {
       labels = [labels]
     }
@@ -42,11 +47,11 @@ export default class Base {
   }
 
   getRequest (label: string): ?Request {
-    return this.requests.find(request => request.labels.indexOf(label) !== -1)
+    return this.requests.find(request => _.includes(request.labels, label))
   }
 
   getAllRequests (label: string): Array<Request> {
-    return this.requests.filter(request => request.labels.indexOf(label) !== -1)
+    return this.requests.filter(request => _.includes(request.labels, label))
   }
 
   /**
@@ -64,7 +69,10 @@ export default class Base {
    */
   @action
   rpc (label: string, endpoint: string, options?: {}): Request {
-    const { promise, abort } = apiClient().post(`${this.url()}/${endpoint}`, options)
+    const { promise, abort } = apiClient().post(
+      `${this.url()}/${endpoint}`,
+      options
+    )
 
     return this.withRequest(label, promise, abort)
   }
