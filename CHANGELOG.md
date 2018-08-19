@@ -7,6 +7,9 @@
   - [ ] Brought back onProgress for file uploaders.
   - [ ] Documented new APIs
   - [ ] Update the mobx-rest-example
+  - [ ] Fix https://github.com/masylum/mobx-rest/issues/47
+  - [ ] Add support for mobx4
+  - [ ] Fix https://github.com/masylum/mobx-rest/issues/41
 
 ## `3.0.0.alpha`
 
