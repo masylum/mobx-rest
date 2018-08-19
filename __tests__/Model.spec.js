@@ -1,663 +1,1079 @@
-import { Collection, Model, apiClient, Request } from '../src'
+import { isObservable } from 'mobx'
+import Model from '../src/Model'
+import Collection from '../src/Collection'
+import apiClient from '../src/apiClient'
 import MockApi from './mocks/api'
-import ErrorObject from '../src/ErrorObject'
-
-const error = 'boom!'
-const errorObject = new ErrorObject('fetch', error)
 
 apiClient(MockApi)
 
-class MyCollection extends Collection {
-  url () {
-    return '/resources'
+describe(Model, () => {
+  class MyModel extends Model {
+    urlRoot = () => '/resources'
   }
 
-  model () {
-    return MyModel
-  }
-}
-
-class MyModel extends Model {
-  urlRoot () {
-    return '/resources'
-  }
-}
-
-describe('Model', () => {
-  let collection
-  let model
-  let item
-  let spy
-
-  function resolve (attr) {
-    return () => {
-      apiClient().resolver = resolve => resolve(attr)
-    }
-  }
-
-  function reject () {
-    apiClient().resolver = (_resolve, reject) => reject(error)
-  }
-
-  beforeEach(() => {
-    item = {
-      id: 1,
-      name: 'miles',
-      album: 'kind of blue',
-      tracks: [
-        { name: 'So What' },
-        { name: 'Freddie Freeloader' },
-        { name: 'Blue in Green' },
-        { name: 'All Blues' },
-        { name: 'Flamenco Sketches' }
-      ]
-    }
-    collection = new MyCollection([item])
-    model = collection.at(0)
-  })
-
-  afterEach(() => {
-    if (spy) {
-      spy.mockReset()
-      spy.mockRestore()
-      spy = null
-    }
-  })
-
-  describe('isRequest', () => {
-    it('returns false if there is no request', () => {
-      const newModel = new MyModel({})
-      expect(newModel.isRequest('fetching')).toBe(false)
+  it('assigns the passed attributes', () => {
+    const model = new Model({
+      firstName: 'John',
+      lastName: 'Doe'
     })
 
-    it('return false if the request is something different', () => {
-      const newModel = new MyModel({})
-      newModel.request = new Request('creating', null, 0)
-      expect(newModel.isRequest('fetching')).toBe(false)
+    expect(model.toJS()).toEqual({
+      firstName: 'John',
+      lastName: 'Doe'
+    })
+  })
+
+  it('sets the initial attributes as committed', () => {
+    const model = new Model({
+      firstName: 'John',
+      lastName: 'Doe'
     })
 
-    it('return true if the request is matching', () => {
-      const newModel = new MyModel({})
-      newModel.request = new Request('fetching', null, 0)
-      expect(newModel.isRequest('fetching')).toBe(true)
+    expect(model.committedAttributes.toJS()).toEqual({
+      firstName: 'John',
+      lastName: 'Doe'
+    })
+  })
+
+  it('allows to define default attributes', () => {
+    class MyModel extends Model {
+      static defaultAttributes = {
+        email: null,
+        phone: null
+      }
+    }
+
+    const model = new MyModel({
+      firstName: 'John',
+      lastName: 'Doe'
+    })
+
+    expect(model.toJS()).toEqual({
+      firstName: 'John',
+      lastName: 'Doe',
+      email: null,
+      phone: null
+    })
+  })
+
+  it('assigns an optimistic id', () => {
+    const model = new Model()
+
+    expect(model.optimisticId).toBeDefined()
+  })
+
+  describe('toJS()', () => {
+    it('returns a plain object version of the attributes', () => {
+      const model = new Model({ name: 'John' })
+
+      expect(isObservable(model.attributes)).toBe(true)
+      expect(isObservable(model.toJS())).toBe(false)
+      expect(model.toJS()).toEqual({ name: 'John' })
+    })
+  })
+
+  describe('url()', () => {
+    describe('if the model is new', () => {
+      it('returns the url root', () => {
+        const model = new MyModel()
+
+        expect(model.url()).toBe('/resources')
+      })
+    })
+
+    describe('if the model is not new', () => {
+      it('returns the url root with the model id', () => {
+        const model = new MyModel({ id: 2 })
+
+        expect(model.url()).toBe('/resources/2')
+      })
+    })
+
+    describe('if the model belongs to a collection and urlRoot is not defined', () => {
+      it('uses the collection url as root', () => {
+        const model = new Model({ id: 2 })
+        const collection = new Collection()
+
+        collection.url = () => '/different-resources'
+        model.collection = collection
+
+        expect(model.url()).toBe('/different-resources/2')
+      })
+    })
+
+    describe('if the model doesn\'t belong to a collection and urlRoot is not defined', () => {
+      it('throws', () => {
+        const model = new Model({ id: 2 })
+
+        expect(() => model.url()).toThrow('implement `urlRoot` method or `url` on the collection')
+      })
+    })
+  })
+
+  describe('get(attribute)', () => {
+    describe('if the attribute is defined', () => {
+      it('returns its value', () => {
+        const model = new Model({ name: 'John' })
+
+        expect(model.get('name')).toBe('John')
+      })
+    })
+
+    describe('if the attribute is not defined', () => {
+      it('throws', () => {
+        const model = new Model({ name: 'John' })
+
+        expect(() => model.get('email')).toThrow('Attribute "email" not found')
+      })
+    })
+  })
+
+  describe('has(attribute)', () => {
+    describe('if the attribute is defined', () => {
+      it('returns true', () => {
+        const model = new Model({ name: 'John' })
+
+        expect(model.has('name')).toBe(true)
+      })
+    })
+
+    describe('if the attribute is not defined', () => {
+      it('returns false', () => {
+        const model = new Model({ name: 'John' })
+
+        expect(model.has('email')).toBe(false)
+      })
     })
   })
 
   describe('isNew', () => {
-    it('returns true if it does not have an id', () => {
-      const newModel = new MyModel({})
-      expect(newModel.isNew).toBe(true)
-    })
+    describe('if the primary key attribute exists', () => {
+      describe('if the primary key attribute has a value', () => {
+        it('returns false', () => {
+          const model = new Model({ id: 123 })
 
-    it('returns false if it does not have an id', () => {
-      const newModel = new MyModel({ id: 4 })
-      expect(newModel.isNew).toBe(false)
-    })
-  })
-
-  describe('url', () => {
-    describe('when the model has a collection', () => {
-      it('returns the collection one', () => {
-        expect(model.url()).toBe('/resources/1')
-      })
-    })
-
-    describe('when the model has no collection', () => {
-      describe('and no urlRoot', () => {
-        it('throws', () => {
-          expect(() => {
-            const newModel = new Model({ id: 1 })
-            newModel.url()
-          }).toThrowError()
+          expect(model.isNew).toBe(false)
         })
       })
 
-      describe('and urlRoot is defined', () => {
-        it('returns different urls depending whether is new or not', () => {
-          let newModel
+      describe('if the primary key attribute is null or undefined', () => {
+        it('returns true', () => {
+          const model1 = new Model({ id: null })
+          const model2 = new Model({ id: undefined })
 
-          newModel = new MyModel({})
-          expect(newModel.url()).toBe('/resources')
-
-          newModel = new MyModel({ id: 3 })
-          expect(newModel.url()).toBe('/resources/3')
+          expect(model1.isNew).toBe(true)
+          expect(model2.isNew).toBe(true)
         })
+      })
+    })
+
+    describe('if the primary key attribute doesn\'t exist', () => {
+      it('returns true', () => {
+        const model = new Model()
+
+        expect(model.isNew).toBe(true)
       })
     })
   })
 
-  describe('get', () => {
-    it('returns the attribute', () => {
-      expect(model.get('name')).toBe(item.name)
+  describe('id', () => {
+    describe('if the model has an id attribute', () => {
+      it('returns its value', () => {
+        const model = new Model({ id: 123 })
+
+        expect(model.id).toBe(123)
+      })
+
+      it('allows to customize the primary key attribute', () => {
+        class MyModel extends Model {
+          get primaryKey () {
+            return 'someId'
+          }
+        }
+
+        const model = new MyModel({ someId: 123 })
+
+        expect(model.id).toBe(123)
+      })
     })
 
-    it('throws if the attribute is not found', () => {
-      expect(() => {
-        model.get('lol')
-      }).toThrowError()
+    describe('if the model doesn\'t have an id attribute', () => {
+      it('returns the optimistic id', () => {
+        const model = new Model()
+
+        expect(model.id).toBe(model.optimisticId)
+      })
     })
   })
 
-  describe('set', () => {
-    const name = 'dylan'
+  describe('changedAttributes', () => {
+    it('return the attributes names that changed from the last sync', () => {
+      const model = new Model({
+        name: 'Name 1',
+        date: '1900-01-01',
+        phone: '123456789',
+        address: {
+          street: 'Somewhere',
+          number: 1
+        }
+      })
 
-    it('changes the given key value', () => {
-      model.set({ name: 'dylan' })
-      expect(model.get('name')).toBe(name)
-      expect(model.get('album')).toBe(item.album)
+      model.set({
+        name: 'Name 2',
+        phone: '987654321',
+        address: {
+          number: 2
+        }
+      })
+
+      expect(model.changedAttributes).toEqual(['name', 'phone', 'address'])
     })
   })
 
-  describe('reset', () => {
-    const name = 'dylan'
-    it('erease everything', () => {
-      model.reset({ name })
-      expect(model.toJS()).toEqual({ name })
+  describe('hasChanges(attribute)', () => {
+    describe('if an attribute is specified', () => {
+      it('returns true if the specified attribute has changes', () => {
+        const model = new Model({
+          name: 'Name 1',
+          date: '1900-01-01',
+          phone: '123456789'
+        })
+
+        model.set({ name: 'Name 2' })
+
+        expect(model.hasChanges('name')).toBe(true)
+      })
+
+      it('returns false if the specified attribute has no changes', () => {
+        const model = new Model({
+          name: 'Name 1',
+          date: '1900-01-01',
+          phone: '123456789'
+        })
+
+        model.set({ name: 'Name 2' })
+
+        expect(model.hasChanges('date')).toBe(false)
+      })
+
+      describe('if no attribute is specified', () => {
+        it('returns true if any attribute has changes', () => {
+          const model = new Model({
+            name: 'Name 1',
+            date: '1900-01-01',
+            phone: '123456789'
+          })
+
+          model.set({ name: 'Name 2' })
+
+          expect(model.hasChanges()).toBe(true)
+        })
+
+        it('returns false if no attributes have changes', () => {
+          const model = new Model({
+            name: 'Name 1',
+            date: '1900-01-01',
+            phone: '123456789'
+          })
+
+          expect(model.hasChanges()).toBe(false)
+        })
+      })
+    })
+
+    it('returns an object with the current changes', () => {
+      const model = new Model({
+        name: 'Name 1',
+        date: '1900-01-01',
+        phone: '123456789'
+      })
+
+      model.set({
+        name: 'Name 2',
+        phone: '987654321'
+      })
+
+      expect(model.changedAttributes).toEqual(['name', 'phone'])
     })
   })
 
-  describe('save', () => {
-    const name = 'dylan'
-
-    describe('if the item is not persisted', () => {
-      beforeEach(() => model.attributes.delete('id'))
-
-      describe('and it has a collection', () => {
-        it('it adds the model', () => {
-          collection.create = jest.fn()
-          model.save(item)
-          expect(collection.create).toBeCalledWith(model, { optimistic: true })
-        })
-
-        it('sends merged attributes on the request', () => {
-          const adapter = apiClient()
-          const attributes = { ...item }
-
-          delete attributes.id
-
-          spy = jest.spyOn(adapter, 'post')
-          model.save({ name })
-
-          expect(spy).toHaveBeenCalledTimes(1)
-          expect(spy.mock.calls[0][1]).toEqual({
-            ...attributes,
-            name: 'dylan'
-          })
-        })
+  describe('changes', () => {
+    it('returns an object with the current changes', () => {
+      const model = new Model({
+        name: 'Name 1',
+        date: '1900-01-01',
+        phone: '123456789',
+        address: {
+          street: 'Somewhere',
+          number: 1
+        }
       })
 
-      describe('and it does not have a collection', () => {
-        beforeEach(() => {
-          model.collection = null
-        })
+      model.set({
+        name: 'Name 2'
+      })
 
-        it('sends merged attributes on the request', () => {
-          const adapter = apiClient()
-          const attributes = { ...item }
+      model.set({
+        name: 'Name 1',
+        date: '2000-01-01',
+        phone: '987654321'
+      })
 
-          delete attributes.id
+      model.get('address').number = 2
 
-          spy = jest.spyOn(adapter, 'post')
-          model.save({ name })
+      expect(model.changes).toEqual({
+        date: '2000-01-01',
+        phone: '987654321',
+        address: {
+          number: 2
+        }
+      })
+    })
+  })
 
-          expect(spy).toHaveBeenCalledTimes(1)
-          expect(spy.mock.calls[0][1]).toEqual({
-            ...attributes,
-            name: 'dylan'
-          })
-        })
+  describe('commitChanges()', () => {
+    it('accepts the current changes', () => {
+      const model = new Model({ phone: '1234' })
 
-        describe('if its optimistic (default)', () => {
-          it('it sets model straight away', () => {
-            model.save({ name })
-            expect(model.get('name')).toBe('dylan')
-            expect(model.get('album')).toBe(item.album)
-            expect(model.request.label).toBe('creating')
-          })
+      model.set({ phone: '5678' })
+      expect(model.hasChanges()).toBe(true)
 
-          describe('when it fails', () => {
-            beforeEach(reject)
+      model.commitChanges()
+      expect(model.hasChanges()).toBe(false)
+      expect(model.get('phone')).toBe('5678')
+    })
 
-            it('sets the error', () => {
-              return model.save({ name }).catch(() => {
-                expect(model.error.label).toBe('creating')
-                expect(model.error.body).toBe(error)
-              })
-            })
+    it('makes a copy of the current attributes', () => {
+      const model = new Model({
+        nested: { phone: '1234' }
+      })
 
-            it('nullifies the request', () => {
-              return model.save({ name }).catch(() => {
-                expect(model.request).toBe(null)
-              })
-            })
-          })
+      expect(model.attributes.get('nested')).not.toBe(model.committedAttributes.get('nested'))
+    })
+  })
 
-          describe('when it succeeds', () => {
-            beforeEach(() => {
-              model.error = errorObject
-              resolve({ id: 1, name: 'coltrane' })()
-            })
+  describe('discardChanges()', () => {
+    it('reverts to the last committed attributes', () => {
+      const model = new Model({ phone: '1234' })
 
-            it('updates the data from the server', () => {
-              return model.save({ name }).then(() => {
-                expect(model.get('name')).toBe('coltrane')
-              })
-            })
+      model.set({ phone: '5678' })
+      expect(model.hasChanges()).toBe(true)
 
-            it('nullifies the request', () => {
-              return model.save({ name }).then(() => {
-                expect(model.request).toBe(null)
-              })
-            })
+      model.discardChanges()
+      expect(model.hasChanges()).toBe(false)
+      expect(model.get('phone')).toBe('1234')
+    })
+  })
 
-            it('clears the error', async () => {
-              await model.save({ name })
-              expect(model.error).toBe(null)
-            })
-          })
-        })
+  describe('reset(attributes)', () => {
+    describe('if attributes is specified', () => {
+      it('replaces the current attributes with the specified ones', () => {
+        const model = new Model()
 
-        describe('if its pessimistic', () => {
-          describe('when it fails', () => {
-            beforeEach(reject)
+        model.reset({ hi: 'bye' })
 
-            it('sets the error', () => {
-              return model.save({ name }, { optimistic: false }).catch(() => {
-                expect(model.error.label).toBe('creating')
-                expect(model.error.body).toBe(error)
-              })
-            })
+        expect(model.toJS()).toEqual({ hi: 'bye' })
+      })
 
-            it('nullifies the request', () => {
-              return model.save({ name }).catch(() => {
-                expect(model.request).toBe(null)
-              })
-            })
-          })
+      it('respects the default attributes', () => {
+        class MyModel extends Model {
+          static defaultAttributes = {
+            someAttribute: 'test'
+          }
+        }
 
-          describe('when it succeeds', () => {
-            beforeEach(() => {
-              model.error = errorObject
-              resolve({ id: 2, name: 'dylan' })()
-            })
+        const model = new MyModel({ name: 'john' })
 
-            it('adds data from the server', () => {
-              return model.save({ name }, { optimistic: false }).then(() => {
-                expect(model.get('name')).toBe('dylan')
-              })
-            })
+        model.reset({ phone: '1234567' })
 
-            it('nullifies the request', () => {
-              return model.save({ name }).then(() => {
-                expect(model.request).toBe(null)
-              })
-            })
-
-            it('clears the error', async () => {
-              await model.save({ name })
-              expect(model.error).toBe(null)
-            })
-          })
+        expect(model.toJS()).toEqual({
+          someAttribute: 'test',
+          phone: '1234567'
         })
       })
     })
 
-    describe('if its optimistic (default)', () => {
-      describe('and its patching (default)', () => {
-        it('it sets model straight away', () => {
-          model.save({ name })
-          expect(model.get('name')).toBe('dylan')
-          expect(model.get('album')).toBe(item.album)
-          expect(model.request.label).toBe('updating')
-        })
+    describe('if attributes is not specified', () => {
+      it('replaces the current attributes with the default ones', () => {
+        class MyModel extends Model {
+          static defaultAttributes = {
+            someAttribute: 'test'
+          }
+        }
+        const model = new MyModel({ email: 'test@test.com' })
 
-        it('sends merged attributes on the request', () => {
-          const adapter = apiClient()
+        model.reset()
 
-          spy = jest.spyOn(adapter, 'put')
-          model.save({
-            name,
-            tracks: [
-              { name: 'Track 1' },
-              { name: 'Track 2' }
-            ]
-          })
+        expect(model.toJS()).toEqual({ someAttribute: 'test' })
+      })
+    })
+  })
 
-          expect(spy).toHaveBeenCalledTimes(1)
-          expect(spy.mock.calls[0][1]).toEqual({
-            name: 'dylan',
-            tracks: [
-              { name: 'Track 1' },
-              { name: 'Track 2' }
-            ]
-          })
-        })
+  describe('set(data)', () => {
+    it('merges the data with the current attributes', () => {
+      const model = new Model({
+        firstName: 'John',
+        lastName: 'Doe'
       })
 
-      describe('and its not patching', () => {
-        it('it sets model straight away', () => {
-          model.save({ name }, { patch: false })
-          expect(model.get('name')).toBe('dylan')
-          expect(model.get('album')).toBe('kind of blue')
-          expect(model.request.label).toBe('updating')
-        })
-
-        it('sends merged attributes on the request', () => {
-          const adapter = apiClient()
-
-          spy = jest.spyOn(adapter, 'put')
-          model.save({
-            name,
-            tracks: [
-              { name: 'Track 1' },
-              { name: 'Track 2' }
-            ]
-          }, { patch: false })
-
-          expect(spy).toHaveBeenCalledTimes(1)
-          expect(spy.mock.calls[0][1]).toEqual({
-            ...item,
-            name: 'dylan',
-            tracks: [
-              { name: 'Track 1' },
-              { name: 'Track 2' }
-            ]
-          })
-        })
+      model.set({
+        firstName: 'Test',
+        email: 'test@test.com'
       })
 
-      describe('when it fails', () => {
-        beforeEach(reject)
-
-        it('sets the error', () => {
-          return model.save({ name }).catch(() => {
-            expect(model.error.label).toBe('updating')
-            expect(model.error.body).toBe(error)
-          })
-        })
-
-        it('rolls back the changes', () => {
-          return model.save({ name }).catch(() => {
-            expect(model.get('name')).toBe(item.name)
-            expect(model.get('album')).toBe(item.album)
-            expect(model.request).toBe(null)
-          })
-        })
-
-        it('nullifies the request', () => {
-          return model.save({ name }).catch(() => {
-            expect(model.request).toBe(null)
-          })
-        })
+      expect(model.toJS()).toEqual({
+        firstName: 'Test',
+        lastName: 'Doe',
+        email: 'test@test.com'
       })
+    })
+  })
 
-      describe('when it succeeds', () => {
-        beforeEach(() => {
-          model.error = errorObject
-          resolve({ id: 1, name: 'coltrane' })()
-        })
+  describe('fetch(options)', () => {
+    let spy
+    let promise
+    let model
 
-        it('updates the data from the server', () => {
-          return model.save({ name }).then(() => {
-            expect(model.get('name')).toBe('coltrane')
-          })
-        })
-
-        it('nullifies the request', () => {
-          return model.save({ name }).then(() => {
-            expect(model.request).toBe(null)
-          })
-        })
-
-        it('clears the error', async () => {
-          await model.save({ name })
-          expect(model.error).toBe(null)
-        })
+    beforeEach(() => {
+      model = new Model({ id: 2 })
+      model.urlRoot = () => '/resources'
+      spy = jest.spyOn(apiClient(), 'get')
+      promise = model.fetch({
+        data: {
+          full: true
+        },
+        method: 'HEAD'
       })
     })
 
-    describe('if its pessimistic', () => {
-      describe('when it fails', () => {
-        beforeEach(reject)
+    afterEach(() => {
+      apiClient().get.mockRestore()
+    })
 
-        it('sets the error', () => {
-          return model.save({ name }, { optimistic: false }).catch(() => {
-            expect(model.error.label).toBe('updating')
-            expect(model.error.body).toBe(error)
-          })
-        })
+    it('makes a get request to the model url', () => {
+      expect(spy).toHaveBeenCalled()
+    })
 
-        it('nullifies the request', () => {
-          return model.save({ name }).catch(() => {
-            expect(model.request).toBe(null)
-          })
-        })
+    it('passes the options to the api client', () => {
+      expect(spy.mock.calls[0][1]).toEqual({
+        full: true
+      })
+    })
+
+    it('tracks the request with the "fetching" label', () => {
+      expect(model.isRequest('fetching')).toBe(true)
+    })
+
+    it('works without passing options', () => {
+      expect(() => model.fetch()).not.toThrow()
+    })
+
+    describe('if the request succeeds', () => {
+      it('merges the current data with the response', async () => {
+        model.set({ last_name: 'Doe' })
+        MockApi.resolvePromise({ id: 2, name: 'John' })
+        await promise
+        expect(model.toJS()).toEqual({ id: 2, name: 'John', last_name: 'Doe' })
       })
 
-      describe('when it succeeds', () => {
-        beforeEach(() => {
-          model.error = errorObject
-          resolve({ id: 2, name: 'dylan' })()
-        })
+      it('sets the new attributes as committed', async () => {
+        MockApi.resolvePromise({ id: 2, name: 'John' })
+        await promise
+        expect(model.committedAttributes.toJS()).toEqual({ id: 2, name: 'John' })
+      })
+    })
 
-        it('adds data from the server', () => {
-          return model.save({ name }, { optimistic: false }).then(() => {
-            expect(model.get('name')).toBe('dylan')
-          })
-        })
-
-        it('nullifies the request', () => {
-          return model.save({ name }).then(() => {
-            expect(model.request).toBe(null)
-          })
-        })
-
-        it('clears the error', async () => {
-          await model.save({ name })
-          expect(model.error).toBe(null)
+    describe('if other options are specified', () => {
+      it('they must be passed to the adapter', () => {
+        expect(spy.mock.calls[0][2]).toEqual({
+          method: 'HEAD'
         })
       })
     })
   })
 
-  describe('destroy', () => {
-    describe('if the item is not persisted', () => {
-      beforeEach(() => model.attributes.delete('id'))
+  describe('save(attributes, options)', () => {
+    let model
 
-      it('it removes the model', () => {
-        collection.remove = jest.fn()
-        model.destroy()
-        expect(collection.remove).toBeCalledWith([model.optimisticId])
-      })
+    beforeEach(() => {
+      model = new Model({ name: 'John', email: 'john@test.com', phone: '1234' })
+      model.urlRoot = () => '/resources'
     })
 
-    describe('if its optimistic (default)', () => {
-      it('it removes the model straight away', () => {
-        model.destroy()
-        expect(collection.models.length).toBe(0)
-      })
+    describe('if is new', () => {
+      let spy
 
-      describe('when it fails', () => {
-        beforeEach(reject)
-
-        it('sets the error', () => {
-          return model.destroy().catch(() => {
-            expect(model.error.label).toBe('destroying')
-            expect(model.error.body).toBe(error)
-          })
-        })
-
-        it('rolls back the changes', () => {
-          return model.destroy().catch(() => {
-            expect(collection.models.length).toBe(1)
-            expect(collection.at(0).toJS()).toEqual(item)
-          })
-        })
-
-        it('nullifies the request', () => {
-          return model.destroy().catch(() => {
-            expect(model.request).toBe(null)
-          })
-        })
-      })
-
-      describe('when it succeeds', () => {
-        beforeEach(() => {
-          model.error = errorObject
-          resolve()()
-        })
-
-        it('nullifies the request', () => {
-          return model.destroy().then(() => {
-            expect(model.request).toBe(null)
-          })
-        })
-
-        it('clears the error', async () => {
-          await model.save({ name })
-          expect(model.error).toBe(null)
-        })
-      })
-    })
-
-    describe('if its pessimistic', () => {
-      describe('when it fails', () => {
-        beforeEach(reject)
-
-        it('sets the error', () => {
-          return model.destroy({ optimistic: false }).catch(() => {
-            expect(model.error.label).toBe('destroying')
-            expect(model.error.body).toBe(error)
-          })
-        })
-
-        it('rolls back the changes', () => {
-          return model.destroy({ optimistic: false }).catch(() => {
-            expect(collection.models.length).toBe(1)
-          })
-        })
-
-        it('nullifies the request', () => {
-          return model.destroy({ optimistic: false }).catch(() => {
-            expect(model.request).toBe(null)
-          })
-        })
-      })
-
-      describe('when it succeeds', () => {
-        beforeEach(() => {
-          model.error = errorObject
-          resolve()()
-        })
-
-        it('applies changes', () => {
-          return model.destroy({ optimistic: false }).then(() => {
-            expect(collection.models.length).toBe(0)
-          })
-        })
-
-        it('nullifies the request', () => {
-          return model.destroy({ optimistic: false }).then(() => {
-            expect(model.request).toBe(null)
-          })
-        })
-
-        it('clears the error', async () => {
-          await model.destroy({ optimistic: false })
-          expect(model.error).toBe(null)
-        })
-      })
-    })
-  })
-
-  describe('fetch', () => {
-    describe('when it fails', () => {
-      beforeEach(reject)
-
-      it('sets the error', () => {
-        return model.fetch().catch(() => {
-          expect(model.error.label).toBe('fetching')
-          expect(model.error.body).toBe(error)
-        })
-      })
-
-      it('nullifies the request', () => {
-        return model.fetch().catch(() => {
-          expect(model.request).toBe(null)
-        })
-      })
-    })
-
-    describe('when it succeeds', () => {
       beforeEach(() => {
-        model.error = errorObject
-        resolve({ name: 'bill' })()
+        spy = jest.spyOn(apiClient(), 'post')
       })
 
-      it('returns the response', () => {
-        return model.fetch().then(response => {
-          expect(response.name).toBe('bill')
+      afterEach(() => {
+        apiClient().post.mockRestore()
+      })
+
+      it('sends a POST request', () => {
+        model.save()
+        expect(spy).toHaveBeenCalled()
+      })
+
+      describe('if attributes are not specified', () => {
+        it('sends the current attributes', () => {
+          model.save()
+          expect(spy.mock.calls[0][1]).toEqual({
+            name: 'John',
+            email: 'john@test.com',
+            phone: '1234'
+          })
         })
       })
 
-      it('sets the response as attributes', () => {
-        return model.fetch().then(() => {
-          expect(model.toJS()).toEqual({ name: 'bill' })
+      describe('if attributes are specified', () => {
+        it('sends merges the attributes with the current ones', () => {
+          model.save({ phone: '5678' })
+
+          expect(spy.mock.calls[0][1]).toEqual({
+            name: 'John',
+            email: 'john@test.com',
+            phone: '5678'
+          })
+        })
+
+        describe('if optimistic', () => {
+          it('immediately assigns the merged attributes', () => {
+            model.save({ phone: '5678' }, { optimistic: true })
+
+            expect(model.toJS()).toEqual({
+              name: 'John',
+              email: 'john@test.com',
+              phone: '5678'
+            })
+          })
+        })
+      })
+    })
+
+    describe('if is not new', () => {
+      beforeEach(() => {
+        model.set({ id: 2 })
+        model.commitChanges()
+      })
+
+      describe('if patch = true', () => {
+        let spy
+
+        beforeEach(() => {
+          spy = jest.spyOn(apiClient(), 'patch')
+        })
+
+        afterEach(() => {
+          apiClient().patch.mockRestore()
+        })
+
+        it('sends a PATCH request', () => {
+          model.save({}, { patch: true })
+          expect(spy).toHaveBeenCalled()
+        })
+
+        describe('if attributes are not specified', () => {
+          it('sends the changes compared to the current attributes', () => {
+            model.set({ phone: '5678' })
+            model.save(null, { patch: true })
+
+            expect(spy.mock.calls[0][1]).toEqual({
+              phone: '5678'
+            })
+          })
+        })
+
+        describe('if attributes are specified', () => {
+          it('sends specified attributes', () => {
+            model.save({ phone: '5678' }, { patch: true })
+
+            expect(spy.mock.calls[0][1]).toEqual({
+              phone: '5678'
+            })
+          })
+
+          describe('if optimistic', () => {
+            it('immediately assigns the merged attributes', () => {
+              model.save({ phone: '5678' }, { optimistic: true, patch: true })
+
+              expect(model.toJS()).toEqual({
+                id: 2,
+                name: 'John',
+                email: 'john@test.com',
+                phone: '5678'
+              })
+            })
+          })
         })
       })
 
-      it('nullifies the request', () => {
-        return model.fetch().then(() => {
-          expect(model.request).toBe(null)
+      describe('if patch = false', () => {
+        let spy
+
+        beforeEach(() => {
+          spy = jest.spyOn(apiClient(), 'put')
+        })
+
+        afterEach(() => {
+          apiClient().put.mockRestore()
+        })
+
+        it('sends a PUT request', () => {
+          model.save()
+          expect(spy).toHaveBeenCalled()
+        })
+
+        describe('if attributes are not specified', () => {
+          it('sends the current attributes', () => {
+            model.save({}, { patch: false })
+
+            expect(spy.mock.calls[0][1]).toEqual({
+              id: 2,
+              name: 'John',
+              email: 'john@test.com',
+              phone: '1234'
+            })
+          })
+        })
+
+        describe('if attributes are specified', () => {
+          it('sends merges the attributes with the current ones', () => {
+            model.save({ phone: '5678' }, { patch: false })
+
+            expect(spy.mock.calls[0][1]).toEqual({
+              id: 2,
+              name: 'John',
+              email: 'john@test.com',
+              phone: '5678'
+            })
+          })
+
+          describe('if optimistic', () => {
+            it('immediately assigns the merged attributes', () => {
+              model.save({ phone: '5678' }, { optimistic: true, patch: false })
+
+              expect(model.toJS()).toEqual({
+                id: 2,
+                name: 'John',
+                email: 'john@test.com',
+                phone: '5678'
+              })
+            })
+          })
+        })
+      })
+    })
+
+    describe('if other options are specified', () => {
+      let spy
+
+      beforeEach(() => {
+        spy = jest.spyOn(apiClient(), 'post')
+      })
+
+      afterEach(() => {
+        apiClient().post.mockRestore()
+      })
+
+      it('they must be passed to the adapter', () => {
+        model.save(undefined, { method: 'HEAD' })
+
+        expect(spy).toHaveBeenCalledWith(expect.anything(), expect.anything(), {
+          method: 'HEAD'
+        })
+      })
+    })
+
+    describe('if the request succeeds', () => {
+      it('assigns the response attributes to the model', async () => {
+        const promise = model.save({ phone: '5678' }, { optimistic: false })
+
+        expect(model.toJS()).toEqual({
+          name: 'John',
+          email: 'john@test.com',
+          phone: '1234'
+        })
+
+        MockApi.resolvePromise({
+          id: 2,
+          name: 'John',
+          email: 'john@test.com',
+          phone: '5678'
+        })
+
+        await promise
+
+        expect(model.toJS()).toEqual({
+          id: 2,
+          name: 'John',
+          email: 'john@test.com',
+          phone: '5678'
         })
       })
 
-      it('clears the error', async () => {
-        await model.fetch()
-        expect(model.error).toBe(null)
+      it('sets the new attributes as committed', async () => {
+        const promise = model.save({ phone: '5678' })
+
+        expect(model.committedAttributes.toJS()).toEqual({
+          name: 'John',
+          email: 'john@test.com',
+          phone: '1234'
+        })
+
+        MockApi.resolvePromise({
+          id: 2,
+          name: 'John',
+          email: 'john@test.com',
+          phone: '5678'
+        })
+
+        await promise
+
+        expect(model.committedAttributes.toJS()).toEqual({
+          id: 2,
+          name: 'John',
+          email: 'john@test.com',
+          phone: '5678'
+        })
+      })
+
+      describe('if changes were made during the request', () => {
+        describe('if keepChanges = false', () => {
+          it('should override the changes with the response', async () => {
+            const promise = model.save({ phone: '5678' }, { keepChanges: false })
+
+            model.set({ phone: '999' })
+
+            MockApi.resolvePromise({
+              id: 2,
+              name: 'John',
+              email: 'john@test.com',
+              phone: '5678'
+            })
+
+            await promise
+
+            expect(model.toJS()).toEqual({
+              id: 2,
+              name: 'John',
+              email: 'john@test.com',
+              phone: '5678'
+            })
+          })
+        })
+
+        describe('if keepChanges = true', () => {
+          it('should keep the changes', async () => {
+            const promise = model.save({ phone: '5678' }, { keepChanges: true })
+
+            model.set({ phone: '999' })
+
+            MockApi.resolvePromise({
+              id: 2,
+              name: 'John',
+              email: 'john@test.com',
+              phone: '5678'
+            })
+
+            await promise
+
+            expect(model.toJS()).toEqual({
+              id: 2,
+              name: 'John',
+              email: 'john@test.com',
+              phone: '999'
+            })
+
+            expect(model.changes).toEqual({
+              phone: '999'
+            })
+          })
+
+          it('should keep complex values changes', async () => {
+            model.set({
+              addresses: {
+                address1: {
+                  street: 'Street 1',
+                  number: 1111
+                },
+                address2: {
+                  street: 'Street 2',
+                  number: 2222
+                }
+              }
+            })
+
+            model.commitChanges()
+
+            const promise = model.save({
+              addresses: {
+                address1: {
+                  street: 'Street 1',
+                  number: 3333
+                },
+                address2: {
+                  street: 'Street 2',
+                  number: 2222
+                }
+              }
+            }, { keepChanges: true })
+
+            model.get('addresses').address2.number = 4444
+
+            MockApi.resolvePromise({
+              email: 'john@test.com',
+              name: 'John',
+              phone: '1234',
+              addresses: {
+                address1: {
+                  street: 'Street 1',
+                  number: 3333
+                },
+                address2: {
+                  street: 'Street 2',
+                  number: 2222
+                }
+              }
+            })
+
+            await promise
+
+            expect(model.toJS()).toEqual({
+              email: 'john@test.com',
+              name: 'John',
+              phone: '1234',
+              addresses: {
+                address1: {
+                  street: 'Street 1',
+                  number: 3333
+                },
+                address2: {
+                  street: 'Street 2',
+                  number: 4444
+                }
+              }
+            })
+
+            expect(model.changes).toEqual({
+              addresses: {
+                address2: {
+                  number: 4444
+                }
+              }
+            })
+          })
+
+          it('shouldn\'t merge arrays', async () => {
+            model.set({
+              numbers: [0, 1, 2]
+            })
+
+            model.commitChanges()
+
+            const promise = model.save({
+              numbers: [3, 4, 5]
+            }, { keepChanges: true })
+
+            model.get('numbers')[0] = 6
+
+            MockApi.resolvePromise({
+              email: 'john@test.com',
+              name: 'John',
+              phone: '1234',
+              numbers: [3, 4, 5]
+            })
+
+            await promise
+
+            expect(model.toJS()).toEqual({
+              email: 'john@test.com',
+              name: 'John',
+              phone: '1234',
+              numbers: [6, 4, 5]
+            })
+
+            expect(model.changes).toEqual({
+              numbers: [6, 4, 5]
+            })
+          })
+        })
+      })
+    })
+
+    describe('if the request fails', () => {
+      describe('if optimistic', () => {
+        it('goes back to the original attributes', async () => {
+          const promise = model.save({ phone: '5678' }, { optimistic: true })
+
+          expect(model.toJS()).toEqual({
+            name: 'John',
+            email: 'john@test.com',
+            phone: '5678'
+          })
+
+          MockApi.rejectPromise('Conflict')
+
+          try {
+            await promise
+          } catch (_error) {
+            expect(model.toJS()).toEqual({
+              name: 'John',
+              email: 'john@test.com',
+              phone: '1234'
+            })
+          }
+        })
       })
     })
   })
 
-  describe('rpc', () => {
-    describe('when it fails', () => {
-      beforeEach(reject)
+  describe('destroy(options)', () => {
+    let spy
+    let model
 
-      it('sets the error', () => {
-        return model.rpc('approve').catch(() => {
-          expect(model.error.label).toBe('updating')
-          expect(model.error.body).toBe(error)
-        })
+    beforeEach(() => {
+      model = new Model()
+      model.urlRoot = () => '/resources'
+      spy = jest.spyOn(apiClient(), 'del')
+    })
+
+    afterEach(() => {
+      apiClient().del.mockRestore()
+    })
+
+    describe('if is new', () => {
+      it('don\'t make any request', () => {
+        model.destroy()
+        expect(spy).not.toHaveBeenCalled()
       })
 
-      it('nullifies the request', () => {
-        return model.rpc('approve').catch(() => {
-          expect(model.request).toBe(null)
+      describe('if belongs to a collection', () => {
+        let collection
+
+        beforeEach(() => {
+          collection = new Collection()
+          model.collection = collection
+          collection.models.push(model)
+        })
+
+        it('removes itself from the collection', () => {
+          expect(collection.length).toBe(1)
+          model.destroy()
+          expect(collection.length).toBe(0)
         })
       })
     })
 
-    describe('when it succeeds', () => {
+    describe('if is not new', () => {
       beforeEach(() => {
-        model.error = errorObject
-        resolve('foo')()
+        model.set({ id: 2 })
+        model.commitChanges()
       })
 
-      it('returns the response', () => {
-        return model.rpc('approve').then(response => {
-          expect(response).toBe('foo')
+      it('makes a DELETE request', () => {
+        model.destroy()
+        expect(spy).toHaveBeenCalled()
+      })
+
+      describe('if optimistic and belongs to a collection', () => {
+        let collection
+
+        beforeEach(() => {
+          collection = new Collection()
+          model.collection = collection
+          collection.models.push(model)
+        })
+
+        it('immediately removes itself from the collection', () => {
+          expect(collection.length).toBe(1)
+          model.destroy({ optimistic: true })
+          expect(collection.length).toBe(0)
         })
       })
 
-      it('nullifies the request', () => {
-        return model.rpc('approve').then(() => {
-          expect(model.request).toBe(null)
+      describe('if the request succeds', () => {
+        describe('if not optimistic and belongs to a collection', () => {
+          it('removes itself from the collection', async () => {
+            const collection = new Collection()
+
+            model.collection = collection
+            collection.models.push(model)
+
+            const promise = model.destroy({ optimistic: false })
+
+            expect(collection.length).toBe(1)
+
+            MockApi.resolvePromise({})
+            await promise
+
+            expect(collection.length).toBe(0)
+          })
+        })
+
+        describe('if optimistic or don\'t belongs to a collection', () => {
+          it('not throws', async () => {
+            model.collection = new Collection()
+            model.collection.models.push(model)
+
+            const promise = model.destroy({ optimistic: true })
+
+            MockApi.resolvePromise({})
+
+            await promise
+          })
         })
       })
 
-      it('clears the error', async () => {
-        await model.rpc('approve')
-        expect(model.error).toBe(null)
+      describe('if other options are specified', () => {
+        it('they must be passed to the adapter', () => {
+          model.destroy({ method: 'OPTIONS' })
+
+          expect(spy.mock.calls[0][1]).toEqual({
+            method: 'OPTIONS'
+          })
+        })
+      })
+
+      describe('if the request fails', () => {
+        describe('if optimistic and belongs to a collection', () => {
+          it('adds itself to the collection again', async () => {
+            const collection = new Collection()
+
+            model.collection = collection
+            collection.models.push(model)
+
+            const promise = model.destroy({ optimistic: true })
+
+            expect(collection.length).toBe(0)
+
+            MockApi.rejectPromise('Conflict')
+
+            try {
+              await promise
+            } catch (_error) {
+              expect(collection.length).toBe(1)
+            }
+          })
+        })
+
+        describe('if not optimistic or don\'t belongs to a collection', () => {
+          it('throws the request response', async () => {
+            model.collection = new Collection()
+            model.collection.models.push(model)
+
+            const promise = model.destroy({ optimistic: false })
+
+            MockApi.rejectPromise('Conflict')
+
+            try {
+              await promise
+            } catch (errorObject) {
+              expect(errorObject.error).toBe('Conflict')
+            }
+          })
+        })
       })
     })
   })

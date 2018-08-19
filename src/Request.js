@@ -1,15 +1,28 @@
 // @flow
 import { observable } from 'mobx'
-import type { Label } from './types'
+import type { RequestOptions, RequestState } from './types'
 
 export default class Request {
-  label: Label
-  abort: () => void
-  @observable progress: number = 0
+  labels: Array<string>
+  abort: ?() => void
+  promise: Promise<*>
+  @observable progress: ?number
+  @observable state: RequestState
 
-  constructor (label: Label, abort: () => void, progress: number) {
-    this.label = label
+  constructor (promise: Promise<*>, { labels, abort, progress = 0 }: RequestOptions = {}) {
+    this.state = 'pending'
+    this.labels = labels
     this.abort = abort
     this.progress = progress
+    this.promise = promise
+
+    promise
+      .then(() => { this.state = 'fulfilled' })
+      .catch(() => { this.state = 'rejected' })
+  }
+
+  // This allows to use async/await on the request object
+  then (onFulfilled: any => Promise<*>, onRejected?: any => Promise<*>) {
+    return this.promise.then(onFulfilled, onRejected)
   }
 }

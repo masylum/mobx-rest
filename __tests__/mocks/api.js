@@ -1,12 +1,27 @@
+let resolvePromise
+let rejectPromise
+
 export default {
-  resolver: resolve => {
-    resolve()
+  resolvePromise (...args) {
+    resolvePromise(...args)
+  },
+
+  rejectPromise (error, requestResponse = {}) {
+    rejectPromise({
+      error,
+      requestResponse
+    })
   },
 
   _mock () {
+    const promise = new Promise((resolve, reject) => {
+      resolvePromise = resolve
+      rejectPromise = reject
+    })
+
     return {
       abort: () => {},
-      promise: new Promise(this.resolver)
+      promise
     }
   },
 
@@ -14,21 +29,15 @@ export default {
     return this._mock()
   },
 
-  post (_path, _attributes, options) {
-    const ret = this._mock()
-
-    // HACK
-    ret.promise
-      .then(() => {
-        options.onProgress(100)
-        options.onProgress.flush()
-      })
-      .catch(() => {})
-
-    return ret
+  post () {
+    return this._mock()
   },
 
   put () {
+    return this._mock()
+  },
+
+  patch () {
     return this._mock()
   },
 

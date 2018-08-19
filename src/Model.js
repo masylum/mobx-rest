@@ -4,33 +4,43 @@ import {
   action,
   ObservableMap,
   computed,
-  runInAction,
-  toJS
+  toJS,
+  runInAction
 } from 'mobx'
+import { uniqueId, union, isEqual, isPlainObject } from 'lodash'
+import deepmerge from 'deepmerge'
 import Collection from './Collection'
-import { uniqueId, isString, debounce } from 'lodash'
 import apiClient from './apiClient'
+import Base from './Base'
 import Request from './Request'
-import ErrorObject from './ErrorObject'
 import type {
   OptimisticId,
   Id,
-  Label,
   DestroyOptions,
-  SaveOptions,
-  CreateOptions
+  SaveOptions
 } from './types'
 
-export default class Model {
-  @observable request: ?Request = null
-  @observable error: ?ErrorObject = null
-  attributes: ObservableMap
+const dontMergeArrays = (_oldArray, newArray) => newArray
+
+export default class Model extends Base {
+  static defaultAttributes = {}
+
+  attributes: ObservableMap = observable.map()
+  committedAttributes: ObservableMap = observable.map()
 
   optimisticId: OptimisticId = uniqueId('i_')
-  collection: ?Collection<*> = null
+  collection: ?Collection = null
 
   constructor (attributes: { [key: string]: any } = {}) {
-    this.attributes = observable.map(attributes)
+    super()
+
+    const mergedAttributes = {
+      ...this.constructor.defaultAttributes,
+      ...attributes
+    }
+
+    this.attributes.replace(mergedAttributes)
+    this.commitChanges()
   }
 
   /**
@@ -58,23 +68,21 @@ export default class Model {
    * @abstract
    */
   urlRoot () {
-    throw new Error('`url` method not implemented')
+    return null
   }
 
   /**
    * Return the url for this given REST resource
    */
   url (): string {
-    let urlRoot
+    let urlRoot = this.urlRoot()
 
-    if (this.collection) {
+    if (!urlRoot && this.collection) {
       urlRoot = this.collection.url()
-    } else {
-      urlRoot = this.urlRoot()
     }
 
     if (!urlRoot) {
-      throw new Error('Either implement `urlRoot` or assign a collection')
+      throw new Error('implement `urlRoot` method or `url` on the collection')
     }
 
     if (this.isNew) {
@@ -85,16 +93,6 @@ export default class Model {
   }
 
   /**
-   * Questions whether the request exists
-   * and matches a certain label
-   */
-  isRequest (label: Label): boolean {
-    if (!this.request) return false
-
-    return this.request.label === label
-  }
-
-  /**
    * Wether the resource is new or not
    *
    * We determine this asking if it contains
@@ -102,7 +100,7 @@ export default class Model {
    */
   @computed
   get isNew (): boolean {
-    return !this.has(this.primaryKey)
+    return !this.has(this.primaryKey) || !this.get(this.primaryKey)
   }
 
   /**
@@ -143,11 +141,53 @@ export default class Model {
   }
 
   /**
+   * Get an array with the attributes names that have changed.
+   */
+  @computed
+  get changedAttributes (): Array<string> {
+    return getChangedAttributesBetween(toJS(this.committedAttributes), toJS(this.attributes))
+  }
+
+  /**
+   * Gets the current changes.
+   */
+  @computed
+  get changes (): { [string]: mixed } {
+    return getChangesBetween(toJS(this.committedAttributes), toJS(this.attributes))
+  }
+
+  /**
+   * If an attribute is specified, returns true if it has changes.
+   * If no attribute is specified, returns true if any attribute has changes.
+   */
+  hasChanges (attribute?: string): boolean {
+    if (attribute) {
+      return this.changedAttributes.indexOf(attribute) !== -1
+    }
+
+    return this.changedAttributes.length > 0
+  }
+
+  @action
+  commitChanges (): void {
+    this.committedAttributes.replace(toJS(this.attributes))
+  }
+
+  @action
+  discardChanges (): void {
+    this.attributes.replace(toJS(this.committedAttributes))
+  }
+
+  /**
    * Replace all attributes with new data
    */
   @action
-  reset (data: {}): void {
-    this.attributes.replace(data)
+  reset (data?: {}): void {
+    this.attributes.replace(
+      data
+        ? { ...this.constructor.defaultAttributes, ...data }
+        : this.constructor.defaultAttributes
+    )
   }
 
   /**
@@ -163,32 +203,27 @@ export default class Model {
    * Fetches the model from the backend.
    */
   @action
-  async fetch (options: { data?: {} } = {}): Promise<void> {
-    const label: Label = 'fetching'
-    const { abort, promise } = apiClient().get(this.url(), options.data)
+  fetch ({ data, ...otherOptions }: { data?: {} } = {}): Request {
+    const { abort, promise } = apiClient().get(this.url(), data, otherOptions)
 
-    this.request = new Request(label, abort, 0)
-
-    let data
-
-    try {
-      data = await promise
-    } catch (body) {
-      runInAction('fetch-error', () => {
-        this.error = new ErrorObject(label, body)
-        this.request = null
+    promise
+      .then(data => {
+        this.set(data)
+        this.commitChanges()
+        return data
       })
 
-      throw body
-    }
+    return this.withRequest('fetching', promise, abort)
+  }
 
-    runInAction('fetch-done', () => {
-      this.reset(data)
-      this.request = null
-      this.error = null
+  /**
+   * Merges old attributes with new ones.
+   * By default it doesn't merge arrays.
+   */
+  applyPatchChanges (oldAttributes: {}, changes: {}): {} {
+    return deepmerge(oldAttributes, changes, {
+      arrayMerge: dontMergeArrays
     })
-
-    return data
   }
 
   /**
@@ -202,114 +237,62 @@ export default class Model {
    * TODO: Add progress
    */
   @action
-  async save (
-    attributes: {},
-    { optimistic = true, patch = true }: SaveOptions = {}
-  ): Promise<*> {
-    if (!this.has(this.primaryKey)) {
-      this.set(Object.assign({}, attributes))
-      if (this.collection) {
-        return this.collection.create(this, { optimistic })
-      } else {
-        return this._create(this.toJS(), { optimistic })
-      }
-    }
-
-    let newAttributes
+  save (
+    attributes?: {},
+    { optimistic = true, patch = false, keepChanges = true, ...otherOptions }: SaveOptions = {}
+  ): Request {
+    const currentAttributes = this.toJS()
+    const label = this.isNew ? 'creating' : 'updating'
     let data
-    const label: Label = 'updating'
-    const originalAttributes = this.toJS()
 
-    if (patch) {
-      newAttributes = Object.assign({}, originalAttributes, attributes)
-      data = Object.assign({}, attributes)
+    if (patch && attributes) {
+      data = attributes
+    } else if (patch) {
+      data = this.changes
     } else {
-      newAttributes = Object.assign({}, attributes)
-      data = Object.assign({}, originalAttributes, attributes)
+      data = { ...currentAttributes, ...attributes }
     }
 
-    const onProgress = debounce(function onProgress (progress) {
-      if (optimistic && this.request) {
-        this.request.progress = progress
-      }
-    }, 300)
+    let method
 
-    const { promise, abort } = apiClient().put(this.url(), data, {
-      method: patch ? 'PATCH' : 'PUT',
-      onProgress
-    })
+    if (this.isNew) {
+      method = 'post'
+    } else if (patch) {
+      method = 'patch'
+    } else {
+      method = 'put'
+    }
 
-    if (optimistic) this.set(newAttributes)
+    if (optimistic && attributes) {
+      this.set(patch
+        ? this.applyPatchChanges(currentAttributes, attributes)
+        : attributes
+      )
+    }
 
-    this.request = new Request(label, abort, 0)
+    const { promise, abort } = apiClient()[method](this.url(), data, otherOptions)
 
-    let response
+    promise
+      .then(data => {
+        const changes = getChangesBetween(currentAttributes, toJS(this.attributes))
 
-    try {
-      response = await promise
-    } catch (body) {
-      runInAction('save-fail', () => {
-        this.request = null
-        this.set(originalAttributes)
-        this.error = new ErrorObject(label, body)
+        runInAction('save success', () => {
+          this.set(data)
+          this.commitChanges()
+
+          if (keepChanges) {
+            this.set(this.applyPatchChanges(data, changes))
+          }
+        })
+
+        return data
+      })
+      .catch(error => {
+        this.set(currentAttributes)
+        throw error
       })
 
-      throw isString(body) ? new Error(body) : body
-    }
-
-    runInAction('save-done', () => {
-      this.request = null
-      this.error = null
-      this.set(response)
-    })
-
-    return response
-  }
-
-  /**
-   * Internal method that takes care of creating a model that does
-   * not belong to a collection
-   */
-  async _create (
-    attributes: {},
-    { optimistic = true }: CreateOptions = {}
-  ): Promise<*> {
-    const label: Label = 'creating'
-
-    const onProgress = debounce(function onProgress (progress) {
-      if (optimistic && this.request) {
-        this.request.progress = progress
-      }
-    }, 300)
-
-    const { abort, promise } = apiClient().post(this.url(), attributes, {
-      onProgress
-    })
-
-    if (optimistic) {
-      this.request = new Request(label, abort, 0)
-    }
-
-    let data: {}
-
-    try {
-      data = await promise
-    } catch (body) {
-      runInAction('create-error', () => {
-        this.error = new ErrorObject(label, body)
-        this.request = null
-      })
-
-      throw body
-    }
-
-    runInAction('create-done', () => {
-      this.set(data)
-      this.request = null
-      this.error = null
-    })
-
-    return data
+    return this.withRequest(['saving', label], promise, abort)
   }
 
   /**
@@ -318,77 +301,59 @@ export default class Model {
    * too
    */
   @action
-  async destroy ({ optimistic = true }: DestroyOptions = {}): Promise<*> {
-    if (!this.has(this.primaryKey) && this.collection) {
-      this.collection.remove([this.optimisticId])
-      return Promise.resolve()
+  destroy ({ optimistic = true, ...otherOptions }: DestroyOptions = {}): Request {
+    const collection = this.collection
+
+    if (this.isNew && collection) {
+      collection.remove(this)
+      return new Request(Promise.resolve())
     }
 
-    const label: Label = 'destroying'
-    const { promise, abort } = apiClient().del(this.url())
-
-    if (optimistic && this.collection) {
-      this.collection.remove([this.id])
+    if (this.isNew) {
+      return new Request(Promise.resolve())
     }
 
-    this.request = new Request(label, abort, 0)
+    const { promise, abort } = apiClient().del(this.url(), otherOptions)
 
-    try {
-      await promise
-    } catch (body) {
-      runInAction('destroy-fail', () => {
-        if (optimistic && this.collection) {
-          this.collection.add([this.attributes.toJS()])
+    if (optimistic && collection) {
+      collection.remove(this)
+    }
+
+    promise
+      .then(data => {
+        if (!optimistic && collection) {
+          collection.remove(this)
         }
-        this.error = new ErrorObject(label, body)
-        this.request = null
+        return data
+      })
+      .catch(error => {
+        if (optimistic && collection) {
+          collection.add(this)
+        }
+        throw error
       })
 
-      throw body
-    }
-
-    runInAction('destroy-done', () => {
-      if (!optimistic && this.collection) {
-        this.collection.remove([this.id])
-      }
-      this.request = null
-      this.error = null
-    })
-
-    return null
+    return this.withRequest('destroying', promise, abort)
   }
+}
 
-  /**
-   * Call an RPC action for all those
-   * non-REST endpoints that you may have in
-   * your API.
-   */
-  @action
-  async rpc (method: string, body?: {}): Promise<*> {
-    const label: Label = 'updating' // TODO: Maybe differentiate?
-    const { promise, abort } = apiClient().post(
-      `${this.url()}/${method}`,
-      body || {}
-    )
+const getChangedAttributesBetween = (source: {}, target: {}): Array<string> => {
+  const keys = union(
+    Object.keys(source),
+    Object.keys(target)
+  )
 
-    this.request = new Request(label, abort, 0)
+  return keys.filter(key => !isEqual(source[key], target[key]))
+}
 
-    let response
+const getChangesBetween = (source: {}, target: {}): { [string]: mixed } => {
+  const changes = {}
 
-    try {
-      response = await promise
-    } catch (body) {
-      runInAction('accept-fail', () => {
-        this.request = null
-        this.error = new ErrorObject(label, body)
-      })
+  getChangedAttributesBetween(source, target).forEach(key => {
+    changes[key] = isPlainObject(source[key]) && isPlainObject(target[key])
+      ? getChangesBetween(source[key], target[key])
+      : target[key]
+  })
 
-      throw body
-    }
-
-    this.request = null
-    this.error = null
-
-    return response
-  }
+  return changes
 }

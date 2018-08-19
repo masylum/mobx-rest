@@ -1,35 +1,40 @@
 // @flow
-import { observable, action, computed, IObservableArray, runInAction, toJS } from 'mobx'
+import { observable, action, computed, IObservableArray } from 'mobx'
 import Model from './Model'
-import {
-  isEmpty,
-  filter,
-  isMatch,
-  find,
-  difference,
-  debounce,
-  map,
-  last
-} from 'lodash'
-import ErrorObject from './ErrorObject'
-import Request from './Request'
+import { filter, isMatch, find, difference, map } from 'lodash'
 import apiClient from './apiClient'
-import type { Label, CreateOptions, SetOptions, Id } from './types'
+import Base from './Base'
+import Request from './Request'
+import type { CreateOptions, SetOptions, GetOptions, FindOptions, Id } from './types'
 
-export default class Collection<T: Model> {
-  @observable request: ?Request = null
-  @observable error: ?ErrorObject = null
-  @observable models: IObservableArray<T> = []
+export default class Collection extends Base {
+  @observable models: IObservableArray<Model> = []
 
   constructor (data: Array<{ [key: string]: any }> = []) {
+    super()
     this.set(data)
   }
 
   /**
    * Alias for models.length
    */
-  @computed get length (): Number {
+  @computed
+  get length (): Number {
     return this.models.length
+  }
+
+  /**
+   * Alias for models.map
+   */
+  map (callback: (model: Model) => mixed): Array<*> {
+    return this.models.map(callback)
+  }
+
+  /**
+   * Alias for models.forEach
+   */
+  forEach (callback: (model: Model) => void): void {
+    return this.models.forEach(callback)
   }
 
   /**
@@ -44,7 +49,7 @@ export default class Collection<T: Model> {
   /**
    * Specifies the model class for that collection
    */
-  model (): Class<*> {
+  model (attributes: { [key: string]: any } = {}): Class<*> {
     return Model
   }
 
@@ -52,33 +57,39 @@ export default class Collection<T: Model> {
    * Returns a JSON representation
    * of the collection
    */
-  toJS () {
-    return toJS(this.models)
+  toJS (): Array<{ [string]: mixed }> {
+    return this.models.map(model => model.toJS())
+  }
+
+  /**
+   * Alias of slice
+   */
+  toArray (): Array<Model> {
+    return this.slice()
+  }
+
+  /**
+   * Returns a defensive shallow array representation
+   * of the collection
+   */
+  slice (): Array<Model> {
+    return this.models.slice()
   }
 
   /**
    * Returns a shallow array representation
    * of the collection
    */
-  toArray () {
-    return this.models.slice()
-  }
-
-  /**
-   * Questions whether the request exists
-   * and matches a certain label
-   */
-  isRequest (label: Label): boolean {
-    if (!this.request) return false
-
-    return this.request.label === label
+  peek (): Array<Model> {
+    return this.models.peek()
   }
 
   /**
    * Wether the collection is empty
    */
-  isEmpty (): boolean {
-    return isEmpty(this.models)
+  @computed
+  get isEmpty (): boolean {
+    return this.length === 0
   }
 
   /**
@@ -91,24 +102,19 @@ export default class Collection<T: Model> {
   /**
    * Get a resource at a given position
    */
-  at (index: number): ?T {
+  at (index: number): ?Model {
     return this.models[index]
   }
 
   /**
    * Get a resource with the given id or uuid
    */
-  get (id: Id): ?T {
-    return this.models.find(item => item.id === id)
-  }
+  get (id: Id, { required = false }: GetOptions = {}): ?Model {
+    const model = this.models.find(item => item.id === id)
 
-  /**
-   * The whinny version of the `get` method
-   */
-  mustGet (id: Id): T {
-    const model = this.get(id)
-
-    if (!model) throw Error(`Invariant: Model must be found with id: ${id}`)
+    if (!model && required) {
+      throw Error(`Invariant: Model must be found with id: ${id}`)
+    }
 
     return model
   }
@@ -116,67 +122,73 @@ export default class Collection<T: Model> {
   /**
    * Get resources matching criteria
    */
-  filter (query: { [key: string]: any } = {}): Array<T> {
-    return filter(this.models, ({ attributes }) => {
-      return isMatch(attributes.toJS(), query)
+  filter (query: { [key: string]: any } | (Model) => boolean): Array<Model> {
+    return filter(this.models, (model) => {
+      return typeof query === 'function'
+        ? query(model)
+        : isMatch(model.toJS(), query)
     })
   }
 
   /**
    * Finds an element with the given matcher
    */
-  find (query: { [key: string]: mixed }): ?T {
-    return find(this.models, ({ attributes }) => {
-      return isMatch(attributes.toJS(), query)
+  find (query: { [key: string]: mixed } | (Model) => boolean, { required = false }: FindOptions = {}): ?Model {
+    const model = find(this.models, (model) => {
+      return typeof query === 'function'
+        ? query(model)
+        : isMatch(model.toJS(), query)
     })
-  }
 
-  /**
-   * The whinny version of `find`
-   */
-  mustFind (query: { [key: string]: mixed }): T {
-    const model = this.find(query)
-
-    if (!model) {
-      const conditions = JSON.stringify(query)
-      throw Error(`Invariant: Model must be found with: ${conditions}`)
+    if (!model && required) {
+      throw Error(`Invariant: Model must be found`)
     }
 
     return model
   }
 
   /**
-   * Adds a collection of models.
-   * Returns the added models.
+   * Adds a model or collection of models.
    */
   @action
-  add (data: Array<{ [key: string]: any }>): Array<T> {
-    const models = data.map(d => this.build(d))
-    this.models.push(...models)
-    return models
+  add (data: Array<{ [key: string]: any } | Model> | { [key: string]: any } | Model): void {
+    if (!Array.isArray(data)) {
+      data = [data]
+    }
+
+    this.models.push(...data.map(this.build))
   }
 
   /**
-   * Resets a collection of models.
-   * Returns the added models.
+   * Resets the collection of models.
    */
   @action
-  reset (data: Array<{ [key: string]: any }>): Array<T> {
-    const models = data.map(d => this.build(d))
-    this.models = models
-    return models
+  reset (data: Array<{ [key: string]: any } | Model>): void {
+    this.models.replace(data.map(this.build))
   }
 
   /**
    * Removes the model with the given ids or uuids
    */
   @action
-  remove (ids: Array<Id>): void {
+  remove (ids: Id | Model | Array<Id | Model>): void {
+    if (!Array.isArray(ids)) {
+      ids = [ids]
+    }
+
     ids.forEach(id => {
-      const model = this.get(id)
+      let model
+
+      if (id instanceof Model && id.collection === this) {
+        model = id
+      } else if (typeof id === 'number') {
+        model = this.get(id)
+      }
+
       if (!model) return
 
       this.models.splice(this.models.indexOf(model), 1)
+      model.collection = undefined
     })
   }
 
@@ -207,8 +219,13 @@ export default class Collection<T: Model> {
   /**
    * Creates a new model instance with the given attributes
    */
-  build (attributes: { [key: string]: any } = {}): T {
-    const ModelClass = this.model()
+  build = (attributes: { [key: string]: any } = {}): Model => {
+    if (attributes instanceof Model) {
+      attributes.collection = this
+      return attributes
+    }
+
+    const ModelClass = this.model(attributes)
     const model = new ModelClass(attributes)
     model.collection = this
 
@@ -222,67 +239,32 @@ export default class Collection<T: Model> {
    * can be tuned.
    */
   @action
-  async create (
+  create (
     attributesOrModel: { [key: string]: any } | Model,
     { optimistic = true }: CreateOptions = {}
-  ): Promise<*> {
-    let model
-    let attributes = attributesOrModel instanceof Model
-      ? attributesOrModel.toJS()
-      : attributesOrModel
-    const label: Label = 'creating'
-
-    const onProgress = debounce(function onProgress (progress) {
-      if (optimistic && model.request) {
-        model.request.progress = progress
-      }
-
-      if (this.request) {
-        this.request.progress = progress
-      }
-    }, 300)
-
-    const { abort, promise } = apiClient().post(this.url(), attributes, {
-      onProgress
-    })
+  ): Request {
+    const model = this.build(attributesOrModel)
+    const { abort, promise } = model.save()
 
     if (optimistic) {
-      model = attributesOrModel instanceof Model
-        ? attributesOrModel
-        : last(this.add([attributesOrModel]))
-      model.request = new Request(label, abort, 0)
+      this.add(model)
     }
 
-    this.request = new Request(label, abort, 0)
-
-    let data: {}
-
-    try {
-      data = await promise
-    } catch (body) {
-      runInAction('create-error', () => {
-        if (model) {
-          this.remove([model.id])
+    promise
+      .then(response => {
+        if (!optimistic) {
+          this.add(model)
         }
-        this.error = new ErrorObject(label, body)
-        this.request = null
+        return response
+      })
+      .catch(error => {
+        if (optimistic) {
+          this.remove(model)
+        }
+        throw error
       })
 
-      throw body
-    }
-
-    runInAction('create-done', () => {
-      if (model) {
-        model.set(data)
-        model.request = null
-      } else {
-        this.add([data])
-      }
-      this.request = null
-      this.error = null
-    })
-
-    return data
+    return this.withRequest('creating', promise, abort)
   }
 
   /**
@@ -293,65 +275,15 @@ export default class Collection<T: Model> {
    * or removing.
    */
   @action
-  async fetch (options: SetOptions = {}): Promise<void> {
-    const label: Label = 'fetching'
-    const { abort, promise } = apiClient().get(this.url(), options.data)
+  fetch (options: SetOptions = {}): Request {
+    const { abort, promise } = apiClient().get(this.url(), options)
 
-    this.request = new Request(label, abort, 0)
-
-    let data: Array<{ [key: string]: any }>
-
-    try {
-      data = await promise
-    } catch (body) {
-      runInAction('fetch-error', () => {
-        this.error = new ErrorObject(label, body)
-        this.request = null
+    promise
+      .then(data => {
+        this.set(data, options)
+        return data
       })
 
-      throw body
-    }
-
-    runInAction('fetch-done', () => {
-      this.set(data, options)
-      this.request = null
-      this.error = null
-    })
-
-    return data
-  }
-
-  /**
-   * Call an RPC action for all those
-   * non-REST endpoints that you may have in
-   * your API.
-   */
-  @action
-  async rpc (method: string, body?: {}): Promise<*> {
-    const label: Label = 'updating' // TODO: Maybe differentiate?
-    const { promise, abort } = apiClient().post(
-      `${this.url()}/${method}`,
-      body || {}
-    )
-
-    this.request = new Request(label, abort, 0)
-
-    let response
-
-    try {
-      response = await promise
-    } catch (body) {
-      runInAction('accept-fail', () => {
-        this.request = null
-        this.error = new ErrorObject(label, body)
-      })
-
-      throw body
-    }
-
-    this.request = null
-    this.error = null
-
-    return response
+    return this.withRequest('fetching', promise, abort)
   }
 }

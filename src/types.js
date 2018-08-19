@@ -1,8 +1,7 @@
 // @flow
-export type Label = 'fetching' | 'creating' | 'updating' | 'destroying'
-
 export type OptimisticId = string
 export type Id = number | OptimisticId
+export type RequestState = 'pending' | 'fulfilled' | 'rejected'
 
 export type CreateOptions = {
   optimistic?: boolean,
@@ -16,12 +15,19 @@ export type DestroyOptions = {
 export type SaveOptions = {
   optimistic?: boolean,
   patch?: boolean,
-  onProgress?: () => mixed
+  onProgress?: () => mixed,
+  keepChanges?: boolean
 }
 
 export type Response = {
   abort: () => void,
   promise: Promise<*>
+}
+
+export type RequestOptions = {
+  abort: ?() => void,
+  progress?: number,
+  labels: Array<string>
 }
 
 export type SetOptions = {
@@ -31,8 +37,17 @@ export type SetOptions = {
   data?: {}
 }
 
+export type GetOptions = {
+  required?: boolean,
+}
+
+export type FindOptions = {
+  required?: boolean,
+}
+
 export type Adapter = {
   get(path: string, data?: {}, options?: {}): Response,
+  patch(path: string, data?: {}, options?: {}): Response,
   post(path: string, data?: {}, options?: {}): Response,
   put(path: string, data?: {}, options?: {}): Response,
   del(path: string, options?: {}): Response
