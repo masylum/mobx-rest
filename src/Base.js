@@ -47,11 +47,11 @@ export default class Base {
   }
 
   getRequest (label: string): ?Request {
-    return this.requests.find(request => _.includes(request.labels, label))
+    return this.requests.find(request => includes(request.labels, label))
   }
 
   getAllRequests (label: string): Array<Request> {
-    return this.requests.filter(request => _.includes(request.labels, label))
+    return this.requests.filter(request => includes(request.labels, label))
   }
 
   /**

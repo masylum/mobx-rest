@@ -29,7 +29,7 @@ export default class Model extends Base {
   committedAttributes: ObservableMap = observable.map()
 
   optimisticId: OptimisticId = uniqueId('i_')
-  collection: ?Collection = null
+  collection: ?Collection<*> = null
 
   constructor (attributes: { [key: string]: any } = {}) {
     super()
@@ -162,7 +162,7 @@ export default class Model extends Base {
    */
   hasChanges (attribute?: string): boolean {
     if (attribute) {
-      return _.includes(this.changedAttributes, attribute)
+      return includes(this.changedAttributes, attribute)
     }
 
     return this.changedAttributes.length > 0
