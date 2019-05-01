@@ -20,12 +20,10 @@ export type SaveOptions = {
 }
 
 export type Response = {
-  abort: () => void,
   promise: Promise<*>
 }
 
 export type RequestOptions = {
-  abort: ?() => void,
   progress?: number,
   labels: Array<string>
 }

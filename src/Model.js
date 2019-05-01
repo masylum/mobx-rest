@@ -204,7 +204,7 @@ export default class Model extends Base {
    */
   @action
   fetch ({ data, ...otherOptions }: { data?: {} } = {}): Request {
-    const { abort, promise } = apiClient().get(this.url(), data, otherOptions)
+    const { promise } = apiClient().get(this.url(), data, otherOptions)
 
     promise
       .then(data => {
@@ -213,7 +213,7 @@ export default class Model extends Base {
         return data
       })
 
-    return this.withRequest('fetching', promise, abort)
+    return this.withRequest('fetching', promise)
   }
 
   /**
@@ -270,7 +270,7 @@ export default class Model extends Base {
       )
     }
 
-    const { promise, abort } = apiClient()[method](this.url(), data, otherOptions)
+    const { promise } = apiClient()[method](this.url(), data, otherOptions)
 
     promise
       .then(data => {
@@ -292,7 +292,7 @@ export default class Model extends Base {
         throw error
       })
 
-    return this.withRequest(['saving', label], promise, abort)
+    return this.withRequest(['saving', label], promise)
   }
 
   /**
@@ -313,7 +313,7 @@ export default class Model extends Base {
       return new Request(Promise.resolve())
     }
 
-    const { promise, abort } = apiClient().del(this.url(), otherOptions)
+    const { promise } = apiClient().del(this.url(), otherOptions)
 
     if (optimistic && collection) {
       collection.remove(this)
@@ -333,7 +333,7 @@ export default class Model extends Base {
         throw error
       })
 
-    return this.withRequest('destroying', promise, abort)
+    return this.withRequest('destroying', promise)
   }
 }
 

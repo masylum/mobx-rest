@@ -562,7 +562,6 @@ Your collections and models will have the following state shape:
 models: Array<Model>      // This is where the models live
 request: {                // An ongoing request
   label: string,          // Examples: 'updating', 'creating', 'fetching', 'destroying' ...
-  abort: () => void,      // A method to abort the ongoing request
   progress: number        // If uploading a file, represents the progress
 },
 error: {                  // A failed request
@@ -577,8 +576,7 @@ error: {                  // A failed request
 attributes: Object    // The resource attributes
 optimisticId: string, // Client side id. Used for optimistic updates
 request: {            // An ongoing request
-  label: string,      // Examples: 'updating', 'creating', 'fetching', 'destroying' ...
-  abort: () => void,  // A method to abort the ongoing request
+  label: string      // Examples: 'updating', 'creating', 'fetching', 'destroying' ...
 },
 error: {              // A failed request
   label: string,      // Examples: 'updating', 'creating', 'fetching', 'destroying' ...

@@ -19,7 +19,7 @@ describe(Base, () => {
     })
   })
 
-  describe('withRequest(labels, promise, abort)', () => {
+  describe('withRequest(labels, promise)', () => {
     it('returns a Request promise', () => {
       const request = model.withRequest('fetching', Promise.resolve())
 
@@ -27,8 +27,7 @@ describe(Base, () => {
     })
 
     it('tracks the request while is pending', () => {
-      const abort = () => {}
-      const request = model.withRequest('fetching', new Promise(() => {}), abort)
+      const request = model.withRequest('fetching', new Promise(() => {}))
 
       expect(model.requests.length).toBe(1)
       expect(model.requests[0]).toBe(request)

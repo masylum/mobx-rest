@@ -4,15 +4,13 @@ import type { RequestOptions, RequestState } from './types'
 
 export default class Request {
   labels: Array<string>
-  abort: ?() => void
   promise: Promise<*>
   @observable progress: ?number
   @observable state: RequestState
 
-  constructor (promise: Promise<*>, { labels, abort, progress = 0 }: RequestOptions = {}) {
+  constructor (promise: Promise<*>, { labels, progress = 0 }: RequestOptions = {}) {
     this.state = 'pending'
     this.labels = labels
-    this.abort = abort
     this.progress = progress
     this.promise = promise
 

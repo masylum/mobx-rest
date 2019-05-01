@@ -244,7 +244,7 @@ export default class Collection extends Base {
     { optimistic = true }: CreateOptions = {}
   ): Request {
     const model = this.build(attributesOrModel)
-    const { abort, promise } = model.save()
+    const { promise } = model.save()
 
     if (optimistic) {
       this.add(model)
@@ -264,7 +264,7 @@ export default class Collection extends Base {
         throw error
       })
 
-    return this.withRequest('creating', promise, abort)
+    return this.withRequest('creating', promise)
   }
 
   /**
@@ -276,7 +276,7 @@ export default class Collection extends Base {
    */
   @action
   fetch (options: SetOptions = {}): Request {
-    const { abort, promise } = apiClient().get(this.url(), options)
+    const { promise } = apiClient().get(this.url(), options)
 
     promise
       .then(data => {
@@ -284,6 +284,6 @@ export default class Collection extends Base {
         return data
       })
 
-    return this.withRequest('fetching', promise, abort)
+    return this.withRequest('fetching', promise)
   }
 }

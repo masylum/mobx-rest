@@ -16,7 +16,7 @@ export default class Base {
     throw new Error('You must implement this method')
   }
 
-  withRequest (labels: string | Array<string>, promise: Promise<*>, abort: ?() => void): Request {
+  withRequest (labels: string | Array<string>, promise: Promise<*>): Request {
     if (typeof labels === 'string') {
       labels = [labels]
     }
@@ -31,10 +31,7 @@ export default class Base {
         throw new ErrorObject(error)
       })
 
-    const request = new Request(handledPromise, {
-      labels,
-      abort
-    })
+    const request = new Request(handledPromise, { labels })
 
     this.requests.push(request)
 
@@ -64,8 +61,8 @@ export default class Base {
    */
   @action
   rpc (label: string, endpoint: string, options?: {}): Request {
-    const { promise, abort } = apiClient().post(`${this.url()}/${endpoint}`, options)
+    const { promise } = apiClient().post(`${this.url()}/${endpoint}`, options)
 
-    return this.withRequest(label, promise, abort)
+    return this.withRequest(label, promise)
   }
 }
