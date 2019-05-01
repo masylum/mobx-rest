@@ -681,7 +681,8 @@ describe(Model, () => {
         model.save(undefined, { method: 'HEAD' })
 
         expect(spy).toHaveBeenCalledWith(expect.anything(), expect.anything(), {
-          method: 'HEAD'
+          method: 'HEAD',
+          onProgress: expect.anything()
         })
       })
     })

@@ -7,7 +7,7 @@ import {
   toJS,
   runInAction
 } from 'mobx'
-import { uniqueId, union, isEqual, isPlainObject } from 'lodash'
+import { debounce, uniqueId, union, isEqual, isPlainObject } from 'lodash'
 import deepmerge from 'deepmerge'
 import Collection from './Collection'
 import apiClient from './apiClient'
@@ -233,8 +233,6 @@ export default class Model extends Base {
    * otherwise it creates the new resource.
    *
    * It supports optimistic and patch updates.
-   *
-   * TODO: Add progress
    */
   @action
   save (
@@ -270,7 +268,11 @@ export default class Model extends Base {
       )
     }
 
-    const { promise, abort } = apiClient()[method](this.url(), data, otherOptions)
+    const onProgress = debounce(function onProgress (progress) {
+      if (optimistic && this.request) this.request.progress = progress
+    }, 300)
+
+    const { promise, abort } = apiClient()[method](this.url(), data, { ...otherOptions, onProgress })
 
     promise
       .then(data => {
