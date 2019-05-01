@@ -205,15 +205,24 @@ export default class Model extends Base {
   @action
   fetch ({ data, ...otherOptions }: { data?: {} } = {}): Request {
     const { abort, promise } = apiClient().get(this.url(), data, otherOptions)
+    const label = 'fetching'
 
     promise
       .then(data => {
         this.set(data)
         this.commitChanges()
+
         return data
       })
+      .catch(error => {
+        runInAction('fetchin error', () => {
+          this.error = { label, body: error }
+        })
 
-    return this.withRequest('fetching', promise, abort)
+        throw error
+      })
+
+    return this.withRequest(label, promise, abort)
   }
 
   /**

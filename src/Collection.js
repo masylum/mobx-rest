@@ -277,13 +277,22 @@ export default class Collection extends Base {
   @action
   fetch (options: SetOptions = {}): Request {
     const { abort, promise } = apiClient().get(this.url(), options)
+    const label = 'fetching'
 
     promise
       .then(data => {
         this.set(data, options)
+
         return data
       })
+      .catch(error => {
+        runInAction('fetching error', () => {
+          this.error = { label, body: error }
+        })
 
-    return this.withRequest('fetching', promise, abort)
+        throw error
+      })
+
+    return this.withRequest(label, promise, abort)
   }
 }
