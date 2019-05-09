@@ -129,6 +129,18 @@ describe(Collection, () => {
     })
   })
 
+  describe('mustGet(id)', () => {
+    it('returns the model with the specified id', () => {
+      expect(collection.mustGet(2)).toBe(collection.models[1])
+    })
+
+    describe('if the model is not found', () => {
+      it('throws', () => {
+        expect(() => collection.mustGet(3))
+          .toThrow('Invariant: Model must be found with id: 3')
+      })
+    })
+  })
   describe('filter(query)', () => {
     beforeEach(() => {
       collection.reset([
@@ -202,6 +214,41 @@ describe(Collection, () => {
         it('return undefined', () => {
           expect(collection.find({ phone: '9999' })).toBeUndefined()
         })
+      })
+    })
+  })
+
+  describe('mustFind(query)', () => {
+    beforeEach(() => {
+      collection.reset([
+        { id: 1, phone: '1234', email: 'test1@test.com' },
+        { id: 2, phone: '1234', email: 'test2@test.com' },
+        { id: 3, phone: '5678', email: 'test2@test.com' },
+        { id: 4, phone: '1234', email: 'test1@test.com' }
+      ])
+    })
+
+    describe('if query is an object', () => {
+      it('returns the first model that matches that attributes', () => {
+        expect(collection.mustFind({
+          phone: '1234',
+          email: 'test1@test.com'
+        })).toEqual(collection.at(0))
+      })
+    })
+
+    describe('if query is a function', () => {
+      it('returns the first model that returns true on the callback', () => {
+        expect(collection.mustFind(model =>
+          model.get('email') === 'test2@test.com'
+        )).toEqual(collection.at(1))
+      })
+    })
+
+    describe('if the model is not found', () => {
+      it('throws', () => {
+        expect(() => collection.mustFind({ phone: '9999' }))
+          .toThrow(Error(`Invariant: Model must be found`))
       })
     })
   })

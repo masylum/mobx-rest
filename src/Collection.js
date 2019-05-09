@@ -119,7 +119,10 @@ export default class Collection<T: Model> extends Base {
     return model
   }
 
-  mustGet(id: Id): ?T {
+  /**
+   * Get a resource with the given id or uuid or fail loudly.
+   */
+  mustGet (id: Id): ?T {
     return this.get(id, { required: true })
   }
 
@@ -151,7 +154,10 @@ export default class Collection<T: Model> extends Base {
     return model
   }
 
-  mustFind(query: { [key: string]: mixed } | (T) => boolean): ?T {
+  /**
+   * Get a resource with the given id or uuid or fails loudly.
+   */
+  mustFind (query: { [key: string]: mixed } | (T) => boolean): ?T {
     return this.find(query, { required: true })
   }
 
