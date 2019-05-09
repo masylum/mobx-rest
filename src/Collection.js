@@ -119,6 +119,10 @@ export default class Collection<T: Model> extends Base {
     return model
   }
 
+  mustGet(id: Id): ?T {
+    return this.get(id, { required: true })
+  }
+
   /**
    * Get resources matching criteria
    */
@@ -145,6 +149,10 @@ export default class Collection<T: Model> extends Base {
     }
 
     return model
+  }
+
+  mustFind(query: { [key: string]: mixed } | (T) => boolean): ?T {
+    return this.find(query, { required: true })
   }
 
   /**
