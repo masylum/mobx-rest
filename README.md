@@ -84,6 +84,10 @@ class User extends Model {
 }
 ```
 
+#### `defaultAttributes: ObservableMap`
+
+An `ObservableMap` that holds the default attributes of the model. {} by default.
+
 #### `attributes: ObservableMap`
 
 An `ObservableMap` that holds the attributes of the model.
@@ -133,6 +137,71 @@ Helper method that asks the model whether there is an ongoing
 request with the given label.
 
 Example: `file.isRequest('saving')`
+
+#### changedAttributes: Array<string>
+
+Get an array with the attributes names that have changed.
+
+Example:
+```js
+model.set({ name: 'Pau'})
+
+model.changedAttributes // => ['name']
+```
+
+#### changes: { [string]: mixed }
+
+Gets the current changes.
+
+Example:
+```js
+model.set({ name: 'Pau'})
+
+model.changes // => { name: 'Pau' }
+```
+
+#### hasChanges(attribute?: string): boolean
+
+If an attribute is specified, returns true if it has changes.
+If no attribute is specified, returns true if any attribute has changes.
+
+Example:
+```js
+model.set({ name: 'Pau'})
+
+// with attribute
+model.hasChanges('name') // => true
+
+// without attribute
+model.hasChanges() // => true
+```
+
+#### commitChanges(): void
+
+Commit attributes to model.
+
+Example:
+```js
+model.set({ name: 'Pau' })
+model.hasChanges // => true
+
+model.commitChanges()
+model.hasChanges // => false
+```
+
+#### discardChanges(): void
+
+This will reset the model attributes to the last committed ones.
+
+Example:
+```js
+const model = new Model({ name: 'Foo' })
+model.set({ name: 'Pau' })
+model.get('name') // => Pau
+
+model.discardChanges()
+model.get('name') // => 'Foo'
+```
 
 #### `isNew: boolean`
 
@@ -234,7 +303,7 @@ Options:
   - `optimistic = true` Whether we want to delete the resource in the client
   first or wait for the server's response.
 
-#### `rpc(method: 'string', body: {}): Promise`
+#### `rpc(method: 'string', body?: {},  label?: 'fetching'): Promise`
 
 When dealing with REST there are always cases when we have some actions beyond
 the conventions. Those are represented as `rpc` calls and are not opinionated.
@@ -301,7 +370,7 @@ Example:
 filesCollection.isRequest('saving')
 ```
 
-#### `isEmpty(): boolean`
+#### `isEmpty: boolean`
 
 Helper method that asks the collection whether there is any
 model in it.
@@ -320,11 +389,15 @@ usersCollection.models.length // => 10
 
 Find a model at the given position.
 
-#### `get(id: number): ?Model`
+#### `get(id: number, { required?: boolean = false }): ?Model`
 
-Find a model (or not) with the given id.
+Find a model (or not) with the given id. If `required` it will raise an error if not found.
 
-#### `filter(query: Object): Array<Model>`
+#### `mustGet(id: number): Model`
+
+Find a model with the given id or raise an Error.
+
+#### `filter(query: Object | Function): Array<Model>`
 
 Helper method that filters the collection by the given conditions represented
 as a key value.
@@ -336,10 +409,10 @@ const resolvedTasks = tasksCollection.filter({ resolved: true })
 resolvedTasks.length // => 3
 ```
 
-#### `find(query: Object): ?Model`
+#### `find(query: Object, { required?: boolean = false }): ?Model`
 
 Same as `filter` but it will halt and return when the first model matches
-the conditions.
+the conditions. If `required` it will raise an error if not found.
 
 Example:
 
@@ -348,7 +421,18 @@ const pau = usersCollection.find({ name: 'pau' })
 pau.get('name') // => 'pau'
 ```
 
-#### `add(data: Array<Object>): Array<Model>`
+#### `mustFind(query: Object): Model`
+
+Same as `find` but it will raise an Error if the model is not found.
+
+Example:
+
+```js
+const pau = usersCollection.mustFind({ name: 'pau' })
+pau.get('name') // => 'pau'
+```
+
+#### `add(data: Array<Object|T>|T|Object): Array<Model>`
 
 Adds models with the given array of attributes.
 
@@ -356,7 +440,7 @@ Adds models with the given array of attributes.
 usersCollection.add([{id: 1, name: 'foo'}])
 ```
 
-#### `reset(data: Array<Object>): Array<Model>`
+#### `reset(data: Array<Object|T>): Array<Model>`
 
 Resets the collection with the given models.
 
@@ -364,7 +448,7 @@ Resets the collection with the given models.
 usersCollection.reset([{id: 1, name: 'foo'}])
 ```
 
-#### `remove(ids: Array<number>): void`
+#### `remove(ids: Array<number|T>|number|T): void`
 
 Remove any model with the given ids.
 
@@ -399,7 +483,7 @@ companiesCollection.get(2).get('name') // => 'Factorial'
 companiesCollection.get(3) // => null
 ```
 
-#### `build(attributes: Object): Model`
+#### `build(attributes: Object|T): Model`
 
 Instantiates and links a model to the current collection.
 
@@ -443,6 +527,26 @@ tasksCollection.isEmpty() // => false
 #### `rpc(method: 'string', body: {}): Promise`
 
 Exactly the same as the model one, but at the collection level.
+
+### forEach (callback: (model: T) => void): void
+
+Alias for models.forEach
+
+Example: `collection.forEach(model => console.log(model.get('id')))`
+
+### map (callback: (model: T) => mixed): Array<*>
+
+Alias for models.map
+
+Example: `collection.map(model => model.get('id')) // => [1,2,3...]`
+
+### peek (): Array<T: Model>
+
+Returns a shallow array representation of the collection
+
+### slice (): Array<T: Model>
+
+Returns a defensive shallow array representation of the collection
 
 ### `apiClient`
 
