@@ -1,10 +1,11 @@
 // @flow
-import { observable, action, computed, IObservableArray } from 'mobx'
-import Model from './Model'
-import { filter, isMatch, find, difference, map } from 'lodash'
-import apiClient from './apiClient'
 import Base from './Base'
+import Model from './Model'
 import Request from './Request'
+import apiClient from './apiClient'
+import { filter, isMatch, find, difference, map } from 'lodash'
+import { observable, action, computed, IObservableArray } from 'mobx'
+
 import type { CreateOptions, SetOptions, GetOptions, FindOptions, Id } from './types'
 
 export default class Collection<T: Model> extends Base {
