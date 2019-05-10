@@ -4,7 +4,10 @@
 
   - [x] Fixed Collection types.
   - [x] Rollback default `keepChanges` behaviour.
-  - [ ] Brought back onProgress for file uploaders.
+  - [x] Collection `build` method adds the model to the collection
+  - [x] Reimplemented mustFind and mustGet methods
+  - [x] Brought back onProgress for file uploaders
+  - [x] Added request property in model that tracks the last active request
   - [ ] Documented new APIs
   - [ ] Update the mobx-rest-example
   - [ ] Fix https://github.com/masylum/mobx-rest/issues/47
