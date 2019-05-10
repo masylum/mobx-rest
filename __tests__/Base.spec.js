@@ -117,7 +117,7 @@ describe(Base, () => {
     })
   })
 
-  describe('rpc(label, endpoint, options)', () => {
+  describe('rpc(endpoint, options, label)', () => {
     let request
     let spy
 
@@ -132,17 +132,27 @@ describe(Base, () => {
     })
 
     it('sends a request using the endpoint suffix', () => {
-      expect(spy.mock.calls[0][0]).toBe('/api/search')
+      expect(spy.mock.calls.pop()[0]).toBe('/api/search')
     })
 
     it('passes the options to the api adapter', () => {
-      expect(spy.mock.calls[0][1]).toEqual({
+      expect(spy.mock.calls.pop()[1]).toEqual({
         method: 'GET'
       })
     })
 
     it('tracks the request with the specified labels', () => {
       expect(model.isRequest('searching')).toBe(true)
+    })
+
+    describe('rpc with rootUrl', () => {
+      beforeEach(() => {
+        model.rpc({ rootUrl: '/another_api/search' }, { method: 'GET' }, 'searching')
+      })
+
+      it('should fetch with the rootUrl', () => {
+        expect(spy.mock.calls.pop()[0]).toBe('/another_api/search')
+      })
     })
   })
 })

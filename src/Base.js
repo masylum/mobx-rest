@@ -3,7 +3,7 @@ import { action, observable, IObservableArray } from 'mobx'
 import apiClient from './apiClient'
 import Request from './Request'
 import ErrorObject from './ErrorObject'
-import { includes } from 'lodash'
+import { includes, isObject } from 'lodash'
 
 export default class Base {
   @observable request: ?Request
@@ -68,12 +68,11 @@ export default class Base {
    * non-REST endpoints that you may have in
    * your API.
    */
+  // TODO: Type endpoint with string | { rootUrl: string }
   @action
-  rpc (endpoint: string, options?: {}, label?: string = 'fetching'): Request {
-    const { promise, abort } = apiClient().post(
-      `${this.url()}/${endpoint}`,
-      options
-    )
+  rpc (endpoint: any, options?: {}, label?: string = 'fetching'): Request {
+    const url = isObject(endpoint) ? endpoint.rootUrl : `${this.url()}/${endpoint}`
+    const { promise, abort } = apiClient().post(url, options)
 
     return this.withRequest(label, promise, abort)
   }
