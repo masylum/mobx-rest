@@ -7,6 +7,7 @@
   - [x] Reimplemented mustFind and mustGet methods
   - [x] Brought back onProgress for file uploaders
   - [x] Added request property in model that tracks the last active request
+  - [x] Made rpc label optional with a default 'fetching' value
   - [ ] Documented new APIs
   - [ ] Update the mobx-rest-example
   - [ ] Fix https://github.com/masylum/mobx-rest/issues/47

@@ -69,7 +69,7 @@ export default class Base {
    * your API.
    */
   @action
-  rpc (label: string, endpoint: string, options?: {}): Request {
+  rpc (endpoint: string, options?: {}, label?: string = 'fetching'): Request {
     const { promise, abort } = apiClient().post(
       `${this.url()}/${endpoint}`,
       options

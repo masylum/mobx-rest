@@ -124,9 +124,7 @@ describe(Base, () => {
     beforeEach(() => {
       model.url = () => '/api'
       spy = jest.spyOn(apiClient(), 'post')
-      request = model.rpc('searching', 'search', {
-        method: 'GET'
-      })
+      request = model.rpc('search', { method: 'GET' }, 'searching')
     })
 
     it('returns a Request promise', () => {
