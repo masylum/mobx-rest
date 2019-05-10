@@ -23,6 +23,6 @@ export default class Request {
 
   // This allows to use async/await on the request object
   then (onFulfilled: any => Promise<*>, onRejected?: any => Promise<*>) {
-    return this.promise.then(onFulfilled, onRejected)
+    return this.promise.then(data => onFulfilled(data || {}), onRejected)
   }
 }
