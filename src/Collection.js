@@ -267,15 +267,11 @@ export default class Collection<T: Model> extends Base {
 
     promise
       .then(response => {
-        if (!optimistic) {
-          this.add(model)
-        }
-        return response
+        if (!optimistic) this.add(model)
       })
       .catch(error => {
-        if (optimistic) {
-          this.remove(model)
-        }
+        if (optimistic) this.remove(model)
+
         throw error
       })
 
@@ -293,11 +289,7 @@ export default class Collection<T: Model> extends Base {
   fetch (options: SetOptions = {}): Request {
     const { abort, promise } = apiClient().get(this.url(), options)
 
-    promise
-      .then(data => {
-        this.set(data, options)
-        return data
-      })
+    promise.then(data => this.set(data, options))
 
     return this.withRequest('fetching', promise, abort)
   }

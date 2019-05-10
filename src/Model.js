@@ -199,7 +199,6 @@ export default class Model extends Base {
       .then(data => {
         this.set(data)
         this.commitChanges()
-        return data
       })
 
     return this.withRequest('fetching', promise, abort)
@@ -277,11 +276,10 @@ export default class Model extends Base {
             this.set(this.applyPatchChanges(data, changes))
           }
         })
-
-        return data
       })
       .catch(error => {
         this.set(currentAttributes)
+
         throw error
       })
 
@@ -316,15 +314,11 @@ export default class Model extends Base {
 
     promise
       .then(data => {
-        if (!optimistic && collection) {
-          collection.remove(this)
-        }
-        return data
+        if (!optimistic && collection) collection.remove(this)
       })
       .catch(error => {
-        if (optimistic && collection) {
-          collection.add(this)
-        }
+        if (optimistic && collection) collection.add(this)
+
         throw error
       })
 
