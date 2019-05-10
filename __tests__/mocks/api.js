@@ -29,9 +29,17 @@ export default {
     return this._mock()
   },
 
-  post () {
-    // TODO: onProgress
-    return this._mock()
+  post (_path, _attributes, options) {
+    const ret = this._mock()
+
+    ret.promise
+      .then(() => {
+        options.onProgress(100)
+        options.onProgress.flush()
+      })
+      .catch(() => {})
+
+    return ret
   },
 
   put () {

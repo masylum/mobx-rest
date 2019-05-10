@@ -6,6 +6,7 @@ import ErrorObject from './ErrorObject'
 import { includes } from 'lodash'
 
 export default class Base {
+  @observable request: ?Request
   @observable.shallow requests: IObservableArray<Request> = []
 
   /**

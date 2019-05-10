@@ -1,24 +1,13 @@
 // @flow
-import {
-  observable,
-  action,
-  ObservableMap,
-  computed,
-  toJS,
-  runInAction
-} from 'mobx'
-import { uniqueId, union, isEqual, isPlainObject, includes } from 'lodash'
-import deepmerge from 'deepmerge'
-import Collection from './Collection'
-import apiClient from './apiClient'
+import { ObservableMap, action, computed, observable, runInAction, toJS } from 'mobx'
+import { debounce, uniqueId, union, isEqual, isPlainObject, includes } from 'lodash'
 import Base from './Base'
+import Collection from './Collection'
 import Request from './Request'
-import type {
-  OptimisticId,
-  Id,
-  DestroyOptions,
-  SaveOptions
-} from './types'
+import apiClient from './apiClient'
+import deepmerge from 'deepmerge'
+
+import type { OptimisticId, Id, DestroyOptions, SaveOptions } from './types'
 
 const dontMergeArrays = (_oldArray, newArray) => newArray
 
@@ -270,7 +259,11 @@ export default class Model extends Base {
       )
     }
 
-    const { promise, abort } = apiClient()[method](this.url(), data, otherOptions)
+    const onProgress = debounce(progress => {
+      if (optimistic && this.request) this.request.progress = progress
+    })
+
+    const { promise, abort } = apiClient()[method](this.url(), data, { onProgress, ...otherOptions })
 
     promise
       .then(data => {
@@ -292,7 +285,9 @@ export default class Model extends Base {
         throw error
       })
 
-    return this.withRequest(['saving', label], promise, abort)
+    this.request = this.withRequest(['saving', label], promise, abort)
+
+    return this.request
   }
 
   /**
