@@ -1,9 +1,9 @@
 // @flow
 export default class ErrorObject {
-  requestResponse: mixed
-  error: mixed
+  requestResponse: any
+  error: any
 
-  constructor (error: { requestResponse: mixed, error: mixed } | string | Error) {
+  constructor (error: { requestResponse: any, error: any } | string | Error) {
     if (error instanceof Error) {
       console.error(error)
       this.requestResponse = null

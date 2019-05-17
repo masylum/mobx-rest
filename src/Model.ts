@@ -7,24 +7,25 @@ import Request from './Request'
 import apiClient from './apiClient'
 import deepmerge from 'deepmerge'
 
-import type { OptimisticId, Id, DestroyOptions, SaveOptions } from './types'
+import { OptimisticId, Id, DestroyOptions, SaveOptions } from './types'
 
 const dontMergeArrays = (_oldArray, newArray) => newArray
+const defaultAttributes = {}
 
 export default class Model extends Base {
-  static defaultAttributes = {}
+  static defaultAttributes = defaultAttributes
 
   attributes: ObservableMap = observable.map()
   committedAttributes: ObservableMap = observable.map()
 
   optimisticId: OptimisticId = uniqueId('i_')
-  collection: ?Collection<*> = null
+  collection: Collection<any> | null = null
 
   constructor (attributes: { [key: string]: any } = {}) {
     super()
 
     const mergedAttributes = {
-      ...this.constructor.defaultAttributes,
+      ...defaultAttributes,
       ...attributes
     }
 
@@ -141,7 +142,7 @@ export default class Model extends Base {
    * Gets the current changes.
    */
   @computed
-  get changes (): { [string]: mixed } {
+  get changes (): { [key: string]: any } {
     return getChangesBetween(toJS(this.committedAttributes), toJS(this.attributes))
   }
 
@@ -174,8 +175,8 @@ export default class Model extends Base {
   reset (data?: {}): void {
     this.attributes.replace(
       data
-        ? { ...this.constructor.defaultAttributes, ...data }
-        : this.constructor.defaultAttributes
+        ? { ...defaultAttributes, ...data }
+        : defaultAttributes
     )
   }
 
@@ -335,7 +336,7 @@ const getChangedAttributesBetween = (source: {}, target: {}): Array<string> => {
   return keys.filter(key => !isEqual(source[key], target[key]))
 }
 
-const getChangesBetween = (source: {}, target: {}): { [string]: mixed } => {
+const getChangesBetween = (source: {}, target: {}): { [key: string]: any } => {
   const changes = {}
 
   getChangedAttributesBetween(source, target).forEach(key => {

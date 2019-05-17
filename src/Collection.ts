@@ -6,10 +6,10 @@ import apiClient from './apiClient'
 import { filter, isMatch, find, difference, map } from 'lodash'
 import { observable, action, computed, IObservableArray } from 'mobx'
 
-import type { CreateOptions, SetOptions, GetOptions, FindOptions, Id } from './types'
+import { CreateOptions, SetOptions, GetOptions, FindOptions, Id } from './types'
 
-export default class Collection<T: Model> extends Base {
-  @observable models: IObservableArray<T> = []
+export default abstract class Collection<T extends Model> extends Base {
+  @observable models: IObservableArray<T> = observable.array([])
 
   constructor (data: Array<{ [key: string]: any }> = []) {
     super()
@@ -27,7 +27,7 @@ export default class Collection<T: Model> extends Base {
   /**
    * Alias for models.map
    */
-  map (callback: (model: T) => mixed): Array<*> {
+  map (callback: (model: T) => any): Array<any> {
     return this.models.map(callback)
   }
 
@@ -49,16 +49,16 @@ export default class Collection<T: Model> extends Base {
 
   /**
    * Specifies the model class for that collection
+   *
+   * @abstract
    */
-  model (attributes: { [key: string]: any } = {}): Class<*> {
-    return Model
-  }
+  abstract model (attributes: { [key: string]: any }): new(attributes: {[key: string]: any}) => T;
 
   /**
    * Returns a JSON representation
    * of the collection
    */
-  toJS (): Array<{ [string]: mixed }> {
+  toJS (): Array<{ [key: string]: any }> {
     return this.models.map(model => model.toJS())
   }
 
@@ -103,14 +103,14 @@ export default class Collection<T: Model> extends Base {
   /**
    * Get a resource at a given position
    */
-  at (index: number): ?T {
+  at (index: number): T | null {
     return this.models[index]
   }
 
   /**
    * Get a resource with the given id or uuid
    */
-  get (id: Id, { required = false }: GetOptions = {}): ?T {
+  get (id: Id, { required = false }: GetOptions = {}): T {
     const model = this.models.find(item => item.id === id)
 
     if (!model && required) {
@@ -123,14 +123,14 @@ export default class Collection<T: Model> extends Base {
   /**
    * Get a resource with the given id or uuid or fail loudly.
    */
-  mustGet (id: Id): ?T {
+  mustGet (id: Id): T {
     return this.get(id, { required: true })
   }
 
   /**
    * Get resources matching criteria
    */
-  filter (query: { [key: string]: any } | (T) => boolean): Array<T> {
+  filter (query: { [key: string]: any } | ((T) => boolean)): Array<T> {
     return filter(this.models, (model) => {
       return typeof query === 'function'
         ? query(model)
@@ -141,7 +141,7 @@ export default class Collection<T: Model> extends Base {
   /**
    * Finds an element with the given matcher
    */
-  find (query: { [key: string]: mixed } | (T) => boolean, { required = false }: FindOptions = {}): ?T {
+  find (query: { [key: string]: any } | ((T) => boolean), { required = false }: FindOptions = {}): T | null {
     const model = find(this.models, (model) => {
       return typeof query === 'function'
         ? query(model)
@@ -158,7 +158,7 @@ export default class Collection<T: Model> extends Base {
   /**
    * Get a resource with the given id or uuid or fails loudly.
    */
-  mustFind (query: { [key: string]: mixed } | (T) => boolean): ?T {
+  mustFind (query: { [key: string]: any } | ((T) => boolean)): T {
     return this.find(query, { required: true })
   }
 
@@ -178,7 +178,7 @@ export default class Collection<T: Model> extends Base {
    * Resets the collection of models.
    */
   @action
-  reset (data: Array<{ [key: string]: any } | T>): void {
+  reset (data: Array<{ [key: string]: any }>): void {
     this.models.replace(data.map(m => this.build(m)))
   }
 
@@ -234,7 +234,7 @@ export default class Collection<T: Model> extends Base {
   /**
    * Creates a new model instance with the given attributes
    */
-  build (attributes: { [key: string]: any } = {}): T {
+  build (attributes: Object | T = {}): T {
     if (attributes instanceof Model) {
       attributes.collection = this
       return attributes

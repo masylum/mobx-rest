@@ -149,7 +149,7 @@ model.set({ name: 'Pau'})
 model.changedAttributes // => ['name']
 ```
 
-#### changes: { [string]: mixed }
+#### changes: { [string]: any }
 
 Gets the current changes.
 
@@ -534,7 +534,7 @@ Alias for models.forEach
 
 Example: `collection.forEach(model => console.log(model.get('id')))`
 
-### map (callback: (model: T) => mixed): Array<*>
+### map (callback: (model: T) => any): Array<any>
 
 Alias for models.map
 

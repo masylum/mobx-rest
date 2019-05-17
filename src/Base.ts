@@ -1,13 +1,13 @@
 // @flow
-import { action, observable, IObservableArray } from 'mobx'
-import apiClient from './apiClient'
-import Request from './Request'
 import ErrorObject from './ErrorObject'
+import Request from './Request'
+import apiClient from './apiClient'
+import { action, observable, IObservableArray } from 'mobx'
 import { includes, isObject } from 'lodash'
 
 export default class Base {
-  @observable request: ?Request
-  @observable.shallow requests: IObservableArray<Request> = []
+  @observable request: Request | null
+  @observable.shallow requests: IObservableArray<Request> = observable.array([])
 
   /**
    * Returns the resource's url.
@@ -20,8 +20,8 @@ export default class Base {
 
   withRequest (
     labels: string | Array<string>,
-    promise: Promise<*>,
-    abort: ?() => void
+    promise: Promise<any>,
+    abort: () => void | null
   ): Request {
     if (typeof labels === 'string') {
       labels = [labels]
@@ -47,7 +47,7 @@ export default class Base {
     return request
   }
 
-  getRequest (label: string): ?Request {
+  getRequest (label: string): Request | null {
     return this.requests.find(request => includes(request.labels, label))
   }
 
@@ -70,7 +70,7 @@ export default class Base {
    */
   // TODO: Type endpoint with string | { rootUrl: string }
   @action
-  rpc (endpoint: any, options?: {}, label?: string = 'fetching'): Request {
+  rpc (endpoint: any, options?: {}, label: string = 'fetching'): Request {
     const url = isObject(endpoint) ? endpoint.rootUrl : `${this.url()}/${endpoint}`
     const { promise, abort } = apiClient().post(url, options)
 

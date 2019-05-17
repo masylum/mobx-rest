@@ -32,7 +32,8 @@
     ]
   },
   "dependencies": {
-    "deepmerge": "^2.0.0",
+    "@types/lodash": "^4.14.129",
+    "deepmerge": "3.2.0",
     "lodash": "^4.17.4"
   },
   "peerDependencies": {
@@ -62,14 +63,18 @@
     "lint-staged": "^3.6.0",
     "mobx": "4.9.4",
     "prettier-standard": "^5.0.0",
-    "rimraf": "^2.6.1"
+    "rimraf": "^2.6.1",
+    "rollup": "^1.12.1",
+    "rollup-plugin-typescript": "^1.0.1",
+    "tslib": "^1.9.3",
+    "typescript": "^3.4.5"
   },
   "main": "lib",
   "scripts": {
     "build:clean": "rimraf lib",
     "build:lib": "babel -d lib src --ignore '**/__tests__/**'",
-    "build": "npm run build:clean && npm run build:lib",
-    "prepublish": "npm run build",
+    "build": "rollup --config",
+    "watch": "rollup --config -w",
     "jest": "BABEL_ENV=test NODE_PATH=src jest --no-cache",
     "lint": "eslint --ext .jsx,.js --cache src/ __tests__/",
     "test": "npm run lint && npm run jest",
