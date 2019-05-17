@@ -8,11 +8,13 @@
   - [x] Brought back onProgress for file uploaders
   - [x] Added request property in model that tracks the last active request
   - [x] Made rpc label optional with a default 'fetching' value
-  - [ ] Documented new APIs
+  - [x] Bring back the `request` attribute in Model. The attribute tracks the last request.
+  - [x] Documented new APIs
   - [ ] Update the mobx-rest-example
-  - [ ] Fix https://github.com/masylum/mobx-rest/issues/47
-  - [ ] Add support for mobx4
-  - [ ] Fix https://github.com/masylum/mobx-rest/issues/41
+  - [x] Fix https://github.com/masylum/mobx-rest/issues/47
+  - [x] Add support for mobx4
+  - [x] Fix https://github.com/masylum/mobx-rest/issues/41
+  - [x] Migrate to typescript
 
 ## `3.0.0.alpha`
 
