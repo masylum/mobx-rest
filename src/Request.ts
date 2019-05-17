@@ -1,4 +1,3 @@
-// @flow
 import { observable } from 'mobx'
 import { RequestOptions, RequestState } from './types'
 

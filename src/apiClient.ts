@@ -1,4 +1,3 @@
-// @flow
 import { Adapter } from './types'
 
 let currentAdapter

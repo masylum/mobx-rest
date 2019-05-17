@@ -1,6 +1,5 @@
-// @flow
 import { ObservableMap, action, computed, observable, runInAction, toJS } from 'mobx'
-import { debounce, uniqueId, union, isEqual, isPlainObject, includes } from 'lodash'
+import { debounce, includes, isEqual, isPlainObject, uniqueId, union } from 'lodash'
 import Base from './Base'
 import Collection from './Collection'
 import Request from './Request'
@@ -10,10 +9,9 @@ import deepmerge from 'deepmerge'
 import { OptimisticId, Id, DestroyOptions, SaveOptions } from './types'
 
 const dontMergeArrays = (_oldArray, newArray) => newArray
-const defaultAttributes = {}
 
 export default class Model extends Base {
-  static defaultAttributes = defaultAttributes
+  defaultAttributes = {}
 
   attributes: ObservableMap = observable.map()
   committedAttributes: ObservableMap = observable.map()
@@ -21,11 +19,13 @@ export default class Model extends Base {
   optimisticId: OptimisticId = uniqueId('i_')
   collection: Collection<any> | null = null
 
-  constructor (attributes: { [key: string]: any } = {}) {
+  constructor (attributes: { [key: string]: any } = {}, defaultAttributes: { [key: string]: any } = {}) {
     super()
 
+    this.defaultAttributes = defaultAttributes
+
     const mergedAttributes = {
-      ...defaultAttributes,
+      ...this.defaultAttributes,
       ...attributes
     }
 
@@ -38,7 +38,7 @@ export default class Model extends Base {
    * of the model
    */
   toJS () {
-    return toJS(this.attributes)
+    return toJS(this.attributes, { exportMapsAsObjects: true })
   }
 
   /**
@@ -175,8 +175,8 @@ export default class Model extends Base {
   reset (data?: {}): void {
     this.attributes.replace(
       data
-        ? { ...defaultAttributes, ...data }
-        : defaultAttributes
+        ? { ...this.defaultAttributes, ...data }
+        : this.defaultAttributes
     )
   }
 

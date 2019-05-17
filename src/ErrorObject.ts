@@ -1,4 +1,3 @@
-// @flow
 export default class ErrorObject {
   requestResponse: any
   error: any

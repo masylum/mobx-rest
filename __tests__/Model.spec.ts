@@ -1,10 +1,17 @@
-import { isObservable } from 'mobx'
-import Model from '../src/Model'
 import Collection from '../src/Collection'
-import apiClient from '../src/apiClient'
 import MockApi from './mocks/api'
+import Model from '../src/Model'
+import apiClient from '../src/apiClient'
+import { isObservable } from 'mobx'
+import { strMapToObj } from './utils'
 
 apiClient(MockApi)
+
+class MockCollection extends Collection<Model> {
+  model (): typeof Model {
+    return Model
+  }
+}
 
 describe(Model, () => {
   class MyModel extends Model {
@@ -29,24 +36,17 @@ describe(Model, () => {
       lastName: 'Doe'
     })
 
-    expect(model.committedAttributes.toJS()).toEqual({
+    expect(strMapToObj(model.committedAttributes.toJS())).toEqual({
       firstName: 'John',
       lastName: 'Doe'
     })
   })
 
   it('allows to define default attributes', () => {
-    class MyModel extends Model {
-      static defaultAttributes = {
-        email: null,
-        phone: null
-      }
-    }
-
-    const model = new MyModel({
+    const model = new Model({
       firstName: 'John',
       lastName: 'Doe'
-    })
+    }, { email: null, phone: null })
 
     expect(model.toJS()).toEqual({
       firstName: 'John',
@@ -92,7 +92,7 @@ describe(Model, () => {
     describe('if the model belongs to a collection and urlRoot is not defined', () => {
       it('uses the collection url as root', () => {
         const model = new Model({ id: 2 })
-        const collection = new Collection()
+        const collection = new MockCollection()
 
         collection.url = () => '/different-resources'
         model.collection = collection
@@ -376,13 +376,7 @@ describe(Model, () => {
       })
 
       it('respects the default attributes', () => {
-        class MyModel extends Model {
-          static defaultAttributes = {
-            someAttribute: 'test'
-          }
-        }
-
-        const model = new MyModel({ name: 'john' })
+        const model = new Model({ name: 'john' }, { someAttribute: 'test' })
 
         model.reset({ phone: '1234567' })
 
@@ -395,12 +389,7 @@ describe(Model, () => {
 
     describe('if attributes is not specified', () => {
       it('replaces the current attributes with the default ones', () => {
-        class MyModel extends Model {
-          static defaultAttributes = {
-            someAttribute: 'test'
-          }
-        }
-        const model = new MyModel({ email: 'test@test.com' })
+        const model = new Model({ email: 'test@test.com' }, { someAttribute: 'test' })
 
         model.reset()
 
@@ -446,9 +435,7 @@ describe(Model, () => {
       })
     })
 
-    afterEach(() => {
-      apiClient().get.mockRestore()
-    })
+    afterEach(() => spy.mockRestore())
 
     it('makes a get request to the model url', () => {
       expect(spy).toHaveBeenCalled()
@@ -478,8 +465,13 @@ describe(Model, () => {
 
       it('sets the new attributes as committed', async () => {
         MockApi.resolvePromise({ id: 2, name: 'John' })
+
         await promise
-        expect(model.committedAttributes.toJS()).toEqual({ id: 2, name: 'John' })
+
+        expect(strMapToObj(model.committedAttributes.toJS())).toEqual({
+          id: 2,
+          name: 'John'
+        })
       })
     })
 
@@ -507,9 +499,7 @@ describe(Model, () => {
         spy = jest.spyOn(apiClient(), 'post')
       })
 
-      afterEach(() => {
-        apiClient().post.mockRestore()
-      })
+      afterEach(() => spy.mockRestore())
 
       it('sends a POST request', () => {
         model.save()
@@ -565,9 +555,7 @@ describe(Model, () => {
           spy = jest.spyOn(apiClient(), 'patch')
         })
 
-        afterEach(() => {
-          apiClient().patch.mockRestore()
-        })
+        afterEach(() => spy.mockRestore())
 
         it('sends a PATCH request', () => {
           model.save({}, { patch: true })
@@ -616,9 +604,7 @@ describe(Model, () => {
           spy = jest.spyOn(apiClient(), 'put')
         })
 
-        afterEach(() => {
-          apiClient().put.mockRestore()
-        })
+        afterEach(() => spy.mockRestore())
 
         it('sends a PUT request', () => {
           model.save()
@@ -673,9 +659,7 @@ describe(Model, () => {
         spy = jest.spyOn(apiClient(), 'post')
       })
 
-      afterEach(() => {
-        apiClient().post.mockRestore()
-      })
+      afterEach(() => spy.mockRestore())
 
       it('they must be passed to the adapter', () => {
         model.save(undefined, { method: 'HEAD' })
@@ -717,7 +701,7 @@ describe(Model, () => {
       it('sets the new attributes as committed', async () => {
         const promise = model.save({ phone: '5678' })
 
-        expect(model.committedAttributes.toJS()).toEqual({
+        expect(strMapToObj(model.committedAttributes.toJS())).toEqual({
           name: 'John',
           email: 'john@test.com',
           phone: '1234'
@@ -732,7 +716,7 @@ describe(Model, () => {
 
         await promise
 
-        expect(model.committedAttributes.toJS()).toEqual({
+        expect(strMapToObj(model.committedAttributes.toJS())).toEqual({
           id: 2,
           name: 'John',
           email: 'john@test.com',
@@ -940,9 +924,7 @@ describe(Model, () => {
       spy = jest.spyOn(apiClient(), 'del')
     })
 
-    afterEach(() => {
-      apiClient().del.mockRestore()
-    })
+    afterEach(() => spy.mockRestore())
 
     describe('if is new', () => {
       it('don\'t make any request', () => {
@@ -954,7 +936,7 @@ describe(Model, () => {
         let collection
 
         beforeEach(() => {
-          collection = new Collection()
+          collection = new MockCollection()
           model.collection = collection
           collection.models.push(model)
         })
@@ -982,7 +964,7 @@ describe(Model, () => {
         let collection
 
         beforeEach(() => {
-          collection = new Collection()
+          collection = new MockCollection()
           model.collection = collection
           collection.models.push(model)
         })
@@ -997,7 +979,7 @@ describe(Model, () => {
       describe('if the request succeds', () => {
         describe('if not optimistic and belongs to a collection', () => {
           it('removes itself from the collection', async () => {
-            const collection = new Collection()
+            const collection = new MockCollection()
 
             model.collection = collection
             collection.models.push(model)
@@ -1015,7 +997,7 @@ describe(Model, () => {
 
         describe('if optimistic or don\'t belongs to a collection', () => {
           it('not throws', async () => {
-            model.collection = new Collection()
+            model.collection = new MockCollection()
             model.collection.models.push(model)
 
             const promise = model.destroy({ optimistic: true })
@@ -1040,7 +1022,7 @@ describe(Model, () => {
       describe('if the request fails', () => {
         describe('if optimistic and belongs to a collection', () => {
           it('adds itself to the collection again', async () => {
-            const collection = new Collection()
+            const collection = new MockCollection()
 
             model.collection = collection
             collection.models.push(model)
@@ -1061,7 +1043,7 @@ describe(Model, () => {
 
         describe('if not optimistic or don\'t belongs to a collection', () => {
           it('throws the request response', async () => {
-            model.collection = new Collection()
+            model.collection = new MockCollection()
             model.collection.models.push(model)
 
             const promise = model.destroy({ optimistic: false })

@@ -1,9 +1,8 @@
-// @flow
 import ErrorObject from './ErrorObject'
 import Request from './Request'
 import apiClient from './apiClient'
-import { action, observable, IObservableArray } from 'mobx'
 import { includes, isObject } from 'lodash'
+import { action, observable, IObservableArray } from 'mobx'
 
 export default class Base {
   @observable request: Request | null

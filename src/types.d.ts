@@ -1,4 +1,3 @@
-// @flow
 export type OptimisticId = string;
 export type Id = number | OptimisticId;
 export type RequestState = 'pending' | 'fulfilled' | 'rejected';

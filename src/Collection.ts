@@ -1,9 +1,8 @@
-// @flow
 import Base from './Base'
 import Model from './Model'
 import Request from './Request'
 import apiClient from './apiClient'
-import { filter, isMatch, find, difference, map } from 'lodash'
+import { difference, isMatch } from 'lodash'
 import { observable, action, computed, IObservableArray } from 'mobx'
 
 import { CreateOptions, SetOptions, GetOptions, FindOptions, Id } from './types'
@@ -52,7 +51,7 @@ export default abstract class Collection<T extends Model> extends Base {
    *
    * @abstract
    */
-  abstract model (attributes: { [key: string]: any }): new(attributes: {[key: string]: any}) => T;
+  abstract model (attributes?: { [key: string]: any }): new(attributes?: {[key: string]: any}) => T;
 
   /**
    * Returns a JSON representation
@@ -78,14 +77,6 @@ export default abstract class Collection<T extends Model> extends Base {
   }
 
   /**
-   * Returns a shallow array representation
-   * of the collection
-   */
-  peek (): Array<T> {
-    return this.models.peek()
-  }
-
-  /**
    * Wether the collection is empty
    */
   @computed
@@ -97,7 +88,7 @@ export default abstract class Collection<T extends Model> extends Base {
    * Gets the ids of all the items in the collection
    */
   _ids (): Array<Id> {
-    return map(this.models, item => item.id).filter(Boolean)
+    return this.models.map(item => item.id).filter(Boolean)
   }
 
   /**
@@ -131,7 +122,7 @@ export default abstract class Collection<T extends Model> extends Base {
    * Get resources matching criteria
    */
   filter (query: { [key: string]: any } | ((T) => boolean)): Array<T> {
-    return filter(this.models, (model) => {
+    return this.models.filter(model => {
       return typeof query === 'function'
         ? query(model)
         : isMatch(model.toJS(), query)
@@ -142,7 +133,7 @@ export default abstract class Collection<T extends Model> extends Base {
    * Finds an element with the given matcher
    */
   find (query: { [key: string]: any } | ((T) => boolean), { required = false }: FindOptions = {}): T | null {
-    const model = find(this.models, (model) => {
+    const model = this.models.find(model => {
       return typeof query === 'function'
         ? query(model)
         : isMatch(model.toJS(), query)

@@ -1,4 +1,6 @@
+import commonjs from 'rollup-plugin-commonjs'
 import typescript from 'rollup-plugin-typescript'
+import resolve from 'rollup-plugin-node-resolve'
 
 export default {
   input: './src/index.ts',
@@ -6,5 +8,14 @@ export default {
     file: './lib/index.js',
     format: 'cjs'
   },
-  plugins: [ typescript() ]
+  plugins: [
+    commonjs({
+      namedExports: {
+        'node_modules/lodash/lodash.js': [ 'uniqueId', 'union', 'includes', 'debounce' ]
+      }
+    }),
+    resolve(),
+    typescript()
+  ],
+  external: ['lodash', 'deepmerge', 'mobx']
 }

@@ -1,15 +1,21 @@
-import Model from '../src/Model'
 import Collection from '../src/Collection'
-import apiClient from '../src/apiClient'
 import MockApi from './mocks/api'
+import Model from '../src/Model'
+import apiClient from '../src/apiClient'
 
 apiClient(MockApi)
+
+class MockCollection extends Collection<Model> {
+   model (): typeof Model {
+    return Model
+  }
+}
 
 describe(Collection, () => {
   let collection
 
   beforeEach(() => {
-    collection = new Collection([
+    collection = new MockCollection([
       { id: 1, phone: '1234' },
       { id: 2, phone: '5678' }
     ])
@@ -71,17 +77,6 @@ describe(Collection, () => {
 
       expect(models.length).toBe(1)
       expect(collection.models.length).toBe(2)
-    })
-  })
-
-  describe('peek()', () => {
-    it('returns a performant shallow copy of the models array', () => {
-      const models = collection.peek()
-
-      models.pop()
-
-      expect(models.length).toBe(1)
-      expect(collection.models.length).toBe(1)
     })
   })
 
@@ -518,10 +513,6 @@ describe(Collection, () => {
       jest.spyOn(apiClient(), 'post')
     })
 
-    afterEach(() => {
-      apiClient().post.mockRestore()
-    })
-
     it('builds a model and saves it', async () => {
       const attributes = { phone: '1234' }
       const promise = collection.create(attributes)
@@ -603,9 +594,7 @@ describe(Collection, () => {
       promise = collection.fetch(options)
     })
 
-    afterEach(() => {
-      apiClient().get.mockRestore()
-    })
+    afterEach(() => spy.mockRestore())
 
     it('makes a get request to the model url', () => {
       expect(spy).toHaveBeenCalled()

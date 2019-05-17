@@ -1,6 +1,6 @@
 module.exports = {
-  parser: 'babel-eslint',
-  plugins: [ 'flowtype' ],
+  parser: '@typescript-eslint/parser',
+  plugins: [ '@typescript-eslint' ],
 
   env: {
     browser: true,
@@ -18,20 +18,10 @@ module.exports = {
     }
   },
 
-  extends: [
-    'plugin:flowtype/recommended',
-    'standard'
-  ],
-
   rules: {
     'object-curly-spacing': ['warn', 'always'],
     'prefer-promise-reject-errors': 'off',
-    'no-duplicate-imports': 'off',
-    'flowtype/no-weak-types': [0, {
-      'any': false,
-      'Object': false,
-      'Function': false
-    }]
+    'no-duplicate-imports': 'off'
   }
 };
 

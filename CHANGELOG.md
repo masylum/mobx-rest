@@ -12,9 +12,10 @@
   - [x] Documented new APIs
   - [ ] Update the mobx-rest-example
   - [x] Fix https://github.com/masylum/mobx-rest/issues/47
-  - [x] Add support for mobx4
+  - [x] Migrate to mobx 5+
   - [x] Fix https://github.com/masylum/mobx-rest/issues/41
   - [x] Migrate to typescript
+  - [x] Deprecated `.peek()` Collection method
 
 ## `3.0.0.alpha`
 
