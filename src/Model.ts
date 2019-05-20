@@ -17,7 +17,7 @@ export default class Model extends Base {
   committedAttributes: ObservableMap = observable.map()
 
   optimisticId: OptimisticId = uniqueId('i_')
-  collection: Collection<any> | null = null
+  collection: Collection<this> | null = null
 
   constructor (attributes: { [key: string]: any } = {}, defaultAttributes: { [key: string]: any } = {}) {
     super()

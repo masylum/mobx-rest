@@ -46,7 +46,6 @@
     "jest": "NODE_PATH=src jest --no-cache",
     "lint": "eslint --ext .ts --cache src/ __tests__/",
     "prepublish": "yarn build",
-    "prepublish": "yarn build",
     "prepush": "yarn test",
     "test": "yarn lint && yarn jest",
     "watch": "rollup --config -w",
