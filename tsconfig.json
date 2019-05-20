@@ -2,10 +2,11 @@
   "compilerOptions": {
     "outDir": "./lib",
     "allowJs": true,
-    "target": "es2015",
+    "target": "ES5",
     "experimentalDecorators": true,
     "moduleResolution": "Node",
-    "esModuleInterop": true
+    "esModuleInterop": true,
+    "lib": ["ES6"]
   },
   "include": [ "./src/**/*" ]
 }
