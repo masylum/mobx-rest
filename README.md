@@ -534,7 +534,7 @@ Alias for models.forEach
 
 Example: `collection.forEach(model => console.log(model.get('id')))`
 
-### map (callback: (model: T) => any): Array<any>
+### map<P> (callback: (model: T) => P): Array<P>
 
 Alias for models.map
 
