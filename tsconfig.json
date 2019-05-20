@@ -1,7 +1,8 @@
 {
   "compilerOptions": {
+    "declaration": true,
+    "declarationDir": "./lib",
     "outDir": "./lib",
-    "allowJs": true,
     "target": "ES5",
     "experimentalDecorators": true,
     "moduleResolution": "Node",

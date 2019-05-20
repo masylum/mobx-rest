@@ -1,5 +1,4 @@
-import commonjs from 'rollup-plugin-commonjs'
-import typescript from 'rollup-plugin-typescript'
+import typescript from 'rollup-plugin-typescript2'
 import resolve from 'rollup-plugin-node-resolve'
 
 export default {
@@ -9,11 +8,6 @@ export default {
     format: 'cjs'
   },
   plugins: [
-    commonjs({
-      namedExports: {
-        'node_modules/lodash/lodash.js': [ 'uniqueId', 'union', 'includes', 'debounce' ]
-      }
-    }),
     resolve(),
     typescript()
   ],

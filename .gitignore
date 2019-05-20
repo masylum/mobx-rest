@@ -5,3 +5,4 @@ flow-typed/
 .eslintcache
 *.log
 *.swp
+*.rpt2*
