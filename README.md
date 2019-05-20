@@ -419,6 +419,8 @@ Example:
 ```js
 const pau = usersCollection.find({ name: 'pau' })
 pau.get('name') // => 'pau'
+
+usersCollection.find({ name: 'foo'}) // => Error(`Invariant: Model must be found`)
 ```
 
 #### `mustFind(query: Object): Model`
