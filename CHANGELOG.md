@@ -1,21 +1,18 @@
 # Changelog
 
-## `3.0.0.beta`
+## `3.0.0`
+🎉
 
-  - [x] Fixed Collection types.
+  - [x] Migrate to Typescript
+  - [x] Add support for Mobx 5+
   - [x] Rollback default `keepChanges` behaviour.
-  - [x] Reimplemented mustFind and mustGet methods
-  - [x] Brought back onProgress for file uploaders
-  - [x] Added request property in model that tracks the last active request
-  - [x] Made rpc label optional with a default 'fetching' value
+  - [x] Reimplement `mustFind` and `mustGet` methods
+  - [x] Bring back `onProgress`
+  - [x] Make rpc label optional with a default 'fetching' value
   - [x] Bring back the `request` attribute in Model. The attribute tracks the last request.
   - [x] Documented new APIs
-  - [ ] Update the mobx-rest-example
   - [x] Fix https://github.com/masylum/mobx-rest/issues/47
-  - [x] Migrate to mobx 5+
   - [x] Fix https://github.com/masylum/mobx-rest/issues/41
-  - [x] Migrate to typescript
-  - [x] Deprecated `.peek()` Collection method
 
 ## `3.0.0.alpha`
 
