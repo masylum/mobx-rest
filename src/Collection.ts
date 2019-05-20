@@ -26,7 +26,7 @@ export default abstract class Collection<T extends Model> extends Base {
   /**
    * Alias for models.map
    */
-  map (callback: (model: T) => any): Array<any> {
+  map<P> (callback: (model: T) => P): Array<P> {
     return this.models.map(callback)
   }
 
