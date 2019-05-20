@@ -84,9 +84,9 @@ class User extends Model {
 }
 ```
 
-#### `defaultAttributes: ObservableMap`
+#### `defaultAttributes: Object`
 
-An `ObservableMap` that holds the default attributes of the model. {} by default.
+An object literal that holds the default attributes of the model. {} by default.
 
 #### `attributes: ObservableMap`
 
