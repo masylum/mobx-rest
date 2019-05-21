@@ -232,9 +232,9 @@ export default class Model extends Base {
     const label = this.isNew ? 'creating' : 'updating'
     let data
 
-    if (patch && attributes) {
+    if (patch && attributes && !this.isNew) {
       data = attributes
-    } else if (patch) {
+    } else if (patch && !this.isNew) {
       data = this.changes
     } else {
       data = { ...currentAttributes, ...attributes }
