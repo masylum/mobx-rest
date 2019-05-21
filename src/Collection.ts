@@ -157,12 +157,13 @@ export default abstract class Collection<T extends Model> extends Base {
    * Adds a model or collection of models.
    */
   @action
-  add (data: Array<{ [key: string]: any } | T> | { [key: string]: any } | T): void {
-    if (!Array.isArray(data)) {
-      data = [data]
-    }
+  add (data: Array<{ [key: string]: any } | T> | { [key: string]: any } | T): Array<T> {
+    if (!Array.isArray(data)) data = [data]
 
-    this.models.push(...data.map(m => this.build(m)))
+    const models = data.map(m => this.build(m))
+    this.models.push(...models)
+
+    return models
   }
 
   /**
