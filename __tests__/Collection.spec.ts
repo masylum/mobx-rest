@@ -587,9 +587,8 @@ describe(Collection, () => {
       collection.url = () => '/resources'
       spy = jest.spyOn(apiClient(), 'get')
       options = {
-        data: {
-          full: true
-        }
+        data: { full: true },
+        foo: 'bar'
       }
       promise = collection.fetch(options)
     })
@@ -601,7 +600,7 @@ describe(Collection, () => {
     })
 
     it('passes the options to the api client', () => {
-      expect(spy.mock.calls[0][1]).toBe(options)
+      expect(spy.mock.calls[0][1]).toBe(options.data)
     })
 
     it('tracks the request with the "fetching" label', () => {
@@ -619,7 +618,7 @@ describe(Collection, () => {
         jest.spyOn(collection, 'set')
         MockApi.resolvePromise(response)
         await promise
-        expect(collection.set).toHaveBeenCalledWith(response, options)
+        expect(collection.set).toHaveBeenCalledWith(response, { foo: 'bar' })
       })
     })
   })
