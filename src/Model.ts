@@ -222,8 +222,6 @@ export default class Model extends Base {
    * otherwise it creates the new resource.
    *
    * It supports optimistic and patch updates.
-   *
-   * TODO: Add progress
    */
   @action
   save (

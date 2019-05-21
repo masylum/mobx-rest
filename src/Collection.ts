@@ -251,7 +251,7 @@ export default abstract class Collection<T extends Model> extends Base {
     { optimistic = true }: CreateOptions = {}
   ): Request {
     const model = this.build(attributesOrModel)
-    const { abort, promise } = model.save() // TODO: Progress?
+    const { abort, promise } = model.save()
 
     if (optimistic) {
       this.add(model)
