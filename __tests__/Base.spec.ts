@@ -79,6 +79,19 @@ describe(Base, () => {
           expect(requestError.error).toBe('Not found')
         }
       })
+
+      it('throws an ErrorObject', async () => {
+        const promise = model.withRequest('fetching', Promise.reject({ foo: 'bar' }))
+
+        try {
+          await promise
+        } catch (requestError) {
+          expect(requestError).toBeInstanceOf(ErrorObject)
+          expect(requestError.payload).toEqual({ foo: 'bar' })
+          expect(requestError.error).toEqual(null)
+          expect(requestError.requestResponse).toEqual(null)
+        }
+      })
     })
   })
 
