@@ -293,7 +293,7 @@ export default class Model extends Base {
    * too
    */
   @action
-  destroy ({ optimistic = true, ...otherOptions }: DestroyOptions = {}): Request {
+  destroy ({ data, optimistic = true, ...otherOptions }: DestroyOptions = {}): Request {
     const collection = this.collection
 
     if (this.isNew && collection) {
@@ -305,7 +305,7 @@ export default class Model extends Base {
       return new Request(Promise.resolve())
     }
 
-    const { promise, abort } = apiClient().del(this.url(), otherOptions)
+    const { promise, abort } = apiClient().del(this.url(), data, otherOptions)
 
     if (optimistic && collection) {
       collection.remove(this)

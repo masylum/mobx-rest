@@ -1013,7 +1013,7 @@ describe(Model, () => {
         it('they must be passed to the adapter', () => {
           model.destroy({ method: 'OPTIONS' })
 
-          expect(spy.mock.calls[0][1]).toEqual({
+          expect(spy.mock.calls[0][2]).toEqual({
             method: 'OPTIONS'
           })
         })

@@ -17,6 +17,7 @@ What's changed 💅:
 Breaking changes ☢️:
   - Migrated to Mobx 5+
   - Rollback default `keepChanges` flag value to `false`.
+  - Compatible adapters need to implement `data` as their second argument [as such](https://github.com/masylum/mobx-rest-jquery-adapter/commit/1e55c15dc37d372db1ae4345dedef855b8fb7611#diff-1fdf421c05c1140f6d71444ea2b27638R135).
 
 ## `3.0.0.alpha`
 
