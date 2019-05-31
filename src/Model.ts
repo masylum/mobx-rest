@@ -1,41 +1,31 @@
-// @flow
-import {
-  observable,
-  action,
-  ObservableMap,
-  computed,
-  toJS,
-  runInAction
-} from 'mobx'
-import { uniqueId, union, isEqual, isPlainObject } from 'lodash'
-import deepmerge from 'deepmerge'
-import Collection from './Collection'
-import apiClient from './apiClient'
+import { ObservableMap, action, computed, observable, runInAction, toJS } from 'mobx'
+import { debounce, includes, isEqual, isPlainObject, uniqueId, union } from 'lodash'
 import Base from './Base'
+import Collection from './Collection'
 import Request from './Request'
-import type {
-  OptimisticId,
-  Id,
-  DestroyOptions,
-  SaveOptions
-} from './types'
+import apiClient from './apiClient'
+import deepmerge from 'deepmerge'
+
+import { OptimisticId, Id, DestroyOptions, SaveOptions } from './types'
 
 const dontMergeArrays = (_oldArray, newArray) => newArray
 
 export default class Model extends Base {
-  static defaultAttributes = {}
+  defaultAttributes = {}
 
   attributes: ObservableMap = observable.map()
   committedAttributes: ObservableMap = observable.map()
 
   optimisticId: OptimisticId = uniqueId('i_')
-  collection: ?Collection = null
+  collection: Collection<this> | null = null
 
-  constructor (attributes: { [key: string]: any } = {}) {
+  constructor (attributes: { [key: string]: any } = {}, defaultAttributes: { [key: string]: any } = {}) {
     super()
 
+    this.defaultAttributes = defaultAttributes
+
     const mergedAttributes = {
-      ...this.constructor.defaultAttributes,
+      ...this.defaultAttributes,
       ...attributes
     }
 
@@ -48,7 +38,7 @@ export default class Model extends Base {
    * of the model
    */
   toJS () {
-    return toJS(this.attributes)
+    return toJS(this.attributes, { exportMapsAsObjects: true })
   }
 
   /**
@@ -152,7 +142,7 @@ export default class Model extends Base {
    * Gets the current changes.
    */
   @computed
-  get changes (): { [string]: mixed } {
+  get changes (): { [key: string]: any } {
     return getChangesBetween(toJS(this.committedAttributes), toJS(this.attributes))
   }
 
@@ -162,7 +152,7 @@ export default class Model extends Base {
    */
   hasChanges (attribute?: string): boolean {
     if (attribute) {
-      return this.changedAttributes.indexOf(attribute) !== -1
+      return includes(this.changedAttributes, attribute)
     }
 
     return this.changedAttributes.length > 0
@@ -185,8 +175,8 @@ export default class Model extends Base {
   reset (data?: {}): void {
     this.attributes.replace(
       data
-        ? { ...this.constructor.defaultAttributes, ...data }
-        : this.constructor.defaultAttributes
+        ? { ...this.defaultAttributes, ...data }
+        : this.defaultAttributes
     )
   }
 
@@ -210,7 +200,6 @@ export default class Model extends Base {
       .then(data => {
         this.set(data)
         this.commitChanges()
-        return data
       })
 
     return this.withRequest('fetching', promise, abort)
@@ -233,21 +222,19 @@ export default class Model extends Base {
    * otherwise it creates the new resource.
    *
    * It supports optimistic and patch updates.
-   *
-   * TODO: Add progress
    */
   @action
   save (
     attributes?: {},
-    { optimistic = true, patch = false, keepChanges = true, ...otherOptions }: SaveOptions = {}
+    { optimistic = true, patch = false, keepChanges = false, ...otherOptions }: SaveOptions = {}
   ): Request {
     const currentAttributes = this.toJS()
     const label = this.isNew ? 'creating' : 'updating'
     let data
 
-    if (patch && attributes) {
+    if (patch && attributes && !this.isNew) {
       data = attributes
-    } else if (patch) {
+    } else if (patch && !this.isNew) {
       data = this.changes
     } else {
       data = { ...currentAttributes, ...attributes }
@@ -270,7 +257,11 @@ export default class Model extends Base {
       )
     }
 
-    const { promise, abort } = apiClient()[method](this.url(), data, otherOptions)
+    const onProgress = debounce(progress => {
+      if (optimistic && this.request) this.request.progress = progress
+    })
+
+    const { promise, abort } = apiClient()[method](this.url(), data, { onProgress, ...otherOptions })
 
     promise
       .then(data => {
@@ -284,15 +275,16 @@ export default class Model extends Base {
             this.set(this.applyPatchChanges(data, changes))
           }
         })
-
-        return data
       })
       .catch(error => {
         this.set(currentAttributes)
+
         throw error
       })
 
-    return this.withRequest(['saving', label], promise, abort)
+    this.request = this.withRequest(['saving', label], promise, abort)
+
+    return this.request
   }
 
   /**
@@ -321,15 +313,11 @@ export default class Model extends Base {
 
     promise
       .then(data => {
-        if (!optimistic && collection) {
-          collection.remove(this)
-        }
-        return data
+        if (!optimistic && collection) collection.remove(this)
       })
       .catch(error => {
-        if (optimistic && collection) {
-          collection.add(this)
-        }
+        if (optimistic && collection) collection.add(this)
+
         throw error
       })
 
@@ -346,7 +334,7 @@ const getChangedAttributesBetween = (source: {}, target: {}): Array<string> => {
   return keys.filter(key => !isEqual(source[key], target[key]))
 }
 
-const getChangesBetween = (source: {}, target: {}): { [string]: mixed } => {
+const getChangesBetween = (source: {}, target: {}): { [key: string]: any } => {
   const changes = {}
 
   getChangedAttributesBetween(source, target).forEach(key => {

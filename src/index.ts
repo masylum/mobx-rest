@@ -1,4 +1,3 @@
-// @flow
 import Collection from './Collection'
 import Model from './Model'
 import Request from './Request'

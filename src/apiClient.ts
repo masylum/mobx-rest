@@ -1,5 +1,4 @@
-// @flow
-import type { Adapter } from './types'
+import { Adapter } from './types'
 
 let currentAdapter
 

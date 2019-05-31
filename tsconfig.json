@@ -1,0 +1,13 @@
+{
+  "compilerOptions": {
+    "declaration": true,
+    "declarationDir": "./lib",
+    "outDir": "./lib",
+    "target": "ES5",
+    "experimentalDecorators": true,
+    "moduleResolution": "Node",
+    "esModuleInterop": true,
+    "lib": ["ES6"]
+  },
+  "include": [ "./src/**/*" ]
+}

@@ -1,15 +1,21 @@
-import Model from '../src/Model'
 import Collection from '../src/Collection'
-import apiClient from '../src/apiClient'
 import MockApi from './mocks/api'
+import Model from '../src/Model'
+import apiClient from '../src/apiClient'
 
 apiClient(MockApi)
+
+class MockCollection extends Collection<Model> {
+   model (): typeof Model {
+    return Model
+  }
+}
 
 describe(Collection, () => {
   let collection
 
   beforeEach(() => {
-    collection = new Collection([
+    collection = new MockCollection([
       { id: 1, phone: '1234' },
       { id: 2, phone: '5678' }
     ])
@@ -74,17 +80,6 @@ describe(Collection, () => {
     })
   })
 
-  describe('peek()', () => {
-    it('returns a performant shallow copy of the models array', () => {
-      const models = collection.peek()
-
-      models.pop()
-
-      expect(models.length).toBe(1)
-      expect(collection.models.length).toBe(1)
-    })
-  })
-
   describe('model()', () => {
     it('returns the default model class', () => {
       expect(collection.model()).toBe(Model)
@@ -129,6 +124,18 @@ describe(Collection, () => {
     })
   })
 
+  describe('mustGet(id)', () => {
+    it('returns the model with the specified id', () => {
+      expect(collection.mustGet(2)).toBe(collection.models[1])
+    })
+
+    describe('if the model is not found', () => {
+      it('throws', () => {
+        expect(() => collection.mustGet(3))
+          .toThrow('Invariant: Model must be found with id: 3')
+      })
+    })
+  })
   describe('filter(query)', () => {
     beforeEach(() => {
       collection.reset([
@@ -202,6 +209,41 @@ describe(Collection, () => {
         it('return undefined', () => {
           expect(collection.find({ phone: '9999' })).toBeUndefined()
         })
+      })
+    })
+  })
+
+  describe('mustFind(query)', () => {
+    beforeEach(() => {
+      collection.reset([
+        { id: 1, phone: '1234', email: 'test1@test.com' },
+        { id: 2, phone: '1234', email: 'test2@test.com' },
+        { id: 3, phone: '5678', email: 'test2@test.com' },
+        { id: 4, phone: '1234', email: 'test1@test.com' }
+      ])
+    })
+
+    describe('if query is an object', () => {
+      it('returns the first model that matches that attributes', () => {
+        expect(collection.mustFind({
+          phone: '1234',
+          email: 'test1@test.com'
+        })).toEqual(collection.at(0))
+      })
+    })
+
+    describe('if query is a function', () => {
+      it('returns the first model that returns true on the callback', () => {
+        expect(collection.mustFind(model =>
+          model.get('email') === 'test2@test.com'
+        )).toEqual(collection.at(1))
+      })
+    })
+
+    describe('if the model is not found', () => {
+      it('throws', () => {
+        expect(() => collection.mustFind({ phone: '9999' }))
+          .toThrow(Error(`Invariant: Model must be found`))
       })
     })
   })
@@ -471,10 +513,6 @@ describe(Collection, () => {
       jest.spyOn(apiClient(), 'post')
     })
 
-    afterEach(() => {
-      apiClient().post.mockRestore()
-    })
-
     it('builds a model and saves it', async () => {
       const attributes = { phone: '1234' }
       const promise = collection.create(attributes)
@@ -549,23 +587,20 @@ describe(Collection, () => {
       collection.url = () => '/resources'
       spy = jest.spyOn(apiClient(), 'get')
       options = {
-        data: {
-          full: true
-        }
+        data: { full: true },
+        foo: 'bar'
       }
       promise = collection.fetch(options)
     })
 
-    afterEach(() => {
-      apiClient().get.mockRestore()
-    })
+    afterEach(() => spy.mockRestore())
 
     it('makes a get request to the model url', () => {
       expect(spy).toHaveBeenCalled()
     })
 
     it('passes the options to the api client', () => {
-      expect(spy.mock.calls[0][1]).toBe(options)
+      expect(spy.mock.calls[0][1]).toBe(options.data)
     })
 
     it('tracks the request with the "fetching" label', () => {
@@ -583,7 +618,7 @@ describe(Collection, () => {
         jest.spyOn(collection, 'set')
         MockApi.resolvePromise(response)
         await promise
-        expect(collection.set).toHaveBeenCalledWith(response, options)
+        expect(collection.set).toHaveBeenCalledWith(response, { foo: 'bar' })
       })
     })
   })

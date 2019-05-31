@@ -1,14 +1,14 @@
-// @flow
-import { observable, action, computed, IObservableArray } from 'mobx'
-import Model from './Model'
-import { filter, isMatch, find, difference, map } from 'lodash'
-import apiClient from './apiClient'
 import Base from './Base'
+import Model from './Model'
 import Request from './Request'
-import type { CreateOptions, SetOptions, GetOptions, FindOptions, Id } from './types'
+import apiClient from './apiClient'
+import { difference, isMatch } from 'lodash'
+import { observable, action, computed, IObservableArray } from 'mobx'
 
-export default class Collection extends Base {
-  @observable models: IObservableArray<Model> = []
+import { CreateOptions, SetOptions, GetOptions, FindOptions, Id } from './types'
+
+export default abstract class Collection<T extends Model> extends Base {
+  @observable models: IObservableArray<T> = observable.array([])
 
   constructor (data: Array<{ [key: string]: any }> = []) {
     super()
@@ -26,14 +26,14 @@ export default class Collection extends Base {
   /**
    * Alias for models.map
    */
-  map (callback: (model: Model) => mixed): Array<*> {
+  map<P> (callback: (model: T) => P): Array<P> {
     return this.models.map(callback)
   }
 
   /**
    * Alias for models.forEach
    */
-  forEach (callback: (model: Model) => void): void {
+  forEach (callback: (model: T) => void): void {
     return this.models.forEach(callback)
   }
 
@@ -48,23 +48,23 @@ export default class Collection extends Base {
 
   /**
    * Specifies the model class for that collection
+   *
+   * @abstract
    */
-  model (attributes: { [key: string]: any } = {}): Class<*> {
-    return Model
-  }
+  abstract model (attributes?: { [key: string]: any }): new(attributes?: {[key: string]: any}) => T;
 
   /**
    * Returns a JSON representation
    * of the collection
    */
-  toJS (): Array<{ [string]: mixed }> {
+  toJS (): Array<{ [key: string]: any }> {
     return this.models.map(model => model.toJS())
   }
 
   /**
    * Alias of slice
    */
-  toArray (): Array<Model> {
+  toArray (): Array<T> {
     return this.slice()
   }
 
@@ -72,16 +72,8 @@ export default class Collection extends Base {
    * Returns a defensive shallow array representation
    * of the collection
    */
-  slice (): Array<Model> {
+  slice (): Array<T> {
     return this.models.slice()
-  }
-
-  /**
-   * Returns a shallow array representation
-   * of the collection
-   */
-  peek (): Array<Model> {
-    return this.models.peek()
   }
 
   /**
@@ -96,20 +88,20 @@ export default class Collection extends Base {
    * Gets the ids of all the items in the collection
    */
   _ids (): Array<Id> {
-    return map(this.models, item => item.id).filter(Boolean)
+    return this.models.map(item => item.id).filter(Boolean)
   }
 
   /**
    * Get a resource at a given position
    */
-  at (index: number): ?Model {
+  at (index: number): T | null {
     return this.models[index]
   }
 
   /**
    * Get a resource with the given id or uuid
    */
-  get (id: Id, { required = false }: GetOptions = {}): ?Model {
+  get (id: Id, { required = false }: GetOptions = {}): T {
     const model = this.models.find(item => item.id === id)
 
     if (!model && required) {
@@ -120,10 +112,17 @@ export default class Collection extends Base {
   }
 
   /**
+   * Get a resource with the given id or uuid or fail loudly.
+   */
+  mustGet (id: Id): T {
+    return this.get(id, { required: true })
+  }
+
+  /**
    * Get resources matching criteria
    */
-  filter (query: { [key: string]: any } | (Model) => boolean): Array<Model> {
-    return filter(this.models, (model) => {
+  filter (query: { [key: string]: any } | ((T) => boolean)): Array<T> {
+    return this.models.filter(model => {
       return typeof query === 'function'
         ? query(model)
         : isMatch(model.toJS(), query)
@@ -133,8 +132,8 @@ export default class Collection extends Base {
   /**
    * Finds an element with the given matcher
    */
-  find (query: { [key: string]: mixed } | (Model) => boolean, { required = false }: FindOptions = {}): ?Model {
-    const model = find(this.models, (model) => {
+  find (query: { [key: string]: any } | ((T) => boolean), { required = false }: FindOptions = {}): T | null {
+    const model = this.models.find(model => {
       return typeof query === 'function'
         ? query(model)
         : isMatch(model.toJS(), query)
@@ -148,30 +147,38 @@ export default class Collection extends Base {
   }
 
   /**
+   * Get a resource with the given id or uuid or fails loudly.
+   */
+  mustFind (query: { [key: string]: any } | ((T) => boolean)): T {
+    return this.find(query, { required: true })
+  }
+
+  /**
    * Adds a model or collection of models.
    */
   @action
-  add (data: Array<{ [key: string]: any } | Model> | { [key: string]: any } | Model): void {
-    if (!Array.isArray(data)) {
-      data = [data]
-    }
+  add (data: Array<{ [key: string]: any } | T> | { [key: string]: any } | T): Array<T> {
+    if (!Array.isArray(data)) data = [data]
 
-    this.models.push(...data.map(this.build))
+    const models = data.map(m => this.build(m))
+    this.models.push(...models)
+
+    return models
   }
 
   /**
    * Resets the collection of models.
    */
   @action
-  reset (data: Array<{ [key: string]: any } | Model>): void {
-    this.models.replace(data.map(this.build))
+  reset (data: Array<{ [key: string]: any }>): void {
+    this.models.replace(data.map(m => this.build(m)))
   }
 
   /**
    * Removes the model with the given ids or uuids
    */
   @action
-  remove (ids: Id | Model | Array<Id | Model>): void {
+  remove (ids: Id | T | Array<Id | T>): void {
     if (!Array.isArray(ids)) {
       ids = [ids]
     }
@@ -219,7 +226,7 @@ export default class Collection extends Base {
   /**
    * Creates a new model instance with the given attributes
    */
-  build = (attributes: { [key: string]: any } = {}): Model => {
+  build (attributes: Object | T = {}): T {
     if (attributes instanceof Model) {
       attributes.collection = this
       return attributes
@@ -240,7 +247,7 @@ export default class Collection extends Base {
    */
   @action
   create (
-    attributesOrModel: { [key: string]: any } | Model,
+    attributesOrModel: { [key: string]: any } | T,
     { optimistic = true }: CreateOptions = {}
   ): Request {
     const model = this.build(attributesOrModel)
@@ -252,15 +259,11 @@ export default class Collection extends Base {
 
     promise
       .then(response => {
-        if (!optimistic) {
-          this.add(model)
-        }
-        return response
+        if (!optimistic) this.add(model)
       })
       .catch(error => {
-        if (optimistic) {
-          this.remove(model)
-        }
+        if (optimistic) this.remove(model)
+
         throw error
       })
 
@@ -275,14 +278,10 @@ export default class Collection extends Base {
    * or removing.
    */
   @action
-  fetch (options: SetOptions = {}): Request {
-    const { abort, promise } = apiClient().get(this.url(), options)
+  fetch ({ data, ...otherOptions }: SetOptions = {}): Request {
+    const { abort, promise } = apiClient().get(this.url(), data, otherOptions)
 
-    promise
-      .then(data => {
-        this.set(data, options)
-        return data
-      })
+    promise.then(data => this.set(data, otherOptions))
 
     return this.withRequest('fetching', promise, abort)
   }

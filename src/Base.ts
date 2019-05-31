@@ -1,11 +1,12 @@
-// @flow
-import { action, observable, IObservableArray } from 'mobx'
-import apiClient from './apiClient'
-import Request from './Request'
 import ErrorObject from './ErrorObject'
+import Request from './Request'
+import apiClient from './apiClient'
+import { includes, isObject } from 'lodash'
+import { action, observable, IObservableArray } from 'mobx'
 
 export default class Base {
-  @observable.shallow requests: IObservableArray = []
+  @observable request: Request | null
+  @observable.shallow requests: IObservableArray<Request> = observable.array([])
 
   /**
    * Returns the resource's url.
@@ -16,7 +17,11 @@ export default class Base {
     throw new Error('You must implement this method')
   }
 
-  withRequest (labels: string | Array<string>, promise: Promise<*>, abort: ?() => void): Request {
+  withRequest (
+    labels: string | Array<string>,
+    promise: Promise<any>,
+    abort: () => void | null
+  ): Request {
     if (typeof labels === 'string') {
       labels = [labels]
     }
@@ -41,12 +46,12 @@ export default class Base {
     return request
   }
 
-  getRequest (label: string): ?Request {
-    return this.requests.find(request => request.labels.indexOf(label) !== -1)
+  getRequest (label: string): Request | null {
+    return this.requests.find(request => includes(request.labels, label))
   }
 
   getAllRequests (label: string): Array<Request> {
-    return this.requests.filter(request => request.labels.indexOf(label) !== -1)
+    return this.requests.filter(request => includes(request.labels, label))
   }
 
   /**
@@ -62,9 +67,11 @@ export default class Base {
    * non-REST endpoints that you may have in
    * your API.
    */
+  // TODO: Type endpoint with string | { rootUrl: string }
   @action
-  rpc (label: string, endpoint: string, options?: {}): Request {
-    const { promise, abort } = apiClient().post(`${this.url()}/${endpoint}`, options)
+  rpc (endpoint: any, options?: {}, label: string = 'fetching'): Request {
+    const url = isObject(endpoint) ? endpoint.rootUrl : `${this.url()}/${endpoint}`
+    const { promise, abort } = apiClient().post(url, options)
 
     return this.withRequest(label, promise, abort)
   }

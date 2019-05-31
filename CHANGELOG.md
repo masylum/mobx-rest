@@ -1,5 +1,30 @@
 # Changelog
 
+## `3.0.0`
+New features 🎩:
+  - Reimplemented `mustFind` and `mustGet` methods in Collection.
+  - Brought back the `request` attribute in Model. The attribute tracks the last issued request.
+  - Brought back `onProgress` hook in `save` method.
+
+Solved bugs 🐛:
+  - Fix https://github.com/masylum/mobx-rest/issues/47
+  - Fix https://github.com/masylum/mobx-rest/issues/41
+
+What's changed 💅:
+  - Migrated to Typescript
+  - Made RPC label optional with a default `fetching` value
+
+Breaking changes ☢️:
+  - Migrated to Mobx 5+
+  - Rollback default `keepChanges` flag value to `false`.
+
+## `3.0.0.alpha`
+
+:sparkles:
+
+Full description here: https://github.com/masylum/mobx-rest/pull/39
+Kudos to @rdiazv
+
 ## `2.2.5`
 
 :nail_care:

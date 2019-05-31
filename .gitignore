@@ -3,3 +3,6 @@ coverage/
 node_modules/
 flow-typed/
 .eslintcache
+*.log
+*.swp
+*.rpt2*
