@@ -282,9 +282,9 @@ export default class Model extends Base {
         throw error
       })
 
-    this.request = this.withRequest(['saving', label], promise, abort)
+    const request = this.withRequest(['saving', label], promise, abort)
 
-    return this.request
+    return request
   }
 
   /**

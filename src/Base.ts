@@ -28,7 +28,9 @@ export default class Base {
 
     const handledPromise = promise
       .then(response => {
+        if (this.request === request) this.request = null
         this.requests.remove(request)
+
         return response
       })
       .catch(error => {
@@ -41,6 +43,7 @@ export default class Base {
       abort
     })
 
+    this.request = request
     this.requests.push(request)
 
     return request
