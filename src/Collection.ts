@@ -188,11 +188,13 @@ export default abstract class Collection<T extends Model> extends Base {
 
       if (id instanceof Model && id.collection === this) {
         model = id
-      } else if (typeof id === 'number') {
+      } else if (typeof id === 'number' || typeof id === 'string') {
         model = this.get(id)
       }
 
-      if (!model) return
+      if (!model) {
+        return console.warn(`${this.constructor.name}: Model with id ${id} not found.`)
+      }
 
       this.models.splice(this.models.indexOf(model), 1)
       model.collection = undefined
