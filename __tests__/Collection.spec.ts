@@ -306,6 +306,7 @@ describe(Collection, () => {
         { id: 1 },
         { id: 2 }
       ])
+
       collection.remove(1)
 
       expect(collection.length).toBe(1)
@@ -374,6 +375,7 @@ describe(Collection, () => {
       describe('if add = true', () => {
         it('adds the new models', () => {
           collection.reset([{ id: 1 }])
+
           collection.set(
             [{ id: 2 }, { id: 3 }],
             { add: true, change: false, remove: false }
@@ -407,6 +409,7 @@ describe(Collection, () => {
             { id: 1, phone: '1234' },
             { id: 2, phone: '5678' }
           ])
+
           collection.set(
             [{ id: 1, phone: '8888' }, { id: 2, phone: '9999' }],
             { add: false, change: true, remove: false }
@@ -441,7 +444,7 @@ describe(Collection, () => {
     describe('if data has missing models', () => {
       describe('if remove = true', () => {
         it('removes the missing models', () => {
-          collection.reset([{ id: 1 }, { id: 2 }])
+          collection.reset([{ id: '1' }, { id: 2 }])
           collection.set(
             [{ id: 2 }],
             { add: false, change: false, remove: true }
