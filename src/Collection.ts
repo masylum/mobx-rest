@@ -281,7 +281,9 @@ export default abstract class Collection<T extends Model> extends Base {
   fetch ({ data, ...otherOptions }: SetOptions = {}): Request {
     const { abort, promise } = apiClient().get(this.url(), data, otherOptions)
 
-    promise.then(data => this.set(data, otherOptions))
+    promise
+      .then(data => this.set(data, otherOptions))
+      .catch(_error => {}) // do nothing
 
     return this.withRequest('fetching', promise, abort)
   }

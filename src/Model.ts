@@ -201,6 +201,7 @@ export default class Model extends Base {
         this.set(data)
         this.commitChanges()
       })
+      .catch(_error => {}) // do nothing
 
     return this.withRequest('fetching', promise, abort)
   }
