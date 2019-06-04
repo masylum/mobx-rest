@@ -105,7 +105,7 @@ export default abstract class Collection<T extends Model> extends Base {
     const model = this.models.find(item => item.id === id)
 
     if (!model && required) {
-      throw Error(`Invariant: Model must be found with id: ${id}`)
+      throw new Error(`Invariant: Model must be found with id: ${id}`)
     }
 
     return model
@@ -140,7 +140,7 @@ export default abstract class Collection<T extends Model> extends Base {
     })
 
     if (!model && required) {
-      throw Error(`Invariant: Model must be found`)
+      throw new Error(`Invariant: Model must be found`)
     }
 
     return model
