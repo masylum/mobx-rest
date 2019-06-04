@@ -265,8 +265,6 @@ export default abstract class Collection<T extends Model> extends Base {
       })
       .catch(error => {
         if (optimistic) this.remove(model)
-
-        throw error
       })
 
     return this.withRequest('creating', promise, abort)
