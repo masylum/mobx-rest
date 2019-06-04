@@ -278,8 +278,6 @@ export default class Model extends Base {
       })
       .catch(error => {
         this.set(currentAttributes)
-
-        throw error
       })
 
     const request = this.withRequest(['saving', label], promise, abort)
@@ -317,8 +315,6 @@ export default class Model extends Base {
       })
       .catch(error => {
         if (optimistic && collection) collection.add(this)
-
-        throw error
       })
 
     return this.withRequest('destroying', promise, abort)
