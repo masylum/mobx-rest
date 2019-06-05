@@ -558,7 +558,7 @@ describe(Model, () => {
         afterEach(() => spy.mockRestore())
 
         it('sends a PATCH request', () => {
-          model.save({}, { patch: true })
+          model.save()
           expect(spy).toHaveBeenCalled()
         })
 
@@ -607,7 +607,7 @@ describe(Model, () => {
         afterEach(() => spy.mockRestore())
 
         it('sends a PUT request', () => {
-          model.save()
+          model.save({}, { patch: false })
           expect(spy).toHaveBeenCalled()
         })
 

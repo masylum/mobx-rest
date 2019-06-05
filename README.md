@@ -282,6 +282,7 @@ Options:
   first or wait for the server's response.
   - `patch = true` Whether we want to use the `PATCH` verb and semantics, sending
   only the changed attributes instead of the whole resource down the wire.
+  - `keepChanges = false` Whether we want to keep the changes after the response from the API.
 
 Example:
 

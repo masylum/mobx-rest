@@ -227,7 +227,7 @@ export default class Model extends Base {
   @action
   save (
     attributes?: {},
-    { optimistic = true, patch = false, keepChanges = false, ...otherOptions }: SaveOptions = {}
+    { optimistic = true, patch = true, keepChanges = false, ...otherOptions }: SaveOptions = {}
   ): Request {
     const currentAttributes = this.toJS()
     const label = this.isNew ? 'creating' : 'updating'
