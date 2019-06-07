@@ -1,7 +1,8 @@
 import ErrorObject from './ErrorObject'
 import Request from './Request'
 import apiClient from './apiClient'
-import { includes, isObject } from 'lodash'
+import includes from 'lodash/includes'
+import isObject from 'lodash/isObject'
 import { action, observable, IObservableArray } from 'mobx'
 
 export default class Base {
@@ -70,9 +71,8 @@ export default class Base {
    * non-REST endpoints that you may have in
    * your API.
    */
-  // TODO: Type endpoint with string | { rootUrl: string }
   @action
-  rpc (endpoint: any, options?: {}, label: string = 'fetching'): Request {
+  rpc (endpoint: string | { rootUrl: string }, options?: {}, label: string = 'fetching'): Request {
     const url = isObject(endpoint) ? endpoint.rootUrl : `${this.url()}/${endpoint}`
     const { promise, abort } = apiClient().post(url, options)
 
