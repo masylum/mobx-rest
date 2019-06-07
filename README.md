@@ -380,9 +380,9 @@ Example:
 
 ```js
 const promise = usersCollection.fetch()
-usersCollection.isEmpty() // => true
+usersCollection.isEmpty // => true
 await promise
-usersCollection.isEmpty() // => false
+usersCollection.isEmpty // => false
 usersCollection.models.length // => 10
 ```
 
@@ -521,10 +521,10 @@ models. Accepts any option from the `set` method.
 
 ```js
 const promise = tasksCollection.fetch()
-tasksCollection.isEmpty() // => true
+tasksCollection.isEmpty // => true
 tasksCollection.isRequest('fetching') // => true
 await promise
-tasksCollection.isEmpty() // => false
+tasksCollection.isEmpty // => false
 ```
 
 #### `rpc(method: 'string', body: {}): Promise`
