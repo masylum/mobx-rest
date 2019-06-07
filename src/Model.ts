@@ -1,10 +1,16 @@
 import { ObservableMap, action, computed, observable, runInAction, toJS } from 'mobx'
-import { debounce, includes, isEqual, isPlainObject, uniqueId, union } from 'lodash'
+import debounce from 'lodash/debounce'
+import includes from 'lodash/includes'
+import isEqual from 'lodash/isEqual'
+import isPlainObject from 'lodash/isPlainObject'
+import union from 'lodash/union'
+import uniqueId from 'lodash/uniqueId'
+import deepmerge from 'deepmerge'
+
 import Base from './Base'
 import Collection from './Collection'
 import Request from './Request'
 import apiClient from './apiClient'
-import deepmerge from 'deepmerge'
 
 import { OptimisticId, Id, DestroyOptions, SaveOptions } from './types'
 

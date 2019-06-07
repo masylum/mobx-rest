@@ -11,5 +11,17 @@ export default {
     resolve(),
     typescript()
   ],
-  external: ['lodash', 'deepmerge', 'mobx']
+  external: [
+    'lodash/debounce',
+    'lodash/difference',
+    'lodash/includes',
+    'lodash/isEqual',
+    'lodash/isMatch',
+    'lodash/isObject',
+    'lodash/isPlainObject',
+    'lodash/union',
+    'lodash/uniqueId',
+    'deepmerge',
+    'mobx'
+  ]
 }
