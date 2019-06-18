@@ -254,7 +254,9 @@ export default abstract class Collection<T extends Model> extends Base {
     { optimistic = true }: CreateOptions = {}
   ): Request {
     const model = this.build(attributesOrModel)
-    const { abort, promise } = model.save()
+    const request = model.save()
+    this.requests.push(request)
+    const { promise } = request
 
     if (optimistic) {
       this.add(model)
@@ -263,12 +265,14 @@ export default abstract class Collection<T extends Model> extends Base {
     promise
       .then(response => {
         if (!optimistic) this.add(model)
+        this.requests.remove(request)
       })
       .catch(error => {
         if (optimistic) this.remove(model)
+        this.requests.remove(request)
       })
 
-    return this.withRequest('creating', promise, abort)
+    return request
   }
 
   /**
