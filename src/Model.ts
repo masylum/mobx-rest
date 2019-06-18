@@ -287,9 +287,7 @@ export default class Model extends Base {
         this.set(currentAttributes)
       })
 
-    const request = this.withRequest(['saving', label], promise, abort)
-
-    return request
+    return this.withRequest(['saving', label], promise, abort)
   }
 
   /**

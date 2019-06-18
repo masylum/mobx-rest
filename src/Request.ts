@@ -15,7 +15,7 @@ export default class Request {
     this.progress = progress = 0
     this.promise = promise
 
-    promise
+    this.promise
       .then(() => { this.state = 'fulfilled' })
       .catch(() => { this.state = 'rejected' })
   }
