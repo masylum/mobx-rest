@@ -3,7 +3,7 @@ import Request from './Request'
 import apiClient from './apiClient'
 import includes from 'lodash/includes'
 import isObject from 'lodash/isObject'
-import { action, observable, IObservableArray } from 'mobx'
+import { action, observable, IObservableArray, runInAction } from 'mobx'
 
 export default class Base {
   @observable request: Request | null
@@ -30,12 +30,17 @@ export default class Base {
     const handledPromise = promise
       .then(response => {
         if (this.request === request) this.request = null
-        this.requests.remove(request)
+        runInAction('remove request', () => {
+            this.requests.remove(request)
+          })
+        
 
         return response
       })
       .catch(error => {
-        this.requests.remove(request)
+          runInAction('remove request', () => {
+              this.requests.remove(request)
+            })
         throw new ErrorObject(error)
       })
 
