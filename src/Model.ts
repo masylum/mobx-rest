@@ -51,6 +51,8 @@ export default class Model extends Base {
    * Determine what attribute do you use
    * as a primary id
    *
+   * TODO: This should be static
+   *
    * @abstract
    */
   get primaryKey (): string {
@@ -213,16 +215,6 @@ export default class Model extends Base {
   }
 
   /**
-   * Merges old attributes with new ones.
-   * By default it doesn't merge arrays.
-   */
-  applyPatchChanges (oldAttributes: {}, changes: {}): {} {
-    return deepmerge(oldAttributes, changes, {
-      arrayMerge: dontMergeArrays
-    })
-  }
-
-  /**
    * Saves the resource on the backend.
    *
    * If the item has a `primaryKey` it updates it,
@@ -259,7 +251,7 @@ export default class Model extends Base {
 
     if (optimistic && attributes) {
       this.set(patch
-        ? this.applyPatchChanges(currentAttributes, attributes)
+        ? applyPatchChanges(currentAttributes, attributes)
         : attributes
       )
     }
@@ -279,7 +271,7 @@ export default class Model extends Base {
           this.commitChanges()
 
           if (keepChanges) {
-            this.set(this.applyPatchChanges(data, changes))
+            this.set(applyPatchChanges(data, changes))
           }
         })
       })
@@ -324,6 +316,16 @@ export default class Model extends Base {
 
     return this.withRequest('destroying', promise, abort)
   }
+}
+
+/**
+ * Merges old attributes with new ones.
+ * By default it doesn't merge arrays.
+ */
+const applyPatchChanges = (oldAttributes: {}, changes: {}): {} => {
+  return deepmerge(oldAttributes, changes, {
+    arrayMerge: dontMergeArrays
+  })
 }
 
 const getChangedAttributesBetween = (source: {}, target: {}): Array<string> => {

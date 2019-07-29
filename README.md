@@ -71,26 +71,17 @@ for instance).
 
 Initialize the model with the given attributes.
 
-You can also overwrite it to provide default attributes like this:
-
-```js
-class User extends Model {
-  constructor(attributes) {
-    super(Object.assign({
-      token: null,
-      email_verified: false,
-    }, attributes))
-  }
-}
-```
-
 #### `defaultAttributes: Object`
 
 An object literal that holds the default attributes of the model. {} by default.
 
 #### `attributes: ObservableMap`
 
-An `ObservableMap` that holds the attributes of the model.
+An `ObservableMap` that holds the attributes of the model in the client.
+
+#### `commitedAttributes: ObservableMap`
+
+An `ObservableMap` that holds the attributes of the model in the server.
 
 #### `collection: ?Collection`
 
@@ -327,6 +318,22 @@ can react accordingly.
 #### `models: ObservableArray`
 
 An `ObservableArray` that holds the collection of models.
+
+#### `indexes: Array<String>`
+
+Indexes allow you to determine which attributes you want to index your collection by.
+This allows you to trade-off memory for speed. By default we index all the models by
+`primaryKey` but you can add more indexes that will be used automatically when using `filter`,
+`find` and `mustFind` with the object form.
+
+```js
+users.find({ id: 123 }) // This will hit the index. Fast!
+users.find(user => user.get('id') === 123) // This will do a full scan of the table. Slow.
+```
+
+You can query your collection by a combination of attributes that are indexed and others
+that are not indexed. `mobx-rest` will take care to sort your query in order to scan the least
+number of models.
 
 #### `request: ?Request`
 

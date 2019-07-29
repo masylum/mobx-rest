@@ -6,7 +6,9 @@ import apiClient from '../src/apiClient'
 apiClient(MockApi)
 
 class MockCollection extends Collection<Model> {
-   model (): typeof Model {
+  indexes = ['phone']
+
+  model (): typeof Model {
     return Model
   }
 }
@@ -39,6 +41,21 @@ describe(Collection, () => {
         { id: 1, phone: '1234' },
         { id: 2, phone: '5678' }
       ])
+    })
+  })
+
+  describe('index', () => {
+    it('indexes the collection', () => {
+      expect(collection.index).toEqual({
+        id: {
+          1: collection.filter({ id: 1 }),
+          2: collection.filter((model) => model.get('id') === 2)
+        },
+        phone: {
+          1234: [collection.find({ phone: '1234' })]
+          5678: [collection.find((model) => model.get('phone') === '5678')]
+        }
+      })
     })
   })
 

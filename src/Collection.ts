@@ -5,15 +5,25 @@ import apiClient from './apiClient'
 import difference from 'lodash/difference'
 import isMatch from 'lodash/isMatch'
 import { observable, action, computed, IObservableArray } from 'mobx'
-
 import { CreateOptions, SetOptions, GetOptions, FindOptions, Id } from './types'
 
 export default abstract class Collection<T extends Model> extends Base {
   @observable models: IObservableArray<T> = observable.array([])
+  indexes: Array<String> = []
 
   constructor (data: Array<{ [key: string]: any }> = []) {
     super()
     this.set(data)
+  }
+
+  @computed
+  get index (): {
+    // TODO: This should use `primaryKey`
+    const indexes = this.indexes.concat(['id'])
+
+    return _.groupBy(indexes, (index) => (
+      _.groupBy(this.models, (model: T) => model.get(index))
+    ))
   }
 
   /**
@@ -89,7 +99,8 @@ export default abstract class Collection<T extends Model> extends Base {
    * Gets the ids of all the items in the collection
    */
   _ids (): Array<Id> {
-    return this.models.map(item => item.id).filter(Boolean)
+    // TODO: This should use `primaryKey`
+    return Object.keys(this.index.id).filter(Boolean)
   }
 
   /**
@@ -103,9 +114,11 @@ export default abstract class Collection<T extends Model> extends Base {
    * Get a resource with the given id or uuid
    */
   get (id: Id, { required = false }: GetOptions = {}): T {
-    const model = this.models.find(item => item.id === id)
+    // TODO: This should use `primaryKey`
+    const model = this.index.id[id]
 
     if (!model && required) {
+      // TODO: This should use `primaryKey`
       throw new Error(`Invariant: Model must be found with id: ${id}`)
     }
 
@@ -120,25 +133,43 @@ export default abstract class Collection<T extends Model> extends Base {
   }
 
   /**
-   * Get resources matching criteria
+   * Get resources matching criteria.
+   *
+   * If passing an object of key:value conditions, it will
+   * use the indexes to efficiently retrieve the data.
    */
   filter (query: { [key: string]: any } | ((T) => boolean)): Array<T> {
-    return this.models.filter(model => {
-      return typeof query === 'function'
-        ? query(model)
-        : isMatch(model.toJS(), query)
-    })
+    if (typeof query === 'function') {
+      return this.models.filter(query)
+    } else {
+      // Sort the query to hit the indexes first
+      const optimizedQuery = _.sortBy(query, (attr) => this.index[attr])
+      return _.reduce(optimizedQuery, (memo, attr, value) => {
+        // Hitting index
+        if (this.index[attr]) {
+          return {
+            values: _.intersection(memo.values, this.index[attr][value]),
+            iteration: memo.iteration++
+          }
+        } else {
+          // Either Re-filter or Full scan
+          const target = memo.iteration > 0 ? memo : this.models
+          return {
+            values: target.filter((model: T) => model.get(attr) === value),
+            iteration: memo.iteration++
+          }
+        }
+      }, { iteration: 0, values: []}).values
+    }
   }
 
   /**
    * Finds an element with the given matcher
    */
   find (query: { [key: string]: any } | ((T) => boolean), { required = false }: FindOptions = {}): T | null {
-    const model = this.models.find(model => {
-      return typeof query === 'function'
-        ? query(model)
-        : isMatch(model.toJS(), query)
-    })
+    const model = typeof query === 'function'
+      ? this.models.find(query)
+      : this.filter(query)[0]
 
     if (!model && required) {
       throw new Error(`Invariant: Model must be found`)
@@ -194,6 +225,7 @@ export default abstract class Collection<T extends Model> extends Base {
       }
 
       if (!model) {
+        // TODO: This should use `primaryKey`
         return console.warn(`${this.constructor.name}: Model with id ${id} not found.`)
       }
 
@@ -213,12 +245,14 @@ export default abstract class Collection<T extends Model> extends Base {
     { add = true, change = true, remove = true }: SetOptions = {}
   ): void {
     if (remove) {
+      // TODO: This should use `primaryKey`
       const ids = resources.map(r => r.id)
       const toRemove = difference(this._ids(), ids)
       if (toRemove.length) this.remove(toRemove)
     }
 
     resources.forEach(resource => {
+      // TODO: This should use `primaryKey`
       const model = this.get(resource.id)
 
       if (model && change) model.set(resource)
