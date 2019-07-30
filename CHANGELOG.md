@@ -1,5 +1,10 @@
 # Changelog
 
+## `4.0.0`
+
+  - Added indexes to optimize filter and find
+
+
 ## `3.0.5`
 
   - Rollback default `patch` flag value to `true`.

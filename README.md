@@ -413,11 +413,19 @@ as a key value.
 Example:
 
 ```js
+// using a query object
 const resolvedTasks = tasksCollection.filter({ resolved: true })
+resolvedTasks.length // => 3
+
+// using a query function
+const resolvedTasks = tasksCollection.filter(model => model.resolved)
 resolvedTasks.length // => 3
 ```
 
-#### `find(query: Object, { required?: boolean = false }): ?Model`
+It's important to notice that using the object API we can optimize
+the filtering using indexes.
+
+#### `find(query: Object | Function, { required?: boolean = false }): ?Model`
 
 Same as `filter` but it will halt and return when the first model matches
 the conditions. If `required` it will raise an error if not found.
@@ -425,13 +433,18 @@ the conditions. If `required` it will raise an error if not found.
 Example:
 
 ```js
-const pau = usersCollection.find({ name: 'pau' })
-pau.get('name') // => 'pau'
+// using a query object
+const user = usersCollection.find({ name: 'paco' })
+user.get('name') // => 'paco'
+
+// using a query function
+const user = usersCollection.find(model => model.name === 'paco')
+user.get('name') // => 'paco'
 
 usersCollection.find({ name: 'foo'}) // => Error(`Invariant: Model must be found`)
 ```
 
-#### `mustFind(query: Object): Model`
+#### `mustFind(query: Object | Function): Model`
 
 Same as `find` but it will raise an Error if the model is not found.
 
@@ -707,21 +720,22 @@ error: {              // A failed request
 This is something that mobx makes really easy to achieve:
 
 ```js
-import usersCollection from './UsersCollections'
+import users from './UsersCollections'
+import comments from './CommentsCollections'
 import { computed } from 'mobx'
 
 class Task extends Model {
   @computed
   author () {
-    const userId = this.get('userId')
-    return usersCollection.get(userId) ||
-      usersCollection.nullObject()
+    return users.mustGet(this.get('user_id'))
+  }
+
+  @computed
+  comments () {
+    return comments.filter({ task_id: this.get('id') })
   }
 }
 ```
-
-I recommend to always fallback with a null object which will facilitate
-a ton to write code like `task.author.get('name')`.
 
 ## Where is it used?
 
@@ -731,7 +745,7 @@ Developed and battle tested in production in [Factorial](https://factorialhr.com
 
 (The MIT License)
 
-Copyright (c) 2017 Pau Ramon <masylum@gmail.com>
+Copyright (c) 2019 Pau Ramon <masylum@gmail.com>
 
 Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the 'Software'), to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so, subject to the following conditions:
 

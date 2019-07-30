@@ -6,18 +6,19 @@ import isPlainObject from 'lodash/isPlainObject'
 import union from 'lodash/union'
 import uniqueId from 'lodash/uniqueId'
 import deepmerge from 'deepmerge'
-
 import Base from './Base'
 import Collection from './Collection'
 import Request from './Request'
 import apiClient from './apiClient'
-
 import { OptimisticId, Id, DestroyOptions, SaveOptions } from './types'
 
 const dontMergeArrays = (_oldArray, newArray) => newArray
 
+type Attributes = { [key: string]: any }
+export const DEFAULT_PRIMARY = 'id'
+
 export default class Model extends Base {
-  defaultAttributes = {}
+  defaultAttributes: Attributes = {}
 
   attributes: ObservableMap = observable.map()
   committedAttributes: ObservableMap = observable.map()
@@ -25,7 +26,10 @@ export default class Model extends Base {
   optimisticId: OptimisticId = uniqueId('i_')
   collection: Collection<this> | null = null
 
-  constructor (attributes: { [key: string]: any } = {}, defaultAttributes: { [key: string]: any } = {}) {
+  constructor (
+    attributes: Attributes = {},
+    defaultAttributes: Attributes = {}
+  ) {
     super()
 
     this.defaultAttributes = defaultAttributes
@@ -48,15 +52,11 @@ export default class Model extends Base {
   }
 
   /**
-   * Determine what attribute do you use
-   * as a primary id
-   *
-   * TODO: This should be static
-   *
-   * @abstract
+   * Define which is the primary
+   * key of the model.
    */
   get primaryKey (): string {
-    return 'id'
+    return DEFAULT_PRIMARY
   }
 
   /**
@@ -65,7 +65,7 @@ export default class Model extends Base {
    *
    * @abstract
    */
-  urlRoot () {
+  urlRoot (): string | null {
     return null
   }
 
@@ -143,7 +143,10 @@ export default class Model extends Base {
    */
   @computed
   get changedAttributes (): Array<string> {
-    return getChangedAttributesBetween(toJS(this.committedAttributes), toJS(this.attributes))
+    return getChangedAttributesBetween(
+      toJS(this.committedAttributes),
+      toJS(this.attributes)
+    )
   }
 
   /**
@@ -151,7 +154,10 @@ export default class Model extends Base {
    */
   @computed
   get changes (): { [key: string]: any } {
-    return getChangesBetween(toJS(this.committedAttributes), toJS(this.attributes))
+    return getChangesBetween(
+      toJS(this.committedAttributes),
+      toJS(this.attributes)
+    )
   }
 
   /**
@@ -225,7 +231,12 @@ export default class Model extends Base {
   @action
   save (
     attributes?: {},
-    { optimistic = true, patch = true, keepChanges = false, ...otherOptions }: SaveOptions = {}
+    {
+      optimistic = true,
+      patch = true,
+      keepChanges = false,
+      ...otherOptions
+    }: SaveOptions = {}
   ): Request {
     const currentAttributes = this.toJS()
     const label = this.isNew ? 'creating' : 'updating'
@@ -260,11 +271,18 @@ export default class Model extends Base {
       if (optimistic && this.request) this.request.progress = progress
     })
 
-    const { promise, abort } = apiClient()[method](this.url(), data, { onProgress, ...otherOptions })
+    const { promise, abort } = apiClient()[method](
+      this.url(),
+      data,
+      { onProgress, ...otherOptions }
+    )
 
     promise
       .then(data => {
-        const changes = getChangesBetween(currentAttributes, toJS(this.attributes))
+        const changes = getChangesBetween(
+          currentAttributes,
+          toJS(this.attributes)
+        )
 
         runInAction('save success', () => {
           this.set(data)
@@ -288,7 +306,9 @@ export default class Model extends Base {
    * too
    */
   @action
-  destroy ({ data, optimistic = true, ...otherOptions }: DestroyOptions = {}): Request {
+  destroy (
+    { data, optimistic = true, ...otherOptions }: DestroyOptions = {}
+  ): Request {
     const collection = this.collection
 
     if (this.isNew && collection) {
@@ -300,7 +320,11 @@ export default class Model extends Base {
       return new Request(Promise.resolve())
     }
 
-    const { promise, abort } = apiClient().del(this.url(), data, otherOptions)
+    const { promise, abort } = apiClient().del(
+      this.url(),
+      data,
+      otherOptions
+    )
 
     if (optimistic && collection) {
       collection.remove(this)
