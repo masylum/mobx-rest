@@ -1,5 +1,9 @@
 # Changelog
 
+## `4.0.2`
+
+  - Fixes `filter` throwing errors when targeting non-existing attributes.
+
 ## `4.0.1`
 
   - Allow a default primary key if model didn't return a class

@@ -185,7 +185,9 @@ export default abstract class Collection<T extends Model> extends Base {
           } else {
             // Either Re-filter or Full scan
             const target = values || this.models
-            return target.filter((model: T) => model.get(attr) === value)
+            return target.filter((model: T) =>
+              model.has(attr) && model.get(attr) === value
+            )
           }
         }, null)
     }

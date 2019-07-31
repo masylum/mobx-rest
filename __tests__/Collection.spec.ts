@@ -160,15 +160,15 @@ describe(Collection, () => {
   describe('filter(query)', () => {
     beforeEach(() => {
       collection.reset([
-        { id: 1, phone: '1234', email: 'test1@test.com' },
-        { id: 2, phone: '1234', email: 'test2@test.com' },
-        { id: 3, phone: '5678', email: 'test2@test.com' },
+        { id: 1, phone: '1234', email: 'test1@test.com', age: 23 },
+        { id: 2, phone: '1234', email: 'test2@test.com', age: 34 },
+        { id: 3, phone: '5678', email: 'test2@test.com', age: 23 },
         { id: 4, phone: '1234', email: 'test1@test.com' }
       ])
     })
 
     describe('if query is an object', () => {
-      it('returns the models that matches that attributes', () => {
+      it('returns the models that matches the attributes', () => {
         expect(collection.filter({
           phone: '1234',
           email: 'test1@test.com'
@@ -176,6 +176,15 @@ describe(Collection, () => {
           collection.at(0),
           collection.at(3)
         ])
+      })
+
+      describe('and the attribute may not exist in some models', () => {
+        it('returns the models that have and math the attributes', () => {
+          expect(collection.filter({ age: 23 })).toEqual([
+            collection.at(0),
+            collection.at(2)
+          ])
+        })
       })
     })
 
