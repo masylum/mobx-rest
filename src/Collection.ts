@@ -31,7 +31,7 @@ export default abstract class Collection<T extends Model> extends Base {
    */
   get primaryKey (): string {
     const ModelClass = this.model()
-    if (!ModelClass) DEFAULT_PRIMARY
+    if (!ModelClass) return DEFAULT_PRIMARY
 
     return (new ModelClass()).primaryKey
   }
@@ -92,7 +92,7 @@ export default abstract class Collection<T extends Model> extends Base {
   /**
    * Specifies the model class for that collection
    */
-  abstract model (attributes?: { [key: string]: any }): new(attributes?: {[key: string]: any}) => T
+  abstract model (attributes?: { [key: string]: any }): new(attributes?: {[key: string]: any}) => T | null
 
   /**
    * Returns a JSON representation

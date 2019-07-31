@@ -1,9 +1,12 @@
 # Changelog
 
+## `4.0.1`
+
+  - Allow a default primary key if model didn't return a class
+
 ## `4.0.0`
 
   - Added indexes to optimize filter and find
-
 
 ## `3.0.5`
 
