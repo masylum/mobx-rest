@@ -1,19 +1,65 @@
 import Base from './Base'
-import Model from './Model'
+import Model, { DEFAULT_PRIMARY } from './Model'
 import Request from './Request'
 import apiClient from './apiClient'
 import difference from 'lodash/difference'
-import isMatch from 'lodash/isMatch'
-import { observable, action, computed, IObservableArray } from 'mobx'
-
+import intersection from 'lodash/intersection'
+import entries from 'lodash/entries'
+import { observable, action, computed, IObservableArray, reaction } from 'mobx'
 import { CreateOptions, SetOptions, GetOptions, FindOptions, Id } from './types'
+
+type IndexTree<T> = Map<string, Index<T>>
+type Index<T> = Map<any, Array<T>>
 
 export default abstract class Collection<T extends Model> extends Base {
   @observable models: IObservableArray<T> = observable.array([])
+  indexes: Array<string> = []
 
   constructor (data: Array<{ [key: string]: any }> = []) {
     super()
     this.set(data)
+  }
+
+  /**
+   * Define which is the primary key
+   * of the model's in the collection.
+   *
+   * FIXME: This contains a hack to use the `primaryKey` as
+   * an instance method. Ideally it should be static but that
+   * would not be backward compatible and Typescript sucks at
+   * static polymorphism (https://github.com/microsoft/TypeScript/issues/5863).
+   */
+  get primaryKey (): string {
+    const ModelClass = this.model()
+    if (!ModelClass) DEFAULT_PRIMARY
+
+    return (new ModelClass()).primaryKey
+  }
+
+  /**
+   * Returns a hash with all the indexes for that
+   * collection.
+   *
+   * We keep the indexes in memory for as long as the
+   * collection is alive, even if no one is referencing it.
+   * This way we can ensure to calculate it only once.
+   */
+  @computed({ keepAlive: true })
+  get index (): IndexTree<T> {
+    const indexes = this.indexes.concat([this.primaryKey])
+
+    return indexes.reduce((tree, attr) => {
+      const newIndex = this.models.reduce((index: Index<T>, model: T) => {
+        const value = model.has(attr)
+          ? model.get(attr)
+          : null
+        const oldModels = index.get(value) || []
+
+        return index.set(value, oldModels.concat(model))
+      }, new Map())
+
+      return tree.set(attr, newIndex)
+    }, new Map())
   }
 
   /**
@@ -40,19 +86,13 @@ export default abstract class Collection<T extends Model> extends Base {
 
   /**
    * Returns the URL where the model's resource would be located on the server.
-   *
-   * @abstract
    */
-  url (): string {
-    throw new Error('You must implement this method')
-  }
+  abstract url (): string
 
   /**
    * Specifies the model class for that collection
-   *
-   * @abstract
    */
-  abstract model (attributes?: { [key: string]: any }): new(attributes?: {[key: string]: any}) => T;
+  abstract model (attributes?: { [key: string]: any }): new(attributes?: {[key: string]: any}) => T
 
   /**
    * Returns a JSON representation
@@ -88,8 +128,9 @@ export default abstract class Collection<T extends Model> extends Base {
   /**
    * Gets the ids of all the items in the collection
    */
-  _ids (): Array<Id> {
-    return this.models.map(item => item.id).filter(Boolean)
+  @computed
+  private get _ids (): Array<Id> {
+    return Array.from(this.index.get(this.primaryKey).keys())
   }
 
   /**
@@ -103,10 +144,11 @@ export default abstract class Collection<T extends Model> extends Base {
    * Get a resource with the given id or uuid
    */
   get (id: Id, { required = false }: GetOptions = {}): T {
-    const model = this.models.find(item => item.id === id)
+    const models = this.index.get(this.primaryKey).get(id)
+    const model = models && models[0]
 
     if (!model && required) {
-      throw new Error(`Invariant: Model must be found with id: ${id}`)
+      throw new Error(`Invariant: Model must be found with ${this.primaryKey}: ${id}`)
     }
 
     return model
@@ -120,25 +162,42 @@ export default abstract class Collection<T extends Model> extends Base {
   }
 
   /**
-   * Get resources matching criteria
+   * Get resources matching criteria.
+   *
+   * If passing an object of key:value conditions, it will
+   * use the indexes to efficiently retrieve the data.
    */
   filter (query: { [key: string]: any } | ((T) => boolean)): Array<T> {
-    return this.models.filter(model => {
-      return typeof query === 'function'
-        ? query(model)
-        : isMatch(model.toJS(), query)
-    })
+    if (typeof query === 'function') {
+      return this.models.filter(model => query(model))
+    } else {
+      // Sort the query to hit the indexes first
+      const optimizedQuery = entries(query).sort((A, B) =>
+        Number(this.index.has(B[0])) - Number(this.index.has(A[0]))
+      )
+
+      return optimizedQuery.reduce(
+        (values: Array<T> | null, [attr, value]): Array<T> => {
+          // Hitting index
+          if (this.index.has(attr)) {
+            const newValues = this.index.get(attr).get(value) || []
+            return values ? intersection(values, newValues) : newValues
+          } else {
+            // Either Re-filter or Full scan
+            const target = values || this.models
+            return target.filter((model: T) => model.get(attr) === value)
+          }
+        }, null)
+    }
   }
 
   /**
    * Finds an element with the given matcher
    */
   find (query: { [key: string]: any } | ((T) => boolean), { required = false }: FindOptions = {}): T | null {
-    const model = this.models.find(model => {
-      return typeof query === 'function'
-        ? query(model)
-        : isMatch(model.toJS(), query)
-    })
+    const model = typeof query === 'function'
+      ? this.models.find(model => query(model))
+      : this.filter(query)[0]
 
     if (!model && required) {
       throw new Error(`Invariant: Model must be found`)
@@ -194,7 +253,7 @@ export default abstract class Collection<T extends Model> extends Base {
       }
 
       if (!model) {
-        return console.warn(`${this.constructor.name}: Model with id ${id} not found.`)
+        return console.warn(`${this.constructor.name}: Model with ${this.primaryKey} ${id} not found.`)
       }
 
       this.models.splice(this.models.indexOf(model), 1)
@@ -213,13 +272,13 @@ export default abstract class Collection<T extends Model> extends Base {
     { add = true, change = true, remove = true }: SetOptions = {}
   ): void {
     if (remove) {
-      const ids = resources.map(r => r.id)
-      const toRemove = difference(this._ids(), ids)
+      const ids = resources.map(r => r[this.primaryKey])
+      const toRemove = difference(this._ids, ids)
       if (toRemove.length) this.remove(toRemove)
     }
 
     resources.forEach(resource => {
-      const model = this.get(resource.id)
+      const model = this.get(resource[this.primaryKey])
 
       if (model && change) model.set(resource)
       if (!model && add) this.add([resource])

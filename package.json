@@ -1,6 +1,6 @@
 {
   "name": "mobx-rest",
-  "version": "3.0.8",
+  "version": "4.0.0",
   "description": "REST conventions for mobx.",
   "jest": {
     "roots": [
@@ -23,6 +23,7 @@
     "@types/jest": "24.0.13",
     "@typescript-eslint/eslint-plugin": "1.9.0",
     "@typescript-eslint/parser": "1.9.0",
+    "benchmark": "2.1.4",
     "eslint": "5.16.0",
     "husky": "0.13.4",
     "jest": "24.8.0",
@@ -39,7 +40,7 @@
   "scripts": {
     "build": "yarn build:clean && rollup --config",
     "build:clean": "rimraf lib",
-    "build:lib": "yarn build:clean && rollup --config",
+    "benchmark": "yarn build && node __tests__/benchmark.js",
     "jest": "NODE_PATH=src jest --no-cache",
     "lint": "eslint --ext .ts --cache src/ __tests__/",
     "prepublish": "yarn build",
@@ -55,7 +56,7 @@
     }
   },
   "dependencies": {
-    "@types/lodash": "^4.14.134",
+    "@types/lodash": "4.14.136",
     "deepmerge": "3.2.0",
     "lodash": "4.17.13",
     "mobx": "5.9.4"

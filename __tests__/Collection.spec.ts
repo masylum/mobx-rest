@@ -6,7 +6,13 @@ import apiClient from '../src/apiClient'
 apiClient(MockApi)
 
 class MockCollection extends Collection<Model> {
-   model (): typeof Model {
+  indexes = ['phone']
+
+  url (): string {
+    return '/users'
+  }
+
+  model (): typeof Model {
     return Model
   }
 }
@@ -17,19 +23,15 @@ describe(Collection, () => {
   beforeEach(() => {
     collection = new MockCollection([
       { id: 1, phone: '1234' },
-      { id: 2, phone: '5678' }
+      { id: 2, phone: '5678' },
+      { id: 3, phone: null },
+      { id: 4 }
     ])
   })
 
   describe('length', () => {
     it('returns the number of models', () => {
-      expect(collection.length).toBe(2)
-    })
-  })
-
-  describe('url()', () => {
-    it('throws', () => {
-      expect(() => collection.url()).toThrow('You must implement this method')
+      expect(collection.length).toBe(4)
     })
   })
 
@@ -37,14 +39,33 @@ describe(Collection, () => {
     it('returns a plain representation of the models array', () => {
       expect(collection.toJS()).toEqual([
         { id: 1, phone: '1234' },
-        { id: 2, phone: '5678' }
+        { id: 2, phone: '5678' },
+        { id: 3, phone: null },
+        { id: 4 }
       ])
+    })
+  })
+
+  describe('index', () => {
+    it('indexes the collection', () => {
+      expect(collection.index.get('id')).toEqual(new Map([
+        [1, collection.filter({ id: 1 })],
+        [2, collection.filter((model) => model.get('id') === 2)],
+        [3, collection.filter({ id: 3 })],
+        [4, collection.filter({ id: 4 })]
+      ]))
+
+      expect(collection.index.get('phone')).toEqual(new Map([
+        ['1234', [collection.find({ phone: '1234' })]],
+        ['5678', [collection.find((model) => model.get('phone') === '5678')]],
+        [null, collection.filter({ phone: null })]
+      ]))
     })
   })
 
   describe('map(callback)', () => {
     it('aliases `models.map`', () => {
-      expect(collection.map(model => model.id)).toEqual([1, 2])
+      expect(collection.map(model => model.id)).toEqual([1, 2, 3, 4])
     })
   })
 
@@ -54,7 +75,7 @@ describe(Collection, () => {
       const response = collection.forEach(model => ids.push(model.id))
 
       expect(response).not.toBeDefined()
-      expect(ids).toEqual([1, 2])
+      expect(ids).toEqual([1, 2, 3, 4])
     })
   })
 
@@ -64,8 +85,8 @@ describe(Collection, () => {
 
       models.pop()
 
-      expect(models.length).toBe(1)
-      expect(collection.models.length).toBe(2)
+      expect(models.length).toBe(3)
+      expect(collection.models.length).toBe(4)
     })
   })
 
@@ -75,8 +96,8 @@ describe(Collection, () => {
 
       models.pop()
 
-      expect(models.length).toBe(1)
-      expect(collection.models.length).toBe(2)
+      expect(models.length).toBe(3)
+      expect(collection.models.length).toBe(4)
     })
   })
 
@@ -111,14 +132,14 @@ describe(Collection, () => {
     describe('if the model is not found', () => {
       describe('if required', () => {
         it('throws', () => {
-          expect(() => collection.get(3, { required: true }))
-            .toThrow('Invariant: Model must be found with id: 3')
+          expect(() => collection.get(999, { required: true }))
+            .toThrow('Invariant: Model must be found with id: 999')
         })
       })
 
       describe('if not required', () => {
         it('return undefined', () => {
-          expect(collection.get(3)).toBeUndefined()
+          expect(collection.get(999)).toBeUndefined()
         })
       })
     })
@@ -131,8 +152,8 @@ describe(Collection, () => {
 
     describe('if the model is not found', () => {
       it('throws', () => {
-        expect(() => collection.mustGet(3))
-          .toThrow('Invariant: Model must be found with id: 3')
+        expect(() => collection.mustGet(999))
+          .toThrow('Invariant: Model must be found with id: 999')
       })
     })
   })

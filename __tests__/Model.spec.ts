@@ -8,6 +8,10 @@ import { strMapToObj } from './utils'
 apiClient(MockApi)
 
 class MockCollection extends Collection<Model> {
+  url (): string {
+    return '/users'
+  }
+
   model (): typeof Model {
     return Model
   }

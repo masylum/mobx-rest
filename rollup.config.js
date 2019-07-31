@@ -16,11 +16,12 @@ export default {
     'lodash/difference',
     'lodash/includes',
     'lodash/isEqual',
-    'lodash/isMatch',
     'lodash/isObject',
     'lodash/isPlainObject',
     'lodash/union',
     'lodash/uniqueId',
+    'lodash/intersection',
+    'lodash/entries',
     'deepmerge',
     'mobx'
   ]
