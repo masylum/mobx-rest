@@ -12,6 +12,7 @@ export default {
     typescript()
   ],
   external: [
+    'lodash/compact',
     'lodash/debounce',
     'lodash/difference',
     'lodash/includes',

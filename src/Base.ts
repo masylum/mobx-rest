@@ -31,16 +31,16 @@ export default class Base {
       .then(response => {
         if (this.request === request) this.request = null
         runInAction('remove request', () => {
-            this.requests.remove(request)
-          })
-        
+          this.requests.remove(request)
+        })
 
         return response
       })
       .catch(error => {
-          runInAction('remove request', () => {
-              this.requests.remove(request)
-            })
+        runInAction('remove request', () => {
+          this.requests.remove(request)
+        })
+
         throw new ErrorObject(error)
       })
 
