@@ -296,7 +296,10 @@ export default abstract class Collection<T extends Model> extends Base {
       const id = getAttribute(resource, this.primaryKey)
       const model = id ? this.get(id) : null
 
-      if (model && change) model.set(resource)
+      if (model && change) {
+        model.set(resource instanceof Model ? resource.toJS() : resource)
+      }
+
       if (!model && add) this.add([resource])
     })
   }

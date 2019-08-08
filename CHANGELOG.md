@@ -1,5 +1,9 @@
 # Changelog
 
+## `5.0.3`
+
+  - Fixes another edge case when passing a model to `collection.set`
+
 ## `5.0.2`
 
   - Fixes edge case when a request fails and no collection was given
