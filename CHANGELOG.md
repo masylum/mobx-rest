@@ -1,5 +1,9 @@
 # Changelog
 
+## `5.0.4`
+
+  - Avoids `add` adding duplicated records and switches `model.save` to use add instead of `set`
+
 ## `5.0.3`
 
   - Fixes another edge case when passing a model to `collection.set`

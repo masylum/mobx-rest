@@ -233,7 +233,10 @@ export default abstract class Collection<T extends Model> extends Base {
   add (data: Array<{ [key: string]: any } | T> | { [key: string]: any } | T): Array<T> {
     if (!Array.isArray(data)) data = [data]
 
-    const models = data.map(m => this.build(m))
+    const models = difference(
+      data.map(m => this.build(m)),
+      this.models
+    )
     this.models.push(...models)
 
     return models

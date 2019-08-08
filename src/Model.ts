@@ -268,9 +268,7 @@ export default class Model extends Base {
       )
     }
 
-    if (optimistic && collection) {
-      collection.set([this], { remove: false })
-    }
+    if (optimistic && collection) collection.add([this])
 
     const onProgress = debounce(progress => {
       if (optimistic && this.request) this.request.progress = progress
@@ -293,9 +291,7 @@ export default class Model extends Base {
           this.set(data)
           this.commitChanges()
 
-          if (!optimistic && collection) {
-            collection.set([this], { remove: false })
-          }
+          if (!optimistic && collection) collection.add([this])
 
           if (keepChanges) {
             this.set(applyPatchChanges(data, changes))

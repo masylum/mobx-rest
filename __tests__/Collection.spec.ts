@@ -291,6 +291,16 @@ describe(Collection, () => {
       expect(collection.at(0)).toBe(model)
     })
 
+    it('does not add duplicated', () => {
+      const model = new Model()
+
+      collection.add(model)
+      collection.add(model)
+
+      expect(collection.at(0)).toBe(model)
+      expect(collection.length).toEqual(1)
+    })
+
     describe('if the model is a plain object', () => {
       it('creates a new instance of the collection model class', () => {
         const attributes = { phone: '1234' }
