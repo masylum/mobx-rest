@@ -141,7 +141,7 @@ export default abstract class Collection<T extends Model> extends Base {
    */
   @computed
   private get _ids (): Array<Id> {
-    return Array.from(this.index.get(this.primaryKey).keys())
+    return compact(Array.from(this.index.get(this.primaryKey).keys()))
   }
 
   /**
