@@ -266,6 +266,7 @@ The opposite of `fetch`. It takes the resource from the client and
 persists it in the server through the API. It accepts some attributes
 as the first argument so you can use it as a `set` + `save`.
 It tracks the state of the request using the label `saving`.
+If the model has a collection associated, it will be added into it.
 
 Options:
 
@@ -481,7 +482,7 @@ Example:
 usersCollection.remove([1, 2, 3])
 ```
 
-#### `set(models: Array<Object>, options: Object): void`
+#### `set(models: Array<Object | Model>, options: Object): void`
 
 Merge the given models smartly the current ones in the collection.
 It detects what to add, remove and change.

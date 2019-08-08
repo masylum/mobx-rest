@@ -496,6 +496,165 @@ describe(Model, () => {
       model.urlRoot = () => '/resources'
     })
 
+    describe('when it belongs to a collection', () => {
+      let collection
+
+      beforeEach(() => {
+        collection = new MockCollection()
+        model.collection = collection
+      })
+
+      describe('and is optimistic', () => {
+        describe('and is New', () => {
+          describe('and it succeeds saving', () => {
+            it('adds it to the collection', async () => {
+              const promise = model.save({ name: 'Paco' })
+
+              expect(collection.at(0).get('name')).toEqual('Paco')
+
+              MockApi.resolvePromise({ id: 999, name: 'Merlo' })
+
+              try {
+                await promise
+              } catch (_error) {
+                expect(collection.at(0).get('name')).toEqual('Merlo')
+              }
+            })
+          })
+
+          describe('and it fails saving', () => {
+            it('removes it from the collection', async () => {
+              const promise = model.save({ name: 'Paco' })
+
+              expect(collection.at(0).get('name')).toEqual('Paco')
+
+              MockApi.rejectPromise('Conflict')
+
+              try {
+                await promise
+              } catch (_error) {
+                expect(collection.length).toEqual(0)
+              }
+            })
+          })
+        })
+
+        describe('and is not New', () => {
+          beforeEach(() => { model.set({ id: 999 }) })
+
+          describe('and it succeeds saving', () => {
+            it('it adds it to the collection', async () => {
+              const promise = model.save({ name: 'Paco' })
+
+              expect(collection.at(0).get('name')).toEqual('Paco')
+
+              MockApi.resolvePromise({ id: 999, name: 'Merlo' })
+
+              try {
+                await promise
+              } catch (_error) {
+                expect(collection.at(0).get('name')).toEqual('Merlo')
+              }
+            })
+          })
+
+          describe('and it fails saving', () => {
+            it('does not remove it from the collection', async () => {
+              const promise = model.save({ name: 'Paco' })
+
+              expect(collection.at(0).get('name')).toEqual('Paco')
+
+              MockApi.rejectPromise('Conflict')
+
+              try {
+                await promise
+              } catch (_error) {
+                expect(collection.at(0).get('name')).toEqual('John')
+              }
+            })
+          })
+        })
+      })
+
+      describe('and is not optimistic', () => {
+        describe('and is New', () => {
+          describe('and it succeeds saving', () => {
+            it('it adds it to the collection', async () => {
+              const promise = model.save({ name: 'Paco' }, { optimistic: false })
+
+              expect(collection.length).toEqual(0)
+              expect(model.get('name')).toEqual('John')
+
+              MockApi.resolvePromise({ id: 999, name: 'Merlo' })
+
+              try {
+                await promise
+              } catch (_error) {
+                expect(collection.at(0).get('name')).toEqual('Merlo')
+              }
+            })
+          })
+
+          describe('and it fails saving', () => {
+            it('removes it from the collection', async () => {
+              const promise = model.save({ name: 'Paco' }, { optimistic: false })
+
+              expect(collection.length).toEqual(0)
+              expect(model.get('name')).toEqual('John')
+
+              MockApi.rejectPromise('Conflict')
+
+              try {
+                await promise
+              } catch (_error) {
+                expect(collection.length).toEqual(0)
+                expect(model.get('name')).toEqual('John')
+              }
+            })
+          })
+        })
+
+        describe('and is not New', () => {
+          beforeEach(() => { model.set({ id: 999 }) })
+
+          describe('and it succeeds saving', () => {
+            it('it adds it to the collection', async () => {
+              const promise = model.save({ name: 'Paco' }, { optimistic: false })
+
+              expect(collection.length).toEqual(0)
+              expect(model.get('name')).toEqual('John')
+
+              MockApi.resolvePromise({ id: 999, name: 'Merlo' })
+
+              try {
+                await promise
+              } catch (_error) {
+                expect(collection.at(0).get('name')).toEqual('Merlo')
+              }
+            })
+          })
+
+          describe('and it fails saving', () => {
+            it('removes it from the collection', async () => {
+              const promise = model.save({ name: 'Paco' }, { optimistic: false })
+
+              expect(collection.length).toEqual(0)
+              expect(model.get('name')).toEqual('John')
+
+              MockApi.rejectPromise('Conflict')
+
+              try {
+                await promise
+              } catch (_error) {
+                expect(collection.length).toEqual(0)
+                expect(model.get('name')).toEqual('John')
+              }
+            })
+          })
+        })
+      })
+    })
+
     describe('if is new', () => {
       let spy
 
@@ -508,6 +667,12 @@ describe(Model, () => {
       it('sends a POST request', () => {
         model.save()
         expect(spy).toHaveBeenCalled()
+      })
+
+      describe('when it does not belong to a collection', () => {
+        beforeEach(() => {
+          model.collection = null
+        })
       })
 
       describe('if attributes are not specified', () => {

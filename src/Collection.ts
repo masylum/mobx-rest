@@ -5,11 +5,22 @@ import apiClient from './apiClient'
 import difference from 'lodash/difference'
 import intersection from 'lodash/intersection'
 import entries from 'lodash/entries'
+import compact from 'lodash/compact'
 import { observable, action, computed, IObservableArray, reaction } from 'mobx'
 import { CreateOptions, SetOptions, GetOptions, FindOptions, Id } from './types'
 
 type IndexTree<T> = Map<string, Index<T>>
 type Index<T> = Map<any, Array<T>>
+
+function getAttribute (resource: { [key: string]: any } | Model, attribute: string): any {
+  if (resource instanceof Model) {
+    return resource.has(attribute)
+      ? resource.get(attribute)
+      : null
+  } else {
+    return resource[attribute]
+  }
+}
 
 export default abstract class Collection<T extends Model> extends Base {
   @observable models: IObservableArray<T> = observable.array([])
@@ -270,17 +281,20 @@ export default abstract class Collection<T extends Model> extends Base {
    */
   @action
   set (
-    resources: Array<{ [key: string]: any }>,
+    resources: Array<{ [key: string]: any } | T>,
     { add = true, change = true, remove = true }: SetOptions = {}
   ): void {
     if (remove) {
-      const ids = resources.map(r => r[this.primaryKey])
+      const ids = compact(resources.map(r =>
+        getAttribute(r, this.primaryKey)
+      ))
       const toRemove = difference(this._ids, ids)
       if (toRemove.length) this.remove(toRemove)
     }
 
     resources.forEach(resource => {
-      const model = this.get(resource[this.primaryKey])
+      const id = getAttribute(resource, this.primaryKey)
+      const model = id ? this.get(id) : null
 
       if (model && change) model.set(resource)
       if (!model && add) this.add([resource])
@@ -315,21 +329,15 @@ export default abstract class Collection<T extends Model> extends Base {
     { optimistic = true }: CreateOptions = {}
   ): Request {
     const model = this.build(attributesOrModel)
-    const request = model.save()
+    const request = model.save({}, { optimistic })
     this.requests.push(request)
     const { promise } = request
 
-    if (optimistic) {
-      this.add(model)
-    }
-
     promise
-      .then(response => {
-        if (!optimistic) this.add(model)
+      .then(_response => {
         this.requests.remove(request)
       })
       .catch(error => {
-        if (optimistic) this.remove(model)
         this.requests.remove(request)
       })
 

@@ -1,5 +1,10 @@
 # Changelog
 
+## `5.0.0`
+
+  - Made `set` accept models too, not only attributes.
+  - Now, `save` will add the model to the collection if one is assigned. This allows people to use `collection.build + save` effectively.
+
 ## `4.0.2`
 
   - Fixes `filter` throwing errors when targeting non-existing attributes.

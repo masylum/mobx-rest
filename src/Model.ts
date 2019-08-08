@@ -240,6 +240,7 @@ export default class Model extends Base {
   ): Request {
     const currentAttributes = this.toJS()
     const label = this.isNew ? 'creating' : 'updating'
+    const collection = this.collection
     let data
 
     if (patch && attributes && !this.isNew) {
@@ -267,6 +268,10 @@ export default class Model extends Base {
       )
     }
 
+    if (optimistic && collection) {
+      collection.set([this], { remove: false })
+    }
+
     const onProgress = debounce(progress => {
       if (optimistic && this.request) this.request.progress = progress
     })
@@ -288,6 +293,10 @@ export default class Model extends Base {
           this.set(data)
           this.commitChanges()
 
+          if (!optimistic && collection) {
+            collection.set([this], { remove: false })
+          }
+
           if (keepChanges) {
             this.set(applyPatchChanges(data, changes))
           }
@@ -295,6 +304,10 @@ export default class Model extends Base {
       })
       .catch(error => {
         this.set(currentAttributes)
+
+        if (optimistic && this.isNew) {
+          collection.remove(this)
+        }
       })
 
     return this.withRequest(['saving', label], promise, abort)
