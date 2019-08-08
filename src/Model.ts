@@ -305,7 +305,7 @@ export default class Model extends Base {
       .catch(error => {
         this.set(currentAttributes)
 
-        if (optimistic && this.isNew) {
+        if (optimistic && this.isNew && collection) {
           collection.remove(this)
         }
       })

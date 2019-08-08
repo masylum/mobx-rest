@@ -1,5 +1,9 @@
 # Changelog
 
+## `5.0.2`
+
+  - Fixes edge case when a request fails and no collection was given
+
 ## `5.0.1`
 
   - Fixes edge case where a model without `id` would make `collection.set` fail.
