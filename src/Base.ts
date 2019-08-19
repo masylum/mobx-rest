@@ -7,8 +7,14 @@ import { action, observable, IObservableArray, runInAction } from 'mobx'
 
 export default class Base {
   @observable request: Request | null
-  @observable.shallow requests: IObservableArray<Request> = observable.array([])
+  @observable.shallow requests: IObservableArray<Request>
 
+  constructor() {
+      runInAction('init request', () => {
+          this.requests = observable.array([])
+        })
+  }
+  
   /**
    * Returns the resource's url.
    *
@@ -29,7 +35,9 @@ export default class Base {
 
     const handledPromise = promise
       .then(response => {
-        if (this.request === request) this.request = null
+        if (this.request === request) runInAction('reset request', () => {
+            this.request = null
+          })
         runInAction('remove request', () => {
           this.requests.remove(request)
         })
@@ -48,10 +56,10 @@ export default class Base {
       labels,
       abort
     })
-
-    this.request = request
-    this.requests.push(request)
-
+    runInAction('push request', () => {
+        this.request = request
+        this.requests.push(request)
+      })
     return request
   }
 

@@ -39,7 +39,8 @@ export default class Model extends Base {
       ...attributes
     }
 
-    this.attributes.replace(mergedAttributes)
+    runInAction('replace attributes', () => this.attributes.replace(mergedAttributes))
+    
     this.commitChanges()
   }
 

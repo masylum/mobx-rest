@@ -1,4 +1,4 @@
-import { observable } from 'mobx'
+import { runInAction, observable } from 'mobx'
 import { RequestOptions, RequestState } from './types'
 
 export default class Request {
@@ -9,15 +9,17 @@ export default class Request {
   @observable state: RequestState
 
   constructor (promise: Promise<any>, { labels, abort, progress = 0 }: RequestOptions = {}) {
-    this.state = 'pending'
-    this.labels = labels
-    this.abort = abort
-    this.progress = progress = 0
-    this.promise = promise
+      runInAction('init request request', () => {
+          this.state = 'pending'
+          this.labels = labels
+          this.abort = abort
+          this.progress = progress = 0
+          this.promise = promise
+      })
 
-    this.promise
-      .then(() => { this.state = 'fulfilled' })
-      .catch(() => { this.state = 'rejected' })
+      this.promise
+      .then(() => {  runInAction('change request state', () => this.state = 'fulfilled') })
+      .catch(() => { runInAction('change request state', () => this.state = 'rejected') })
   }
 
   // This allows to use async/await on the request object
