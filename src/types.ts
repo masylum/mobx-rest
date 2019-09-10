@@ -52,3 +52,8 @@ export interface Adapter {
   put(path: string, data?: {}, options?: {}): Response
   del(path: string, data?: {}, options?: {}): Response
 }
+
+export interface ModelMapperAdapter {
+  modelToApi(model: object, map: any[][]): object;
+  apiToModel<T extends Object>(apiModel: object, map: any[][], ModelClass?: { new(): T; }): T
+}

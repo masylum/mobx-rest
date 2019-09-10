@@ -10,7 +10,7 @@ import Base from './Base'
 import Collection from './Collection'
 import Request from './Request'
 import apiClient from './apiClient'
-import { OptimisticId, Id, DestroyOptions, SaveOptions } from './types'
+import { OptimisticId, Id, DestroyOptions, SaveOptions, ModelMapperAdapter } from './types'
 
 const dontMergeArrays = (_oldArray, newArray) => newArray
 

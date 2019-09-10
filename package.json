@@ -41,7 +41,7 @@
     "build": "yarn build:clean && rollup --config",
     "build:clean": "rimraf lib",
     "benchmark": "yarn build && node __tests__/benchmark.js",
-    "jest": "NODE_PATH=src jest --no-cache",
+    "jest": "jest --no-cache",
     "lint": "eslint --ext .ts --cache src/ __tests__/",
     "prepublish": "yarn build",
     "prepush": "yarn test",

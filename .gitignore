@@ -6,3 +6,4 @@ flow-typed/
 *.log
 *.swp
 *.rpt2*
+.idea
