@@ -41,12 +41,21 @@ describe(modelMapper, () => {
     })
   })
 
-  describe('api to model test', () => {
-    test('returns', () => {
+  describe('api to model test with given type', () => {
+    test('returns ApiToModelType', () => {
       let r: ApiToModelType;
       r = modelMapper(new BasicModelMapper()).apiToModel(apiModel, mapping, ApiToModelType);
       console.warn(r);
       expect(r).toBeInstanceOf(ApiToModelType);
+    })
+  })
+
+  describe('api to model test default Object Type', () => {
+    test('returns Object', () => {
+      let r: Object;
+      r = modelMapper(new BasicModelMapper()).apiToModel(apiModel, mapping);
+      console.warn(r);
+      expect(r).toBeInstanceOf(Object);
     })
   })
 
