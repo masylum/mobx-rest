@@ -9,12 +9,12 @@ export default class BasicModelMapper implements ModelMapperAdapter {
     return result;
   }
 
-  apiToModel<T extends Object>(apiModel: { [index: string]: any }, map: any[][], ModelClass?: { new(attributes:object): T; }): T {
+  apiToModel<T extends Object>(apiModel: { [index: string]: any }, map: any[][], ModelClass?: { new(): T; }): T {
     let model: { [index: string]: any } = {};
     map.forEach((value, key) => {
       model[value[2] || value[0]] = apiModel[value[1]];
     });
-    let result :any = (ModelClass) ? new ModelClass(model) : new Object(model);
-    return result;
+    let result :any = (ModelClass) ? new ModelClass() : new Object();
+    return Object.assign(result,model);
   }
 }
