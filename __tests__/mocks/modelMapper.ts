@@ -14,7 +14,7 @@ export default class BasicModelMapper implements ModelMapperAdapter {
     map.forEach((value, key) => {
       model[value[2] || value[0]] = apiModel[value[1]];
     });
-    let result :any = (ModelClass) ? new ModelClass({...model}) : new Object({...model});
+    let result :any = (ModelClass) ? new ModelClass(model) : new Object(model);
     return result;
   }
 }
