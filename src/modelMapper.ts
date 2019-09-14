@@ -1,4 +1,4 @@
-import { ModelMapperAdapter } from './types'
+import {ModelMapperAdapter} from './types'
 
 let currentModelMapperAdapter;
 
@@ -6,13 +6,17 @@ let currentModelMapperAdapter;
  * Sets or gets the api client instance
  */
 export default function modelMapper(
-  adapter?: ModelMapperAdapter
+  adapter?: ModelMapperAdapter,
+  clear: boolean = false // hack for better testing
 ): ModelMapperAdapter {
+  if (clear) {
+    currentModelMapperAdapter = undefined;
+  }
   if (adapter) {
     currentModelMapperAdapter = adapter;
   }
 
-  if (!currentModelMapperAdapter) {
+  if (!currentModelMapperAdapter && !clear) {
     throw new Error('You must set an model mapper adapter first!')
   }
 

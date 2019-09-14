@@ -2,17 +2,19 @@ import Collection from '../src/Collection'
 import MockApi from './mocks/api'
 import Model from '../src/Model'
 import apiClient from '../src/apiClient'
-import { isObservable } from 'mobx'
-import { strMapToObj } from './utils'
+import {isObservable} from 'mobx'
+import {strMapToObj} from './utils'
+import modelMapper from "../src/modelMapper";
+import BasicModelMapper from "./mocks/modelMapper";
 
 apiClient(MockApi)
 
 class MockCollection extends Collection<Model> {
-  url (): string {
+  url(): string {
     return '/users'
   }
 
-  model (): typeof Model {
+  model(): typeof Model {
     return Model
   }
 }
@@ -50,7 +52,7 @@ describe(Model, () => {
     const model = new Model({
       firstName: 'John',
       lastName: 'Doe'
-    }, { email: null, phone: null })
+    }, {email: null, phone: null})
 
     expect(model.toJS()).toEqual({
       firstName: 'John',
@@ -68,11 +70,11 @@ describe(Model, () => {
 
   describe('toJS()', () => {
     it('returns a plain object version of the attributes', () => {
-      const model = new Model({ name: 'John' })
+      const model = new Model({name: 'John'})
 
       expect(isObservable(model.attributes)).toBe(true)
       expect(isObservable(model.toJS())).toBe(false)
-      expect(model.toJS()).toEqual({ name: 'John' })
+      expect(model.toJS()).toEqual({name: 'John'})
     })
   })
 
@@ -87,7 +89,7 @@ describe(Model, () => {
 
     describe('if the model is not new', () => {
       it('returns the url root with the model id', () => {
-        const model = new MyModel({ id: 2 })
+        const model = new MyModel({id: 2})
 
         expect(model.url()).toBe('/resources/2')
       })
@@ -95,7 +97,7 @@ describe(Model, () => {
 
     describe('if the model belongs to a collection and urlRoot is not defined', () => {
       it('uses the collection url as root', () => {
-        const model = new Model({ id: 2 })
+        const model = new Model({id: 2})
         const collection = new MockCollection()
 
         collection.url = () => '/different-resources'
@@ -107,7 +109,7 @@ describe(Model, () => {
 
     describe('if the model doesn\'t belong to a collection and urlRoot is not defined', () => {
       it('throws', () => {
-        const model = new Model({ id: 2 })
+        const model = new Model({id: 2})
 
         expect(() => model.url()).toThrow('implement `urlRoot` method or `url` on the collection')
       })
@@ -117,7 +119,7 @@ describe(Model, () => {
   describe('get(attribute)', () => {
     describe('if the attribute is defined', () => {
       it('returns its value', () => {
-        const model = new Model({ name: 'John' })
+        const model = new Model({name: 'John'})
 
         expect(model.get('name')).toBe('John')
       })
@@ -125,7 +127,7 @@ describe(Model, () => {
 
     describe('if the attribute is not defined', () => {
       it('throws', () => {
-        const model = new Model({ name: 'John' })
+        const model = new Model({name: 'John'})
 
         expect(() => model.get('email')).toThrow('Attribute "email" not found')
       })
@@ -135,7 +137,7 @@ describe(Model, () => {
   describe('has(attribute)', () => {
     describe('if the attribute is defined', () => {
       it('returns true', () => {
-        const model = new Model({ name: 'John' })
+        const model = new Model({name: 'John'})
 
         expect(model.has('name')).toBe(true)
       })
@@ -143,7 +145,7 @@ describe(Model, () => {
 
     describe('if the attribute is not defined', () => {
       it('returns false', () => {
-        const model = new Model({ name: 'John' })
+        const model = new Model({name: 'John'})
 
         expect(model.has('email')).toBe(false)
       })
@@ -154,7 +156,7 @@ describe(Model, () => {
     describe('if the primary key attribute exists', () => {
       describe('if the primary key attribute has a value', () => {
         it('returns false', () => {
-          const model = new Model({ id: 123 })
+          const model = new Model({id: 123})
 
           expect(model.isNew).toBe(false)
         })
@@ -162,8 +164,8 @@ describe(Model, () => {
 
       describe('if the primary key attribute is null or undefined', () => {
         it('returns true', () => {
-          const model1 = new Model({ id: null })
-          const model2 = new Model({ id: undefined })
+          const model1 = new Model({id: null})
+          const model2 = new Model({id: undefined})
 
           expect(model1.isNew).toBe(true)
           expect(model2.isNew).toBe(true)
@@ -183,19 +185,19 @@ describe(Model, () => {
   describe('id', () => {
     describe('if the model has an id attribute', () => {
       it('returns its value', () => {
-        const model = new Model({ id: 123 })
+        const model = new Model({id: 123})
 
         expect(model.id).toBe(123)
       })
 
       it('allows to customize the primary key attribute', () => {
         class MyModel extends Model {
-          get primaryKey () {
+          get primaryKey() {
             return 'someId'
           }
         }
 
-        const model = new MyModel({ someId: 123 })
+        const model = new MyModel({someId: 123})
 
         expect(model.id).toBe(123)
       })
@@ -243,7 +245,7 @@ describe(Model, () => {
           phone: '123456789'
         })
 
-        model.set({ name: 'Name 2' })
+        model.set({name: 'Name 2'})
 
         expect(model.hasChanges('name')).toBe(true)
       })
@@ -255,7 +257,7 @@ describe(Model, () => {
           phone: '123456789'
         })
 
-        model.set({ name: 'Name 2' })
+        model.set({name: 'Name 2'})
 
         expect(model.hasChanges('date')).toBe(false)
       })
@@ -268,7 +270,7 @@ describe(Model, () => {
             phone: '123456789'
           })
 
-          model.set({ name: 'Name 2' })
+          model.set({name: 'Name 2'})
 
           expect(model.hasChanges()).toBe(true)
         })
@@ -337,9 +339,9 @@ describe(Model, () => {
 
   describe('commitChanges()', () => {
     it('accepts the current changes', () => {
-      const model = new Model({ phone: '1234' })
+      const model = new Model({phone: '1234'})
 
-      model.set({ phone: '5678' })
+      model.set({phone: '5678'})
       expect(model.hasChanges()).toBe(true)
 
       model.commitChanges()
@@ -349,7 +351,7 @@ describe(Model, () => {
 
     it('makes a copy of the current attributes', () => {
       const model = new Model({
-        nested: { phone: '1234' }
+        nested: {phone: '1234'}
       })
 
       expect(model.attributes.get('nested')).not.toBe(model.committedAttributes.get('nested'))
@@ -358,9 +360,9 @@ describe(Model, () => {
 
   describe('discardChanges()', () => {
     it('reverts to the last committed attributes', () => {
-      const model = new Model({ phone: '1234' })
+      const model = new Model({phone: '1234'})
 
-      model.set({ phone: '5678' })
+      model.set({phone: '5678'})
       expect(model.hasChanges()).toBe(true)
 
       model.discardChanges()
@@ -374,15 +376,15 @@ describe(Model, () => {
       it('replaces the current attributes with the specified ones', () => {
         const model = new Model()
 
-        model.reset({ hi: 'bye' })
+        model.reset({hi: 'bye'})
 
-        expect(model.toJS()).toEqual({ hi: 'bye' })
+        expect(model.toJS()).toEqual({hi: 'bye'})
       })
 
       it('respects the default attributes', () => {
-        const model = new Model({ name: 'john' }, { someAttribute: 'test' })
+        const model = new Model({name: 'john'}, {someAttribute: 'test'})
 
-        model.reset({ phone: '1234567' })
+        model.reset({phone: '1234567'})
 
         expect(model.toJS()).toEqual({
           someAttribute: 'test',
@@ -393,11 +395,11 @@ describe(Model, () => {
 
     describe('if attributes is not specified', () => {
       it('replaces the current attributes with the default ones', () => {
-        const model = new Model({ email: 'test@test.com' }, { someAttribute: 'test' })
+        const model = new Model({email: 'test@test.com'}, {someAttribute: 'test'})
 
         model.reset()
 
-        expect(model.toJS()).toEqual({ someAttribute: 'test' })
+        expect(model.toJS()).toEqual({someAttribute: 'test'})
       })
     })
   })
@@ -428,7 +430,7 @@ describe(Model, () => {
     let model
 
     beforeEach(() => {
-      model = new Model({ id: 2 })
+      model = new Model({id: 2})
       model.urlRoot = () => '/resources'
       spy = jest.spyOn(apiClient(), 'get')
       promise = model.fetch({
@@ -461,14 +463,14 @@ describe(Model, () => {
 
     describe('if the request succeeds', () => {
       it('merges the current data with the response', async () => {
-        model.set({ last_name: 'Doe' })
-        MockApi.resolvePromise({ id: 2, name: 'John' })
+        model.set({last_name: 'Doe'})
+        MockApi.resolvePromise({id: 2, name: 'John'})
         await promise
-        expect(model.toJS()).toEqual({ id: 2, name: 'John', last_name: 'Doe' })
+        expect(model.toJS()).toEqual({id: 2, name: 'John', last_name: 'Doe'})
       })
 
       it('sets the new attributes as committed', async () => {
-        MockApi.resolvePromise({ id: 2, name: 'John' })
+        MockApi.resolvePromise({id: 2, name: 'John'})
 
         await promise
 
@@ -492,7 +494,7 @@ describe(Model, () => {
     let model
 
     beforeEach(() => {
-      model = new Model({ name: 'John', email: 'john@test.com', phone: '1234' })
+      model = new Model({name: 'John', email: 'john@test.com', phone: '1234'})
       model.urlRoot = () => '/resources'
     })
 
@@ -508,11 +510,11 @@ describe(Model, () => {
         describe('and is New', () => {
           describe('and it succeeds saving', () => {
             it('adds it to the collection', async () => {
-              const promise = model.save({ name: 'Paco' })
+              const promise = model.save({name: 'Paco'})
 
               expect(collection.at(0).get('name')).toEqual('Paco')
 
-              MockApi.resolvePromise({ id: 999, name: 'Merlo' })
+              MockApi.resolvePromise({id: 999, name: 'Merlo'})
 
               try {
                 await promise
@@ -524,7 +526,7 @@ describe(Model, () => {
 
           describe('and it fails saving', () => {
             it('removes it from the collection', async () => {
-              const promise = model.save({ name: 'Paco' })
+              const promise = model.save({name: 'Paco'})
 
               expect(collection.at(0).get('name')).toEqual('Paco')
 
@@ -540,15 +542,17 @@ describe(Model, () => {
         })
 
         describe('and is not New', () => {
-          beforeEach(() => { model.set({ id: 999 }) })
+          beforeEach(() => {
+            model.set({id: 999})
+          })
 
           describe('and it succeeds saving', () => {
             it('it adds it to the collection', async () => {
-              const promise = model.save({ name: 'Paco' })
+              const promise = model.save({name: 'Paco'})
 
               expect(collection.at(0).get('name')).toEqual('Paco')
 
-              MockApi.resolvePromise({ id: 999, name: 'Merlo' })
+              MockApi.resolvePromise({id: 999, name: 'Merlo'})
 
               try {
                 await promise
@@ -560,7 +564,7 @@ describe(Model, () => {
 
           describe('and it fails saving', () => {
             it('does not remove it from the collection', async () => {
-              const promise = model.save({ name: 'Paco' })
+              const promise = model.save({name: 'Paco'})
 
               expect(collection.at(0).get('name')).toEqual('Paco')
 
@@ -580,12 +584,12 @@ describe(Model, () => {
         describe('and is New', () => {
           describe('and it succeeds saving', () => {
             it('it adds it to the collection', async () => {
-              const promise = model.save({ name: 'Paco' }, { optimistic: false })
+              const promise = model.save({name: 'Paco'}, {optimistic: false})
 
               expect(collection.length).toEqual(0)
               expect(model.get('name')).toEqual('John')
 
-              MockApi.resolvePromise({ id: 999, name: 'Merlo' })
+              MockApi.resolvePromise({id: 999, name: 'Merlo'})
 
               try {
                 await promise
@@ -597,7 +601,7 @@ describe(Model, () => {
 
           describe('and it fails saving', () => {
             it('removes it from the collection', async () => {
-              const promise = model.save({ name: 'Paco' }, { optimistic: false })
+              const promise = model.save({name: 'Paco'}, {optimistic: false})
 
               expect(collection.length).toEqual(0)
               expect(model.get('name')).toEqual('John')
@@ -615,16 +619,18 @@ describe(Model, () => {
         })
 
         describe('and is not New', () => {
-          beforeEach(() => { model.set({ id: 999 }) })
+          beforeEach(() => {
+            model.set({id: 999})
+          })
 
           describe('and it succeeds saving', () => {
             it('it adds it to the collection', async () => {
-              const promise = model.save({ name: 'Paco' }, { optimistic: false })
+              const promise = model.save({name: 'Paco'}, {optimistic: false})
 
               expect(collection.length).toEqual(0)
               expect(model.get('name')).toEqual('John')
 
-              MockApi.resolvePromise({ id: 999, name: 'Merlo' })
+              MockApi.resolvePromise({id: 999, name: 'Merlo'})
 
               try {
                 await promise
@@ -636,7 +642,7 @@ describe(Model, () => {
 
           describe('and it fails saving', () => {
             it('removes it from the collection', async () => {
-              const promise = model.save({ name: 'Paco' }, { optimistic: false })
+              const promise = model.save({name: 'Paco'}, {optimistic: false})
 
               expect(collection.length).toEqual(0)
               expect(model.get('name')).toEqual('John')
@@ -688,7 +694,7 @@ describe(Model, () => {
 
       describe('if attributes are specified', () => {
         it('sends merges the attributes with the current ones', () => {
-          model.save({ phone: '5678' })
+          model.save({phone: '5678'})
 
           expect(spy.mock.calls[0][1]).toEqual({
             name: 'John',
@@ -699,7 +705,7 @@ describe(Model, () => {
 
         describe('if optimistic', () => {
           it('immediately assigns the merged attributes', () => {
-            model.save({ phone: '5678' }, { optimistic: true })
+            model.save({phone: '5678'}, {optimistic: true})
 
             expect(model.toJS()).toEqual({
               name: 'John',
@@ -713,7 +719,7 @@ describe(Model, () => {
 
     describe('if is not new', () => {
       beforeEach(() => {
-        model.set({ id: 2 })
+        model.set({id: 2})
         model.commitChanges()
       })
 
@@ -733,8 +739,8 @@ describe(Model, () => {
 
         describe('if attributes are not specified', () => {
           it('sends the changes compared to the current attributes', () => {
-            model.set({ phone: '5678' })
-            model.save(null, { patch: true })
+            model.set({phone: '5678'})
+            model.save(null, {patch: true})
 
             expect(spy.mock.calls[0][1]).toEqual({
               phone: '5678'
@@ -744,7 +750,7 @@ describe(Model, () => {
 
         describe('if attributes are specified', () => {
           it('sends specified attributes', () => {
-            model.save({ phone: '5678' }, { patch: true })
+            model.save({phone: '5678'}, {patch: true})
 
             expect(spy.mock.calls[0][1]).toEqual({
               phone: '5678'
@@ -753,7 +759,7 @@ describe(Model, () => {
 
           describe('if optimistic', () => {
             it('immediately assigns the merged attributes', () => {
-              model.save({ phone: '5678' }, { optimistic: true, patch: true })
+              model.save({phone: '5678'}, {optimistic: true, patch: true})
 
               expect(model.toJS()).toEqual({
                 id: 2,
@@ -776,13 +782,13 @@ describe(Model, () => {
         afterEach(() => spy.mockRestore())
 
         it('sends a PUT request', () => {
-          model.save({}, { patch: false })
+          model.save({}, {patch: false})
           expect(spy).toHaveBeenCalled()
         })
 
         describe('if attributes are not specified', () => {
           it('sends the current attributes', () => {
-            model.save({}, { patch: false })
+            model.save({}, {patch: false})
 
             expect(spy.mock.calls[0][1]).toEqual({
               id: 2,
@@ -795,7 +801,7 @@ describe(Model, () => {
 
         describe('if attributes are specified', () => {
           it('sends merges the attributes with the current ones', () => {
-            model.save({ phone: '5678' }, { patch: false })
+            model.save({phone: '5678'}, {patch: false})
 
             expect(spy.mock.calls[0][1]).toEqual({
               id: 2,
@@ -807,7 +813,7 @@ describe(Model, () => {
 
           describe('if optimistic', () => {
             it('immediately assigns the merged attributes', () => {
-              model.save({ phone: '5678' }, { optimistic: true, patch: false })
+              model.save({phone: '5678'}, {optimistic: true, patch: false})
 
               expect(model.toJS()).toEqual({
                 id: 2,
@@ -831,7 +837,7 @@ describe(Model, () => {
       afterEach(() => spy.mockRestore())
 
       it('they must be passed to the adapter', () => {
-        model.save(undefined, { method: 'HEAD' })
+        model.save(undefined, {method: 'HEAD'})
 
         expect(spy).toHaveBeenCalledWith(expect.anything(), expect.anything(), {
           method: 'HEAD',
@@ -842,7 +848,7 @@ describe(Model, () => {
 
     describe('if the request succeeds', () => {
       it('assigns the response attributes to the model', async () => {
-        const promise = model.save({ phone: '5678' }, { optimistic: false })
+        const promise = model.save({phone: '5678'}, {optimistic: false})
 
         expect(model.toJS()).toEqual({
           name: 'John',
@@ -868,7 +874,7 @@ describe(Model, () => {
       })
 
       it('sets the new attributes as committed', async () => {
-        const promise = model.save({ phone: '5678' })
+        const promise = model.save({phone: '5678'})
 
         expect(strMapToObj(model.committedAttributes.toJS())).toEqual({
           name: 'John',
@@ -896,9 +902,9 @@ describe(Model, () => {
       describe('if changes were made during the request', () => {
         describe('if keepChanges = false', () => {
           it('should override the changes with the response', async () => {
-            const promise = model.save({ phone: '5678' }, { keepChanges: false })
+            const promise = model.save({phone: '5678'}, {keepChanges: false})
 
-            model.set({ phone: '999' })
+            model.set({phone: '999'})
 
             MockApi.resolvePromise({
               id: 2,
@@ -920,9 +926,9 @@ describe(Model, () => {
 
         describe('if keepChanges = true', () => {
           it('should keep the changes', async () => {
-            const promise = model.save({ phone: '5678' }, { keepChanges: true })
+            const promise = model.save({phone: '5678'}, {keepChanges: true})
 
-            model.set({ phone: '999' })
+            model.set({phone: '999'})
 
             MockApi.resolvePromise({
               id: 2,
@@ -972,7 +978,7 @@ describe(Model, () => {
                   number: 2222
                 }
               }
-            }, { keepChanges: true })
+            }, {keepChanges: true})
 
             model.get('addresses').address2.number = 4444
 
@@ -1028,7 +1034,7 @@ describe(Model, () => {
 
             const promise = model.save({
               numbers: [3, 4, 5]
-            }, { keepChanges: true })
+            }, {keepChanges: true})
 
             model.get('numbers')[0] = 6
 
@@ -1059,7 +1065,7 @@ describe(Model, () => {
     describe('if the request fails', () => {
       describe('if optimistic', () => {
         it('goes back to the original attributes', async () => {
-          const promise = model.save({ phone: '5678' }, { optimistic: true })
+          const promise = model.save({phone: '5678'}, {optimistic: true})
 
           expect(model.toJS()).toEqual({
             name: 'John',
@@ -1120,7 +1126,7 @@ describe(Model, () => {
 
     describe('if is not new', () => {
       beforeEach(() => {
-        model.set({ id: 2 })
+        model.set({id: 2})
         model.commitChanges()
       })
 
@@ -1140,7 +1146,7 @@ describe(Model, () => {
 
         it('immediately removes itself from the collection', () => {
           expect(collection.length).toBe(1)
-          model.destroy({ optimistic: true })
+          model.destroy({optimistic: true})
           expect(collection.length).toBe(0)
         })
       })
@@ -1153,7 +1159,7 @@ describe(Model, () => {
             model.collection = collection
             collection.models.push(model)
 
-            const promise = model.destroy({ optimistic: false })
+            const promise = model.destroy({optimistic: false})
 
             expect(collection.length).toBe(1)
 
@@ -1169,7 +1175,7 @@ describe(Model, () => {
             model.collection = new MockCollection()
             model.collection.models.push(model)
 
-            const promise = model.destroy({ optimistic: true })
+            const promise = model.destroy({optimistic: true})
 
             MockApi.resolvePromise({})
 
@@ -1180,7 +1186,7 @@ describe(Model, () => {
 
       describe('if other options are specified', () => {
         it('they must be passed to the adapter', () => {
-          model.destroy({ method: 'OPTIONS' })
+          model.destroy({method: 'OPTIONS'})
 
           expect(spy.mock.calls[0][2]).toEqual({
             method: 'OPTIONS'
@@ -1196,7 +1202,7 @@ describe(Model, () => {
             model.collection = collection
             collection.models.push(model)
 
-            const promise = model.destroy({ optimistic: true })
+            const promise = model.destroy({optimistic: true})
 
             expect(collection.length).toBe(0)
 
@@ -1215,7 +1221,7 @@ describe(Model, () => {
             model.collection = new MockCollection()
             model.collection.models.push(model)
 
-            const promise = model.destroy({ optimistic: false })
+            const promise = model.destroy({optimistic: false})
 
             MockApi.rejectPromise('Conflict')
 
@@ -1229,4 +1235,51 @@ describe(Model, () => {
       })
     })
   })
+
+  describe('mapToApi test', () => {
+    let model
+
+    beforeEach(() => {
+      model = new Model({username: "Emrah TOY"})
+      model.urlRoot = () => '/mapperTest'
+      model.modelMap = [
+        ["username", "user"]
+      ]
+    })
+
+    afterEach(() => {
+      model.modelMap = [
+        ["username", "user"]
+      ]
+      modelMapper(undefined,true);
+    });
+
+    describe('when it has no mapper adapter and it should fail', () => {
+      it('throws error because there is no model map', () => {
+        expect(() => {
+          model.modelMap = [];
+          modelMapper(new BasicModelMapper());
+          return model.toApiObject(true);
+        }).toThrow('Undefined model map');
+      })
+    })
+
+    describe('when it has no mapper adapter and it should fail', () => {
+      it('throws error because there is no model mapper', () => {
+        expect(() => {
+          return model.toApiObject(true);
+        }).toThrow('You must set an model mapper adapter first!');
+      })
+    })
+
+    describe('when model has both map and mapper and it success', () => {
+      it("returns mapped object", () => {
+        modelMapper(new BasicModelMapper());
+        const mappedModel = model.toApiObject()
+        expect(mappedModel).toMatchObject({user: "Emrah TOY"})
+      })
+    })
+
+  })
+
 })
