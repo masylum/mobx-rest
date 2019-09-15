@@ -16,6 +16,7 @@ REST conventions for mobx.
   - [Model](#model)
   - [Collection](#collection)
   - [apiClient](#apiclient)
+  - [modelMapper](#modelMapper)
 - [Simple Example](#simple-example)
 - [State shape](#state-shape)
 - [FAQ](#faq)
@@ -713,7 +714,8 @@ error: {              // A failed request
   body: string,       // A string representing the error
 },
 ```
-
+### `modelMapper`
+d
 ## FAQ
 
 ### How do I create relations between the models?
