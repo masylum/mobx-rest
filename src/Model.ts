@@ -1,4 +1,4 @@
-import { ObservableMap, action, computed, observable, runInAction, toJS } from 'mobx'
+import {ObservableMap, action, computed, observable, runInAction, toJS} from 'mobx'
 import debounce from 'lodash/debounce'
 import includes from 'lodash/includes'
 import isEqual from 'lodash/isEqual'
@@ -10,7 +10,8 @@ import Base from './Base'
 import Collection from './Collection'
 import Request from './Request'
 import apiClient from './apiClient'
-import { OptimisticId, Id, DestroyOptions, SaveOptions } from './types'
+import modelMapper from './modelMapper'
+import {OptimisticId, Id, DestroyOptions, SaveOptions, ModelMapperAdapter} from './types'
 
 const dontMergeArrays = (_oldArray, newArray) => newArray
 
@@ -25,10 +26,12 @@ export default class Model extends Base {
 
   optimisticId: OptimisticId = uniqueId('i_')
   collection: Collection<this> | null = null
+  modelMap: any[][]
 
-  constructor (
+  constructor(
     attributes: Attributes = {},
-    defaultAttributes: Attributes = {}
+    defaultAttributes: Attributes = {},
+    modelMap: any[][] = []
   ) {
     super()
 
@@ -39,6 +42,7 @@ export default class Model extends Base {
       ...attributes
     }
 
+    this.modelMap = modelMap
     this.attributes.replace(mergedAttributes)
     this.commitChanges()
   }
@@ -47,15 +51,15 @@ export default class Model extends Base {
    * Returns a JSON representation
    * of the model
    */
-  toJS () {
-    return toJS(this.attributes, { exportMapsAsObjects: true })
+  toJS() {
+    return toJS(this.attributes, {exportMapsAsObjects: true})
   }
 
   /**
    * Define which is the primary
    * key of the model.
    */
-  get primaryKey (): string {
+  get primaryKey(): string {
     return DEFAULT_PRIMARY
   }
 
@@ -65,14 +69,14 @@ export default class Model extends Base {
    *
    * @abstract
    */
-  urlRoot (): string | null {
+  urlRoot(): string | null {
     return null
   }
 
   /**
    * Return the url for this given REST resource
    */
-  url (): string {
+  url(): string {
     let urlRoot = this.urlRoot()
 
     if (!urlRoot && this.collection) {
@@ -97,7 +101,7 @@ export default class Model extends Base {
    * the `primaryKey` attribute (set by the server).
    */
   @computed
-  get isNew (): boolean {
+  get isNew(): boolean {
     return !this.has(this.primaryKey) || !this.get(this.primaryKey)
   }
 
@@ -113,7 +117,7 @@ export default class Model extends Base {
    * use `has` to check wether the field
    * exists.
    */
-  get (attribute: string): any {
+  get(attribute: string): any {
     if (this.has(attribute)) {
       return this.attributes.get(attribute)
     }
@@ -124,7 +128,7 @@ export default class Model extends Base {
    * Returns whether the given field exists
    * for the model.
    */
-  has (attribute: string): boolean {
+  has(attribute: string): boolean {
     return this.attributes.has(attribute)
   }
 
@@ -132,7 +136,7 @@ export default class Model extends Base {
    * Get an id from the model. It will use either
    * the backend assigned one or the client.
    */
-  get id (): Id {
+  get id(): Id {
     return this.has(this.primaryKey)
       ? this.get(this.primaryKey)
       : this.optimisticId
@@ -142,7 +146,7 @@ export default class Model extends Base {
    * Get an array with the attributes names that have changed.
    */
   @computed
-  get changedAttributes (): Array<string> {
+  get changedAttributes(): Array<string> {
     return getChangedAttributesBetween(
       toJS(this.committedAttributes),
       toJS(this.attributes)
@@ -153,7 +157,7 @@ export default class Model extends Base {
    * Gets the current changes.
    */
   @computed
-  get changes (): { [key: string]: any } {
+  get changes(): { [key: string]: any } {
     return getChangesBetween(
       toJS(this.committedAttributes),
       toJS(this.attributes)
@@ -164,7 +168,7 @@ export default class Model extends Base {
    * If an attribute is specified, returns true if it has changes.
    * If no attribute is specified, returns true if any attribute has changes.
    */
-  hasChanges (attribute?: string): boolean {
+  hasChanges(attribute?: string): boolean {
     if (attribute) {
       return includes(this.changedAttributes, attribute)
     }
@@ -173,12 +177,12 @@ export default class Model extends Base {
   }
 
   @action
-  commitChanges (): void {
+  commitChanges(): void {
     this.committedAttributes.replace(toJS(this.attributes))
   }
 
   @action
-  discardChanges (): void {
+  discardChanges(): void {
     this.attributes.replace(toJS(this.committedAttributes))
   }
 
@@ -186,10 +190,10 @@ export default class Model extends Base {
    * Replace all attributes with new data
    */
   @action
-  reset (data?: {}): void {
+  reset(data?: {}): void {
     this.attributes.replace(
       data
-        ? { ...this.defaultAttributes, ...data }
+        ? {...this.defaultAttributes, ...data}
         : this.defaultAttributes
     )
   }
@@ -199,7 +203,7 @@ export default class Model extends Base {
    * the current ones
    */
   @action
-  set (data: {}): void {
+  set(data: {}): void {
     this.attributes.merge(data)
   }
 
@@ -207,15 +211,18 @@ export default class Model extends Base {
    * Fetches the model from the backend.
    */
   @action
-  fetch ({ data, ...otherOptions }: { data?: {} } = {}): Request {
-    const { abort, promise } = apiClient().get(this.url(), data, otherOptions)
+  fetch({data, ...otherOptions}: { data?: {} } = {}): Request {
+    const modelMap = this.modelMap;
+    const {abort, promise} = apiClient().get(this.url(), mapToApi(data, modelMap), otherOptions) // changed from const to let in order to apply chaining
 
     promise
+      .then(data => mapToModel(data, modelMap))
       .then(data => {
         this.set(data)
         this.commitChanges()
       })
-      .catch(_error => {}) // do nothing
+      .catch(_error => {
+      }) // do nothing
 
     return this.withRequest('fetching', promise, abort)
   }
@@ -229,7 +236,7 @@ export default class Model extends Base {
    * It supports optimistic and patch updates.
    */
   @action
-  save (
+  save(
     attributes?: {},
     {
       optimistic = true,
@@ -242,13 +249,14 @@ export default class Model extends Base {
     const label = this.isNew ? 'creating' : 'updating'
     const collection = this.collection
     let data
+    const modelMap = this.modelMap
 
     if (patch && attributes && !this.isNew) {
       data = attributes
     } else if (patch && !this.isNew) {
       data = this.changes
     } else {
-      data = { ...currentAttributes, ...attributes }
+      data = {...currentAttributes, ...attributes}
     }
 
     let method
@@ -274,13 +282,14 @@ export default class Model extends Base {
       if (optimistic && this.request) this.request.progress = progress
     })
 
-    const { promise, abort } = apiClient()[method](
+    const {promise, abort} = apiClient()[method](
       this.url(),
-      data,
-      { onProgress, ...otherOptions }
+      mapToApi(data, modelMap),
+      {onProgress, ...otherOptions}
     )
 
     promise
+      .then(data => mapToModel(data, modelMap))
       .then(data => {
         const changes = getChangesBetween(
           currentAttributes,
@@ -315,10 +324,11 @@ export default class Model extends Base {
    * too
    */
   @action
-  destroy (
-    { data, optimistic = true, ...otherOptions }: DestroyOptions = {}
+  destroy(
+    {data, optimistic = true, ...otherOptions}: DestroyOptions = {}
   ): Request {
     const collection = this.collection
+    const modelMap = this.modelMap
 
     if (this.isNew && collection) {
       collection.remove(this)
@@ -329,9 +339,9 @@ export default class Model extends Base {
       return new Request(Promise.resolve())
     }
 
-    const { promise, abort } = apiClient().del(
+    const {promise, abort} = apiClient().del(
       this.url(),
-      data,
+      mapToApi(data, modelMap),
       otherOptions
     )
 
@@ -340,6 +350,7 @@ export default class Model extends Base {
     }
 
     promise
+      .then(data => mapToModel(data, modelMap))
       .then(data => {
         if (!optimistic && collection) collection.remove(this)
       })
@@ -348,6 +359,22 @@ export default class Model extends Base {
       })
 
     return this.withRequest('destroying', promise, abort)
+  }
+
+  /*
+  * Helper method.
+  * We may need this method to use before rpc requests response
+   */
+  toApiObject(throwException: boolean = false) {
+    return mapToApi(this.toJS(), this.modelMap, modelMapper, throwException)
+  }
+
+  /*
+  * Helper method.
+  * We may need this method to use after rpc requests response
+   */
+  toModelObject(data: {}, throwException: boolean = false) {
+    return mapToModel(data, this.modelMap, modelMapper, throwException)
   }
 }
 
@@ -381,3 +408,45 @@ const getChangesBetween = (source: {}, target: {}): { [key: string]: any } => {
 
   return changes
 }
+
+/*
+* Maps api response model to model.
+* Default : It returns api response data as is.
+ */
+const mapToModel = (data: {}, map: any[][], mapper = modelMapper, throwError: boolean = false): {} => {
+  try {
+    const adapter = mapper();
+    if (map.length > 0) { // test if model has map and modelMapper has an adapter
+      data = adapter.apiToModel(data, map);
+    } else {
+      if (throwError)
+        throw new Error("Undefined model map");
+    }
+  } catch (_error) {
+    //do nothing so we can return data as is
+    if (throwError)
+      throw new Error(_error);
+  }
+  return data;
+};
+
+/*
+* Maps model to api(request) model.
+* Default : It returns data as is.
+ */
+const mapToApi = (data: {}, map: any[][], mapper = modelMapper, throwError: boolean = false): {} => {
+  try {
+    const adapter = mapper();
+    if (map.length > 0) { // test if model has map and modelMapper has an adapter
+      data = adapter.modelToApi(data, map);
+    } else {
+      if (throwError)
+        throw new Error("Undefined model map");
+    }
+  } catch (_error) {
+    //do nothing so we can return data as is
+    if (throwError)
+      throw new Error(_error);
+  }
+  return data;
+};
