@@ -605,6 +605,29 @@ All options:
   * **headers**: Additional request headers, like `Authorization`
   * **tbd.**
 
+### `modelMapper`
+You may need to use different kind of models while sending request and using in mobx-rest
+There are currently one implementation:
+
+  - One using `Basic` and `Auto` mappers in the [mobx-rest-auto-mapper-adapter](https://github.com/emrahtoy/mobx-rest-auto-mapper-adapter) package.
+
+For example, if you're using an api takes and returns different kind of models or you are using view model different than api model,  you use username for view and name for api request, it could look like this:
+
+```
+import modelMapper from "mobx-rest";
+import { BasicModelMapper } from "./mobx-rest-auto-mapper-adapter";
+
+ modelMapper(new BasicModelMapper());
+
+const modelMap=[['username','name']];
+
+class User extends Model {} // I assume you create proper model here.
+
+let user = new User({username:"Emrah TOY"},{username:"Emrah TOY"},modelMap);
+user.save() // will send {name:"Emrah TOY"} to given api endpoint. username -> name
+```
+Please, visit model mappers githup repo for much more complicated examples.
+
 ## Simple Example
 
 A collection looks like this:
@@ -714,8 +737,7 @@ error: {              // A failed request
   body: string,       // A string representing the error
 },
 ```
-### `modelMapper`
-d
+
 ## FAQ
 
 ### How do I create relations between the models?
