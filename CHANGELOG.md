@@ -1,5 +1,10 @@
 # Changelog
 
+## `5.0.6`
+
+  - Defend some cases when data is not present.
+
+
 ## `5.0.5`
 
   - Avoids `add` adding duplicated records and switches `model.save` to use add instead of `set`

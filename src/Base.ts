@@ -1,5 +1,5 @@
-import ErrorObject from './ErrorObject'
 import Request from './Request'
+import ErrorObject from './ErrorObject'
 import apiClient from './apiClient'
 import includes from 'lodash/includes'
 import isObject from 'lodash/isObject'
@@ -77,7 +77,7 @@ export default class Base {
    * your API.
    */
   @action
-  rpc (endpoint: string | { rootUrl: string }, options?: {}, label: string = 'fetching'): Request {
+  rpc (endpoint: string | { rootUrl: string }, options?: {}, label: string = 'calling'): Request {
     const url = isObject(endpoint) ? endpoint.rootUrl : `${this.url()}/${endpoint}`
     const { promise, abort } = apiClient().post(url, options)
 

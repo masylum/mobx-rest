@@ -11,7 +11,7 @@ export default class ErrorObject {
     } else if (typeof error === 'string') {
       this.requestResponse = null
       this.error = error
-    } else if (error.requestResponse || error.error ){
+    } else if (error && (error.requestResponse || error.error)) {
       this.requestResponse = error.requestResponse
       this.error = error.error
     } else {

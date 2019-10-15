@@ -362,7 +362,9 @@ export default abstract class Collection<T extends Model> extends Base {
     const { abort, promise } = apiClient().get(this.url(), data, otherOptions)
 
     promise
-      .then(data => this.set(data, otherOptions))
+      .then(data => {
+        if (Array.isArray(data)) this.set(data, otherOptions)
+      })
       .catch(_error => {}) // do nothing
 
     return this.withRequest('fetching', promise, abort)

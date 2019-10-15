@@ -212,6 +212,8 @@ export default class Model extends Base {
 
     promise
       .then(data => {
+        if (!data) return
+
         this.set(data)
         this.commitChanges()
       })
@@ -282,6 +284,8 @@ export default class Model extends Base {
 
     promise
       .then(data => {
+        if (!data) return
+
         const changes = getChangesBetween(
           currentAttributes,
           toJS(this.attributes)
@@ -340,7 +344,7 @@ export default class Model extends Base {
     }
 
     promise
-      .then(data => {
+      .then(_data => {
         if (!optimistic && collection) collection.remove(this)
       })
       .catch(error => {
