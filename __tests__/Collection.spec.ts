@@ -5,15 +5,18 @@ import apiClient from '../src/apiClient'
 
 apiClient(MockApi)
 
-class MockCollection extends Collection<Model> {
+class MockModel extends Model {
+}
+
+class MockCollection extends Collection<MockModel> {
   indexes = ['phone']
 
   url (): string {
     return '/users'
   }
 
-  model (): typeof Model {
-    return Model
+  model (): typeof MockModel {
+    return MockModel
   }
 }
 
@@ -103,7 +106,7 @@ describe(Collection, () => {
 
   describe('model()', () => {
     it('returns the default model class', () => {
-      expect(collection.model()).toBe(Model)
+      expect(collection.model()).toBe(MockModel)
     })
   })
 
@@ -133,7 +136,7 @@ describe(Collection, () => {
       describe('if required', () => {
         it('throws', () => {
           expect(() => collection.get(999, { required: true }))
-            .toThrow('Invariant: Model must be found with id: 999')
+            .toThrow('Invariant: MockModel must be found with id: 999')
         })
       })
 
@@ -153,7 +156,7 @@ describe(Collection, () => {
     describe('if the model is not found', () => {
       it('throws', () => {
         expect(() => collection.mustGet(999))
-          .toThrow('Invariant: Model must be found with id: 999')
+          .toThrow('Invariant: MockModel must be found with id: 999')
       })
     })
   })
@@ -231,7 +234,7 @@ describe(Collection, () => {
       describe('if required', () => {
         it('throws', () => {
           expect(() => collection.find({ phone: '9999' }, { required: true }))
-            .toThrow('Invariant: Model must be found')
+            .toThrow('Invariant: MockModel must be found')
         })
       })
 
@@ -273,7 +276,7 @@ describe(Collection, () => {
     describe('if the model is not found', () => {
       it('throws', () => {
         expect(() => collection.mustFind({ phone: '9999' }))
-          .toThrow(Error(`Invariant: Model must be found`))
+          .toThrow(Error(`Invariant: MockModel must be found`))
       })
     })
   })

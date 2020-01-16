@@ -159,7 +159,7 @@ export default abstract class Collection<T extends Model> extends Base {
     const model = models && models[0]
 
     if (!model && required) {
-      throw new Error(`Invariant: Model must be found with ${this.primaryKey}: ${id}`)
+      throw new Error(`Invariant: ${this.model().name} must be found with ${this.primaryKey}: ${id}`)
     }
 
     return model
@@ -213,7 +213,7 @@ export default abstract class Collection<T extends Model> extends Base {
       : this.filter(query)[0]
 
     if (!model && required) {
-      throw new Error(`Invariant: Model must be found`)
+      throw new Error(`Invariant: ${this.model().name} must be found`)
     }
 
     return model
@@ -269,7 +269,7 @@ export default abstract class Collection<T extends Model> extends Base {
       }
 
       if (!model) {
-        return console.warn(`${this.constructor.name}: Model with ${this.primaryKey} ${id} not found.`)
+        return console.warn(`${this.constructor.name}: ${this.model().name} with ${this.primaryKey} ${id} not found.`)
       }
 
       this.models.splice(this.models.indexOf(model), 1)
