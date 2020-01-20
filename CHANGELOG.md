@@ -1,5 +1,9 @@
 # Changelog
 
+## `5.0.7`
+
+  - Improved error messages when an invariant fails.
+
 ## `5.0.6`
 
   - Defend some cases when data is not present.
