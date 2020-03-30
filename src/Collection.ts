@@ -166,17 +166,6 @@ export default abstract class Collection<T extends Model> extends Base {
   }
 
   /**
-   * @deprecated Will be deleted in next version. Use `get` instead.
-   *
-   * Get a resource with the given id or uuid or fail loudly.
-   *
-   */
-  mustGet (id: Id): T {
-    console.warn("caution: mustGet is a deprecated function!");
-    return this.get(id, { required: true })
-  }
-
-  /**
    * Get resources matching criteria.
    *
    * If passing an object of key:value conditions, it will
@@ -221,16 +210,6 @@ export default abstract class Collection<T extends Model> extends Base {
     }
 
     return model
-  }
-
-  /**
-   * @deprecated Will be deleted in next version. Use `find` instead.
-   *
-   * Get a resource with the given id or uuid or fails loudly.
-   */
-  mustFind (query: { [key: string]: any } | ((T) => boolean)): T {
-    console.warn("caution: mustFind is a deprecated function!");
-    return this.find(query, { required: true })
   }
 
   /**

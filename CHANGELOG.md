@@ -1,5 +1,8 @@
 # Changelog
 
+## `6.0.0``
+  - Remove mustFind and mustGet methods
+
 ## `5.0.7`
 
   - Improved error messages when an invariant fails.
