@@ -166,13 +166,6 @@ export default abstract class Collection<T extends Model> extends Base {
   }
 
   /**
-   * Get a resource with the given id or uuid or fail loudly.
-   */
-  mustGet (id: Id): T {
-    return this.get(id, { required: true })
-  }
-
-  /**
    * Get resources matching criteria.
    *
    * If passing an object of key:value conditions, it will
@@ -217,13 +210,6 @@ export default abstract class Collection<T extends Model> extends Base {
     }
 
     return model
-  }
-
-  /**
-   * Get a resource with the given id or uuid or fails loudly.
-   */
-  mustFind (query: { [key: string]: any } | ((T) => boolean)): T {
-    return this.find(query, { required: true })
   }
 
   /**

@@ -324,8 +324,7 @@ An `ObservableArray` that holds the collection of models.
 
 Indexes allow you to determine which attributes you want to index your collection by.
 This allows you to trade-off memory for speed. By default we index all the models by
-`primaryKey` but you can add more indexes that will be used automatically when using `filter`,
-`find` and `mustFind` with the object form.
+`primaryKey` but you can add more indexes that will be used automatically when using `filter` and `find` with the object form.
 
 ```js
 users.find({ id: 123 }) // This will hit the index. Fast!
@@ -402,10 +401,6 @@ Find a model at the given position.
 
 Find a model (or not) with the given id. If `required` it will raise an error if not found.
 
-#### `mustGet(id: number): Model`
-
-Find a model with the given id or raise an Error.
-
 #### `filter(query: Object | Function): Array<Model>`
 
 Helper method that filters the collection by the given conditions represented
@@ -443,17 +438,6 @@ const user = usersCollection.find(model => model.name === 'paco')
 user.get('name') // => 'paco'
 
 usersCollection.find({ name: 'foo'}) // => Error(`Invariant: Model must be found`)
-```
-
-#### `mustFind(query: Object | Function): Model`
-
-Same as `find` but it will raise an Error if the model is not found.
-
-Example:
-
-```js
-const pau = usersCollection.mustFind({ name: 'pau' })
-pau.get('name') // => 'pau'
 ```
 
 #### `add(data: Array<Object|T>|T|Object): Array<Model>`
@@ -728,7 +712,7 @@ import { computed } from 'mobx'
 class Task extends Model {
   @computed
   author () {
-    return users.mustGet(this.get('user_id'))
+    return users.get(this.get('user_id'))
   }
 
   @computed
