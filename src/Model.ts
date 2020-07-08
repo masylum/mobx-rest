@@ -54,6 +54,8 @@ export default class Model extends Base {
   /**
    * Define which is the primary
    * key of the model.
+   *
+   * @abstract
    */
   get primaryKey (): string {
     return DEFAULT_PRIMARY

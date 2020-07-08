@@ -1,5 +1,9 @@
 # Changelog
 
+## `6.0.1``
+
+  - Fix peformance regression for `set` introduced in 4.0.0 with the addition of indexes: We were creating a model just to call the `primaryKey` method instead of just calling the prototype.
+
 ## `6.0.0``
   - Remove mustFind and mustGet methods
 

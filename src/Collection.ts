@@ -35,8 +35,8 @@ export default abstract class Collection<T extends Model> extends Base {
    * Define which is the primary key
    * of the model's in the collection.
    *
-   * FIXME: This contains a hack to use the `primaryKey` as
-   * an instance method. Ideally it should be static but that
+   * FIXME: This contains a hack to use the `primaryKey` directly
+   * from the prototype. Ideally it should be static but that
    * would not be backward compatible and Typescript sucks at
    * static polymorphism (https://github.com/microsoft/TypeScript/issues/5863).
    */
@@ -44,7 +44,7 @@ export default abstract class Collection<T extends Model> extends Base {
     const ModelClass = this.model()
     if (!ModelClass) return DEFAULT_PRIMARY
 
-    return (new ModelClass()).primaryKey
+    return ModelClass.prototype.primaryKey
   }
 
   /**
