@@ -23,12 +23,18 @@ function getAttribute (resource: { [key: string]: any } | Model, attribute: stri
 }
 
 export default abstract class Collection<T extends Model> extends Base {
-  @observable models: IObservableArray<T> = observable.array([])
-  indexes: Array<string> = []
+  models: IObservableArray<T> = observable.array([])
 
   constructor (data: Array<{ [key: string]: any }> = []) {
     super()
     this.set(data)
+  }
+
+  /*
+   * Override this to have more indexes
+   */
+  get indexes (): Array<string> {
+    return []
   }
 
   /**
@@ -59,7 +65,7 @@ export default abstract class Collection<T extends Model> extends Base {
   get index (): IndexTree<T> {
     const indexes = this.indexes.concat([this.primaryKey])
 
-    return indexes.reduce((tree, attr) => {
+    return indexes.reduce((tree: IndexTree<T>, attr: string) => {
       const newIndex = this.models.reduce((index: Index<T>, model: T) => {
         const value = model.has(attr)
           ? model.get(attr)
@@ -273,24 +279,28 @@ export default abstract class Collection<T extends Model> extends Base {
     resources: Array<{ [key: string]: any } | T>,
     { add = true, change = true, remove = true }: SetOptions = {}
   ): void {
-    if (remove) {
-      const ids = compact(resources.map(r =>
-        getAttribute(r, this.primaryKey)
-      ))
-      const toRemove = difference(this._ids, ids)
-      if (toRemove.length) this.remove(toRemove)
-    }
+    const getPrimaryKey = (resource) => getAttribute(resource, this.primaryKey)
+    const idsToRemove = difference(this._ids, resources.map(getPrimaryKey))
+    let resourcesToAdd = []
 
     resources.forEach(resource => {
-      const id = getAttribute(resource, this.primaryKey)
+      const id = getPrimaryKey(resource)
       const model = id ? this.get(id) : null
 
       if (model && change) {
         model.set(resource instanceof Model ? resource.toJS() : resource)
+      } else {
+        resourcesToAdd.push(resource)
       }
-
-      if (!model && add) this.add([resource])
     })
+
+    if (remove && idsToRemove.length) {
+      this.remove(idsToRemove)
+    }
+
+    if (add && resourcesToAdd.length) {
+      this.add(resourcesToAdd)
+    }
   }
 
   /**

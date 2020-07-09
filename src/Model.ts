@@ -20,8 +20,8 @@ export const DEFAULT_PRIMARY = 'id'
 export default class Model extends Base {
   defaultAttributes: Attributes = {}
 
-  attributes: ObservableMap = observable.map()
-  committedAttributes: ObservableMap = observable.map()
+  attributes: ObservableMap
+  committedAttributes: ObservableMap
 
   optimisticId: OptimisticId = uniqueId('i_')
   collection: Collection<this> | null = null
@@ -39,8 +39,8 @@ export default class Model extends Base {
       ...attributes
     }
 
-    this.attributes.replace(mergedAttributes)
-    this.commitChanges()
+    this.attributes = observable.map(mergedAttributes)
+    this.committedAttributes = observable.map(mergedAttributes)
   }
 
   /**

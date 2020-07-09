@@ -9,7 +9,9 @@ class MockModel extends Model {
 }
 
 class MockCollection extends Collection<MockModel> {
-  indexes = ['phone']
+  get indexes () {
+    return ['phone']
+  }
 
   url (): string {
     return '/users'

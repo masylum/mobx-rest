@@ -1,5 +1,11 @@
 # Changelog
 
+## `7.0.0``
+
+  - Breaking: Moved indexes as getters so they are available during the first `Collection#set` call in the constructor
+  - Refactored `Collection#set` to batch all the additions so indexes are not recalculated for each addition.
+  - Refactored `Model#constructor` to directly set the attributes instead of initialize with an empty map and replace it.
+
 ## `6.0.1``
 
   - Fix peformance regression for `set` introduced in 4.0.0 with the addition of indexes: We were creating a model just to call the `primaryKey` method instead of just calling the prototype.
