@@ -1,5 +1,9 @@
 # Changelog
 
+## `7.0.1``
+
+  - One more performance improvement by optimizing `Collection#constructor` to just reset the collection
+
 ## `7.0.0``
 
   - Breaking: Moved indexes as getters so they are available during the first `Collection#set` call in the constructor

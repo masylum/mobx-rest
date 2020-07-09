@@ -23,11 +23,11 @@ function getAttribute (resource: { [key: string]: any } | Model, attribute: stri
 }
 
 export default abstract class Collection<T extends Model> extends Base {
-  models: IObservableArray<T> = observable.array([])
+  models: IObservableArray<T>
 
   constructor (data: Array<{ [key: string]: any }> = []) {
     super()
-    this.set(data)
+    this.models = observable.array(data.map(m => this.build(m)))
   }
 
   /*
