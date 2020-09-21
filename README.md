@@ -440,6 +440,10 @@ user.get('name') // => 'paco'
 usersCollection.find({ name: 'foo'}) // => Error(`Invariant: Model must be found`)
 ```
 
+#### `last(): ?Model`
+
+Returns the last model of the collection. If the collection is empty, it returns `null`
+
 #### `add(data: Array<Object|T>|T|Object): Array<Model>`
 
 Adds models with the given array of attributes.
