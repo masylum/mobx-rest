@@ -236,6 +236,19 @@ describe(Collection, () => {
     })
   })
 
+  describe('last()', () => {
+    it('returns the last model of the collection', () => {
+      expect(collection.last()).toBe(collection.models[3])
+    })
+
+    describe('if the collection is empty', () => {
+      it('returns null', () => {
+        collection.reset([])
+        expect(collection.last()).toBe(null)
+      })
+    })
+  })
+
   describe('add(model)', () => {
     beforeEach(() => {
       collection.reset([])

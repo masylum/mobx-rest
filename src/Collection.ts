@@ -219,6 +219,16 @@ export default abstract class Collection<T extends Model> extends Base {
   }
 
   /**
+   * Returns the last element of the collection
+   */
+  last (): T | null {
+    const length = this.models.length
+    if (length === 0) return null
+
+    return this.models[length - 1]
+  }
+
+  /**
    * Adds a model or collection of models.
    */
   @action
