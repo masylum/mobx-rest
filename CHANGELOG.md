@@ -1,5 +1,9 @@
 # Changelog
 
+## `7.1.0``
+
+  - Added `Collection#last` method
+
 ## `7.0.1``
 
   - One more performance improvement by optimizing `Collection#constructor` to just reset the collection

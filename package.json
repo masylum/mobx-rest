@@ -1,6 +1,6 @@
 {
   "name": "mobx-rest",
-  "version": "7.0.1",
+  "version": "7.1.0",
   "description": "REST conventions for mobx.",
   "jest": {
     "roots": [
