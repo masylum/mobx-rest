@@ -40,7 +40,7 @@ describe(Model, () => {
       lastName: 'Doe'
     })
 
-    expect(strMapToObj(model.committedAttributes.toJS())).toEqual({
+    expect(strMapToObj(new Map(model.committedAttributes))).toEqual({
       firstName: 'John',
       lastName: 'Doe'
     })
@@ -472,7 +472,7 @@ describe(Model, () => {
 
         await promise
 
-        expect(strMapToObj(model.committedAttributes.toJS())).toEqual({
+        expect(strMapToObj(new Map(model.committedAttributes))).toEqual({
           id: 2,
           name: 'John'
         })
@@ -870,7 +870,7 @@ describe(Model, () => {
       it('sets the new attributes as committed', async () => {
         const promise = model.save({ phone: '5678' })
 
-        expect(strMapToObj(model.committedAttributes.toJS())).toEqual({
+        expect(strMapToObj(new Map(model.committedAttributes))).toEqual({
           name: 'John',
           email: 'john@test.com',
           phone: '1234'
@@ -885,7 +885,7 @@ describe(Model, () => {
 
         await promise
 
-        expect(strMapToObj(model.committedAttributes.toJS())).toEqual({
+        expect(Object.fromEntries(model.committedAttributes)).toEqual({
           id: 2,
           name: 'John',
           email: 'john@test.com',
