@@ -30,16 +30,16 @@ export default class Base {
     const handledPromise = promise
       .then(response => {
         if (this.request === request) this.request = null
-        runInAction('remove request', () => {
+        runInAction(action('remove request', () => {
           this.requests.remove(request)
-        })
+        }))
 
         return response
       })
       .catch(error => {
-        runInAction('remove request', () => {
+        runInAction(action('remove request', () => {
           this.requests.remove(request)
-        })
+        }))
 
         throw new ErrorObject(error)
       })

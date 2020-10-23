@@ -293,7 +293,7 @@ export default class Model extends Base {
           toJS(this.attributes)
         )
 
-        runInAction('save success', () => {
+        runInAction(action('save success', () => {
           this.set(data)
           this.commitChanges()
 
@@ -302,7 +302,7 @@ export default class Model extends Base {
           if (keepChanges) {
             this.set(applyPatchChanges(data, changes))
           }
-        })
+        }))
       })
       .catch(error => {
         this.set(currentAttributes)
