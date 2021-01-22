@@ -1081,6 +1081,32 @@ describe(Model, () => {
         })
       })
     })
+
+    describe('with customized path', () => {
+      let spy
+
+      beforeEach(() => {
+        spy = jest.spyOn(apiClient(), 'post')
+      })
+
+      afterEach(() => spy.mockRestore())
+
+      it('request to the given path', async () => {
+        const promise = model.save({
+          addresses: {
+            address2: {
+              street: 'Street 2',
+              number: 2222
+            }
+          }
+        }, {
+          optimistic: false,
+          path: '/custom'
+        })
+
+        expect(spy.mock.calls[0][0]).toEqual('/custom')
+      })
+    })
   })
 
   describe('destroy(options)', () => {
@@ -1225,6 +1251,20 @@ describe(Model, () => {
               expect(errorObject.error).toBe('Conflict')
             }
           })
+        })
+      })
+
+      describe('with customized path', () => {
+        it('request to the given path', async () => {
+          model.collection = new MockCollection()
+          model.collection.models.push(model)
+
+          model.destroy({
+            optimistic: false,
+            path: '/custom'
+          })
+
+          expect(spy.mock.calls[0][0]).toEqual('/custom')
         })
       })
     })

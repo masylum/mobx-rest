@@ -338,10 +338,10 @@ export default abstract class Collection<T extends Model> extends Base {
   @action
   create (
     attributesOrModel: { [key: string]: any } | T,
-    { optimistic = true }: CreateOptions = {}
+    { optimistic = true, path }: CreateOptions = {}
   ): Request {
     const model = this.build(attributesOrModel)
-    const request = model.save({}, { optimistic })
+    const request = model.save({}, { optimistic, path })
     this.requests.push(request)
     const { promise } = request
 
