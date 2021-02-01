@@ -521,11 +521,14 @@ describe(Collection, () => {
   })
 
   describe('create(attributes, { optimistic = true })', () => {
+    let spy
     beforeEach(() => {
       collection.url = () => '/resources'
       collection.reset([])
-      jest.spyOn(apiClient(), 'post')
+      spy = jest.spyOn(apiClient(), 'post')
     })
+
+    afterEach(() => spy.mockRestore())
 
     it('builds a model and saves it', async () => {
       const attributes = { phone: '1234' }
@@ -599,6 +602,17 @@ describe(Collection, () => {
         } catch (errorObject) {
           expect(errorObject.error).toBe('Conflict')
         }
+      })
+    })
+
+    describe('with customized path', () => {
+      it('request to the given path', async () => {
+        const promise = collection.create({}, {
+          optimistic: false,
+          path: '/custom'
+        })
+
+        expect(spy.mock.calls[0][0]).toEqual('/custom')
       })
     })
   })

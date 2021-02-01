@@ -275,6 +275,8 @@ Options:
   - `patch = true` Whether we want to use the `PATCH` verb and semantics, sending
   only the changed attributes instead of the whole resource down the wire.
   - `keepChanges = false` Whether we want to keep the changes after the response from the API.
+  - `path` (Optional) Target API path where we want perform the save action. It
+      has preference over `url()`.
 
 Example:
 
@@ -295,6 +297,8 @@ Options:
 
   - `optimistic = true` Whether we want to delete the resource in the client
   first or wait for the server's response.
+  - `path` (Optional) Target API path where we want perform the save action. It
+      has preference over `url()`.
 
 #### `rpc(method: 'string', body?: {},  label?: 'fetching'): Promise`
 
@@ -515,6 +519,8 @@ Options:
 
   - `optimistic = true` Whether we want to create the resource in the client
   first or wait for the server's response.
+  - `path` (Optional) Target API path where we want perform the save action. It
+      has preference over `url()`.
 
 ```js
 const promise = tasksCollection.create({ name: 'Do laundry' })

@@ -5,11 +5,13 @@ export type RequestState = 'pending' | 'fulfilled' | 'rejected'
 export interface CreateOptions {
   optimistic?: boolean
   onProgress?: () => any
+  path?: string
 }
 
 export interface DestroyOptions {
   data?: {}
   optimistic?: boolean
+  path?: string
 }
 
 export interface SaveOptions {
@@ -17,6 +19,7 @@ export interface SaveOptions {
   patch?: boolean
   onProgress?: () => any
   keepChanges?: boolean
+  path?: string
 }
 
 export interface Response {

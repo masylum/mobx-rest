@@ -239,6 +239,7 @@ export default class Model extends Base {
       optimistic = true,
       patch = true,
       keepChanges = false,
+      path,
       ...otherOptions
     }: SaveOptions = {}
   ): Request {
@@ -279,7 +280,7 @@ export default class Model extends Base {
     })
 
     const { promise, abort } = apiClient()[method](
-      this.url(),
+      path || this.url(),
       data,
       { onProgress, ...otherOptions }
     )
@@ -322,7 +323,7 @@ export default class Model extends Base {
    */
   @action
   destroy (
-    { data, optimistic = true, ...otherOptions }: DestroyOptions = {}
+    { data, optimistic = true, path, ...otherOptions }: DestroyOptions = {}
   ): Request {
     const collection = this.collection
 
@@ -336,7 +337,7 @@ export default class Model extends Base {
     }
 
     const { promise, abort } = apiClient().del(
-      this.url(),
+      path || this.url(),
       data,
       otherOptions
     )
