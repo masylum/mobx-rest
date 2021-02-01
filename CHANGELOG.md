@@ -1,5 +1,9 @@
 # Changelog
 
+## `7.1.1``
+
+  - Added `path` option to `Collection#create`, `Model#destroy` and `Model#save`
+
 ## `7.1.0``
 
   - Added `Collection#last` method
