@@ -1,5 +1,9 @@
 # Changelog
 
+## `8.0.0``
+
+  - Migrated to mobx 6
+
 ## `7.1.1``
 
   - Added `path` option to `Collection#create`, `Model#destroy` and `Model#save`
