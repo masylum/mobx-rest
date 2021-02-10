@@ -17,24 +17,24 @@
   },
   "license": "MIT",
   "peerDependencies": {
-    "mobx": "5.9.4"
+    "mobx": "^6.0.2"
   },
   "devDependencies": {
-    "@types/jest": "24.0.13",
-    "@typescript-eslint/eslint-plugin": "1.9.0",
-    "@typescript-eslint/parser": "1.9.0",
+    "@types/jest": "26.0.15",
+    "@typescript-eslint/eslint-plugin": "4.6.1",
+    "@typescript-eslint/parser": "4.6.1",
     "benchmark": "2.1.4",
-    "eslint": "5.16.0",
-    "husky": "0.13.4",
-    "jest": "24.8.0",
-    "lint-staged": "3.6.0",
-    "rimraf": "2.6.1",
-    "rollup": "1.12.1",
+    "eslint": "7.12.1",
+    "husky": "4.3.0",
+    "jest": "26.6.2",
+    "lint-staged": "10.5.1",
+    "rimraf": "3.0.2",
+    "rollup": "2.33.1",
     "rollup-plugin-node-resolve": "5.0.0",
-    "rollup-plugin-typescript2": "^0.21.1",
-    "ts-jest": "24.0.2",
-    "tslib": "1.9.3",
-    "typescript": "3.4.5"
+    "rollup-plugin-typescript2": "^0.29.0",
+    "ts-jest": "26.4.3",
+    "tslib": "2.0.3",
+    "typescript": "4.0.5"
   },
   "main": "lib",
   "scripts": {
@@ -56,9 +56,9 @@
     }
   },
   "dependencies": {
-    "@types/lodash": "4.14.136",
-    "deepmerge": "3.2.0",
-    "lodash": "4.17.19",
-    "mobx": "5.9.4"
+    "@types/lodash": "4.14.164",
+    "deepmerge": "4.2.2",
+    "lodash": "4.17.20",
+    "mobx": "^6.0.2"
   }
 }

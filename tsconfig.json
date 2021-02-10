@@ -7,7 +7,7 @@
     "experimentalDecorators": true,
     "moduleResolution": "Node",
     "esModuleInterop": true,
-    "lib": ["ES6"]
+    "lib": ["es2019"]
   },
-  "include": [ "./src/**/*" ]
+  "include": [ "./src/**/*", "__tests__/**/*.spec.ts" ]
 }

@@ -48,7 +48,7 @@ export default class Model extends Base {
    * of the model
    */
   toJS () {
-    return toJS(this.attributes, { exportMapsAsObjects: true })
+    return Object.fromEntries(this.attributes)
   }
 
   /**
@@ -146,8 +146,8 @@ export default class Model extends Base {
   @computed
   get changedAttributes (): Array<string> {
     return getChangedAttributesBetween(
-      toJS(this.committedAttributes),
-      toJS(this.attributes)
+      Object.fromEntries(this.committedAttributes),
+      Object.fromEntries(this.attributes)
     )
   }
 
@@ -157,8 +157,8 @@ export default class Model extends Base {
   @computed
   get changes (): { [key: string]: any } {
     return getChangesBetween(
-      toJS(this.committedAttributes),
-      toJS(this.attributes)
+      Object.fromEntries(this.committedAttributes),
+      Object.fromEntries(this.attributes)
     )
   }
 
@@ -176,12 +176,12 @@ export default class Model extends Base {
 
   @action
   commitChanges (): void {
-    this.committedAttributes.replace(toJS(this.attributes))
+    this.committedAttributes.replace(Object.fromEntries(this.attributes))
   }
 
   @action
   discardChanges (): void {
-    this.attributes.replace(toJS(this.committedAttributes))
+    this.attributes.replace(Object.fromEntries(this.committedAttributes))
   }
 
   /**
@@ -291,10 +291,10 @@ export default class Model extends Base {
 
         const changes = getChangesBetween(
           currentAttributes,
-          toJS(this.attributes)
+          Object.fromEntries(this.attributes)
         )
 
-        runInAction('save success', () => {
+        runInAction(action('save success', () => {
           this.set(data)
           this.commitChanges()
 
@@ -303,7 +303,7 @@ export default class Model extends Base {
           if (keepChanges) {
             this.set(applyPatchChanges(data, changes))
           }
-        })
+        }))
       })
       .catch(error => {
         this.set(currentAttributes)
