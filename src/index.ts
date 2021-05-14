@@ -4,4 +4,5 @@ import Request from './Request'
 import ErrorObject from './ErrorObject'
 import apiClient from './apiClient'
 
+export * from "./types";
 export { Collection, Model, apiClient, Request, ErrorObject }

@@ -1,32 +1,36 @@
 # Changelog
 
-## `8.0.0``
+## `8.0.1`
+
+  - Fix the issue #101 caused by generated declaration files path changes
+
+## `8.0.0`
 
   - Migrated to mobx 6
 
-## `7.1.1``
+## `7.1.1`
 
   - Added `path` option to `Collection#create`, `Model#destroy` and `Model#save`
 
-## `7.1.0``
+## `7.1.0`
 
   - Added `Collection#last` method
 
-## `7.0.1``
+## `7.0.1`
 
   - One more performance improvement by optimizing `Collection#constructor` to just reset the collection
 
-## `7.0.0``
+## `7.0.0`
 
   - Breaking: Moved indexes as getters so they are available during the first `Collection#set` call in the constructor
   - Refactored `Collection#set` to batch all the additions so indexes are not recalculated for each addition.
   - Refactored `Model#constructor` to directly set the attributes instead of initialize with an empty map and replace it.
 
-## `6.0.1``
+## `6.0.1`
 
   - Fix peformance regression for `set` introduced in 4.0.0 with the addition of indexes: We were creating a model just to call the `primaryKey` method instead of just calling the prototype.
 
-## `6.0.0``
+## `6.0.0`
   - Remove mustFind and mustGet methods
 
 ## `5.0.7`
