@@ -59,7 +59,7 @@
   "dependencies": {
     "@types/lodash": "4.14.164",
     "deepmerge": "4.2.2",
-    "lodash": "4.17.20",
+    "lodash": "4.17.21",
     "mobx": "^6.0.2",
     "rollup-plugin-dts": "^3.0.1"
   }
