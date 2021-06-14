@@ -30,7 +30,6 @@ export default [
 			'lodash/union',
 			'lodash/uniqueId',
 			'lodash/intersection',
-			'lodash/entries',
 			'deepmerge',
 			'mobx'
 		]

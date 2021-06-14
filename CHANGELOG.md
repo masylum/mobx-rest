@@ -1,5 +1,10 @@
 # Changelog
 
+## `9.0.0`
+
+  - Remove decorators
+  - Added missing actions
+
 ## `8.0.1`
 
   - Fix the issue #101 caused by generated declaration files path changes

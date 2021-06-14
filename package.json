@@ -1,6 +1,6 @@
 {
   "name": "mobx-rest",
-  "version": "8.0.1",
+  "version": "9.0.0",
   "description": "REST conventions for mobx.",
   "jest": {
     "roots": [
@@ -17,24 +17,25 @@
   },
   "license": "MIT",
   "peerDependencies": {
-    "mobx": "^6.0.2"
+    "mobx": "^6.3.2"
   },
   "devDependencies": {
-    "@types/jest": "26.0.15",
-    "@typescript-eslint/eslint-plugin": "4.6.1",
-    "@typescript-eslint/parser": "4.6.1",
+    "@types/jest": "26.0.23",
+    "@types/lodash": "4.14.170",
+    "@typescript-eslint/eslint-plugin": "4.26.1",
+    "@typescript-eslint/parser": "4.26.1",
     "benchmark": "2.1.4",
-    "eslint": "7.12.1",
+    "eslint": "7.28.0",
     "husky": "4.3.0",
-    "jest": "26.6.2",
-    "lint-staged": "10.5.1",
+    "jest": "27.0.4",
+    "lint-staged": "11.0.0",
     "rimraf": "3.0.2",
-    "rollup": "2.33.1",
-    "rollup-plugin-node-resolve": "5.0.0",
-    "rollup-plugin-typescript2": "^0.29.0",
-    "ts-jest": "26.4.3",
-    "tslib": "2.0.3",
-    "typescript": "4.0.5"
+    "rollup": "2.51.2",
+    "rollup-plugin-node-resolve": "5.2.0",
+    "rollup-plugin-typescript2": "^0.30.0",
+    "ts-jest": "27.0.3",
+    "tslib": "2.3.0",
+    "typescript": "4.3.2"
   },
   "main": "lib",
   "types": "./lib/index.d.ts",
@@ -50,17 +51,16 @@
     "watch": "rollup --config -w",
     "lint-staged": {
       "linters": {
-        "{src|__tests__}/**/*.js": [
+        "{src|__tests__}/**/*.ts": [
           "git add"
         ]
       }
     }
   },
   "dependencies": {
-    "@types/lodash": "4.14.164",
     "deepmerge": "4.2.2",
     "lodash": "4.17.21",
-    "mobx": "^6.0.2",
-    "rollup-plugin-dts": "^3.0.1"
+    "mobx": "^6.3.2",
+    "rollup-plugin-dts": "^3.0.2"
   }
 }

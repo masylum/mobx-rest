@@ -4,4 +4,4 @@ cache:
   directories:
     - node_modules
 node_js:
-  - "10.15.3"
+  - "14.15.0"

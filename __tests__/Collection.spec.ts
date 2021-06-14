@@ -335,7 +335,7 @@ describe(Collection, () => {
     })
 
     describe('if the id is not registered', () => {
-      it('don\'t throws', () => {
+      it('doesn\'t throw', () => {
         collection.reset([{ id: 1 }])
 
         expect(() => collection.remove(2)).not.toThrow()

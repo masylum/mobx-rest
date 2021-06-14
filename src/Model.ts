@@ -1,4 +1,11 @@
-import { ObservableMap, action, computed, observable, runInAction, toJS } from 'mobx'
+import {
+  ObservableMap,
+  action,
+  computed,
+  observable,
+  toJS,
+  makeObservable,
+} from 'mobx'
 import debounce from 'lodash/debounce'
 import includes from 'lodash/includes'
 import isEqual from 'lodash/isEqual'
@@ -31,6 +38,19 @@ export default class Model extends Base {
     defaultAttributes: Attributes = {}
   ) {
     super()
+
+    makeObservable(this, {
+      isNew: computed,
+      changedAttributes: computed,
+      changes: computed,
+      commitChanges: action,
+      discardChanges: action,
+      reset: action,
+      set: action,
+      fetch: action,
+      save: action,
+      destroy: action
+    })
 
     this.defaultAttributes = defaultAttributes
 
@@ -98,8 +118,7 @@ export default class Model extends Base {
    * We determine this asking if it contains
    * the `primaryKey` attribute (set by the server).
    */
-  @computed
-  get isNew (): boolean {
+  get isNew(): boolean {
     return !this.has(this.primaryKey) || !this.get(this.primaryKey)
   }
 
@@ -143,22 +162,20 @@ export default class Model extends Base {
   /**
    * Get an array with the attributes names that have changed.
    */
-  @computed
-  get changedAttributes (): Array<string> {
+  get changedAttributes(): Array<string> {
     return getChangedAttributesBetween(
       Object.fromEntries(this.committedAttributes),
-      Object.fromEntries(this.attributes)
+      this.toJS()
     )
   }
 
   /**
    * Gets the current changes.
    */
-  @computed
-  get changes (): { [key: string]: any } {
+  get changes(): { [key: string]: any } {
     return getChangesBetween(
       Object.fromEntries(this.committedAttributes),
-      Object.fromEntries(this.attributes)
+      this.toJS()
     )
   }
 
@@ -174,21 +191,18 @@ export default class Model extends Base {
     return this.changedAttributes.length > 0
   }
 
-  @action
-  commitChanges (): void {
-    this.committedAttributes.replace(Object.fromEntries(this.attributes))
+  commitChanges(): void {
+    this.committedAttributes.replace(this.toJS())
   }
 
-  @action
-  discardChanges (): void {
+  discardChanges(): void {
     this.attributes.replace(Object.fromEntries(this.committedAttributes))
   }
 
   /**
    * Replace all attributes with new data
    */
-  @action
-  reset (data?: {}): void {
+  reset(data?: {}): void {
     this.attributes.replace(
       data
         ? { ...this.defaultAttributes, ...data }
@@ -200,24 +214,24 @@ export default class Model extends Base {
    * Merge the given attributes with
    * the current ones
    */
-  @action
-  set (data: {}): void {
+  set(data: {}): void {
     this.attributes.merge(data)
   }
 
   /**
    * Fetches the model from the backend.
    */
-  @action
-  fetch ({ data, ...otherOptions }: { data?: {} } = {}): Request {
+  fetch({ data, ...otherOptions }: { data?: {} } = {}): Request {
     const { abort, promise } = apiClient().get(this.url(), data, otherOptions)
 
     promise
       .then(data => {
         if (!data) return
 
-        this.set(data)
-        this.commitChanges()
+        action('fetch done', () => {
+          this.set(data)
+          this.commitChanges()
+        })()
       })
       .catch(_error => {}) // do nothing
 
@@ -232,8 +246,7 @@ export default class Model extends Base {
    *
    * It supports optimistic and patch updates.
    */
-  @action
-  save (
+  save(
     attributes?: {},
     {
       optimistic = true,
@@ -276,7 +289,9 @@ export default class Model extends Base {
     if (optimistic && collection) collection.add([this])
 
     const onProgress = debounce(progress => {
-      if (optimistic && this.request) this.request.progress = progress
+      if (optimistic && this.request) {
+        this.request.setProgress(progress)
+      }
     })
 
     const { promise, abort } = apiClient()[method](
@@ -291,10 +306,10 @@ export default class Model extends Base {
 
         const changes = getChangesBetween(
           currentAttributes,
-          Object.fromEntries(this.attributes)
+          this.toJS()
         )
 
-        runInAction(action('save success', () => {
+        action('save success', () => {
           this.set(data)
           this.commitChanges()
 
@@ -303,28 +318,27 @@ export default class Model extends Base {
           if (keepChanges) {
             this.set(applyPatchChanges(data, changes))
           }
-        }))
+        })()
       })
       .catch(error => {
-        this.set(currentAttributes)
+        action('save error', () => {
+          this.set(currentAttributes)
 
-        if (optimistic && this.isNew && collection) {
-          collection.remove(this)
-        }
+          if (optimistic && this.isNew && collection) {
+            collection.remove(this)
+          }
+        })()
       })
 
     return this.withRequest(['saving', label], promise, abort)
   }
 
   /**
-   * Destroys the resurce on the client and
+   * Destroys the resource on the client and
    * requests the backend to delete it there
    * too
    */
-  @action
-  destroy (
-    { data, optimistic = true, path, ...otherOptions }: DestroyOptions = {}
-  ): Request {
+  destroy({ data, optimistic = true, path, ...otherOptions }: DestroyOptions = {}): Request {
     const collection = this.collection
 
     if (this.isNew && collection) {
