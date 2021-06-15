@@ -4,9 +4,9 @@
     "declarationDir": "./lib",
     "outDir": "./lib",
     "target": "ES5",
-    "experimentalDecorators": true,
     "moduleResolution": "Node",
     "esModuleInterop": true,
+    "downlevelIteration": true,
     "lib": ["es2019"]
   },
   "include": [ "./src/**/*", "__tests__/**/*.spec.ts" ]

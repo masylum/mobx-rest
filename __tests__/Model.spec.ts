@@ -669,12 +669,6 @@ describe(Model, () => {
         expect(spy).toHaveBeenCalled()
       })
 
-      describe('when it does not belong to a collection', () => {
-        beforeEach(() => {
-          model.collection = null
-        })
-      })
-
       describe('if attributes are not specified', () => {
         it('sends the current attributes', () => {
           model.save()

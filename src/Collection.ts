@@ -4,30 +4,31 @@ import Request from './Request'
 import apiClient from './apiClient'
 import difference from 'lodash/difference'
 import intersection from 'lodash/intersection'
-import entries from 'lodash/entries'
-import compact from 'lodash/compact'
-import { observable, action, computed, IObservableArray, reaction } from 'mobx'
+import { observable, action, computed, IObservableArray, reaction, makeObservable } from 'mobx'
 import { CreateOptions, SetOptions, GetOptions, FindOptions, Id } from './types'
 
 type IndexTree<T> = Map<string, Index<T>>
 type Index<T> = Map<any, Array<T>>
-
-function getAttribute (resource: { [key: string]: any } | Model, attribute: string): any {
-  if (resource instanceof Model) {
-    return resource.has(attribute)
-      ? resource.get(attribute)
-      : null
-  } else {
-    return resource[attribute]
-  }
-}
 
 export default abstract class Collection<T extends Model> extends Base {
   models: IObservableArray<T>
 
   constructor (data: Array<{ [key: string]: any }> = []) {
     super()
+
     this.models = observable.array(data.map(m => this.build(m)))
+
+    makeObservable(this, {
+      index: computed({ keepAlive: true }),
+      length: computed,
+      isEmpty: computed,
+      add: action,
+      reset: action,
+      remove: action,
+      set: action,
+      create: action,
+      fetch: action
+    })
   }
 
   /*
@@ -61,8 +62,7 @@ export default abstract class Collection<T extends Model> extends Base {
    * collection is alive, even if no one is referencing it.
    * This way we can ensure to calculate it only once.
    */
-  @computed({ keepAlive: true })
-  get index (): IndexTree<T> {
+  get index(): IndexTree<T> {
     const indexes = this.indexes.concat([this.primaryKey])
 
     return indexes.reduce((tree: IndexTree<T>, attr: string) => {
@@ -82,8 +82,7 @@ export default abstract class Collection<T extends Model> extends Base {
   /**
    * Alias for models.length
    */
-  @computed
-  get length (): Number {
+  get length(): Number {
     return this.models.length
   }
 
@@ -137,17 +136,8 @@ export default abstract class Collection<T extends Model> extends Base {
   /**
    * Wether the collection is empty
    */
-  @computed
-  get isEmpty (): boolean {
+  get isEmpty(): boolean {
     return this.length === 0
-  }
-
-  /**
-   * Gets the ids of all the items in the collection
-   */
-  @computed
-  private get _ids (): Array<Id> {
-    return compact(Array.from(this.index.get(this.primaryKey).keys()))
   }
 
   /**
@@ -182,7 +172,7 @@ export default abstract class Collection<T extends Model> extends Base {
       return this.models.filter(model => query(model))
     } else {
       // Sort the query to hit the indexes first
-      const optimizedQuery = entries(query).sort((A, B) =>
+      const optimizedQuery = Object.entries(query).sort((A, B) =>
         Number(this.index.has(B[0])) - Number(this.index.has(A[0]))
       )
 
@@ -231,14 +221,14 @@ export default abstract class Collection<T extends Model> extends Base {
   /**
    * Adds a model or collection of models.
    */
-  @action
-  add (data: Array<{ [key: string]: any } | T> | { [key: string]: any } | T): Array<T> {
+  add(data: Array<{ [key: string]: any } | T> | { [key: string]: any } | T): Array<T> {
     if (!Array.isArray(data)) data = [data]
 
     const models = difference(
       data.map(m => this.build(m)),
       this.models
     )
+
     this.models.push(...models)
 
     return models
@@ -247,19 +237,19 @@ export default abstract class Collection<T extends Model> extends Base {
   /**
    * Resets the collection of models.
    */
-  @action
-  reset (data: Array<{ [key: string]: any }>): void {
+  reset(data: Array<{ [key: string]: any }>): void {
     this.models.replace(data.map(m => this.build(m)))
   }
 
   /**
    * Removes the model with the given ids or uuids
    */
-  @action
-  remove (ids: Id | T | Array<Id | T>): void {
+  remove(ids: Id | T | Array<Id | T>): void {
     if (!Array.isArray(ids)) {
       ids = [ids]
     }
+
+    const toKeep: Set<T> = new Set(this.models)
 
     ids.forEach(id => {
       let model
@@ -274,9 +264,11 @@ export default abstract class Collection<T extends Model> extends Base {
         return console.warn(`${this.constructor.name}: ${this.model().name} with ${this.primaryKey} ${id} not found.`)
       }
 
-      this.models.splice(this.models.indexOf(model), 1)
+      toKeep.delete(model)
       model.collection = undefined
     })
+
+    this.models.replace(Array.from(toKeep))
   }
 
   /**
@@ -284,32 +276,36 @@ export default abstract class Collection<T extends Model> extends Base {
    *
    * You can disable adding, changing or removing.
    */
-  @action
-  set (
+  set(
     resources: Array<{ [key: string]: any } | T>,
     { add = true, change = true, remove = true }: SetOptions = {}
   ): void {
-    const getPrimaryKey = (resource) => getAttribute(resource, this.primaryKey)
-    const idsToRemove = difference(this._ids, resources.map(getPrimaryKey))
-    let resourcesToAdd = []
+    const idsToRemove = new Set(this.index.get(this.primaryKey).keys())
+    const resourcesToAdd = new Set([])
+
+    idsToRemove.delete(null)
 
     resources.forEach(resource => {
-      const id = getPrimaryKey(resource)
+      const id = resource[this.primaryKey]
       const model = id ? this.get(id) : null
 
-      if (model && change) {
-        model.set(resource instanceof Model ? resource.toJS() : resource)
+      if (!model) {
+        resourcesToAdd.add(resource)
       } else {
-        resourcesToAdd.push(resource)
+        idsToRemove.delete(id)
+
+        if (change) {
+          model.set(resource instanceof Model ? resource.toJS() : resource)
+        }
       }
     })
 
-    if (remove && idsToRemove.length) {
-      this.remove(idsToRemove)
+    if (remove && idsToRemove.size) {
+      this.remove(Array.from(idsToRemove))
     }
 
-    if (add && resourcesToAdd.length) {
-      this.add(resourcesToAdd)
+    if (add && resourcesToAdd.size) {
+      this.add(Array.from(resourcesToAdd))
     }
   }
 
@@ -335,23 +331,20 @@ export default abstract class Collection<T extends Model> extends Base {
    * The default behaviour is optimistic but this
    * can be tuned.
    */
-  @action
-  create (
+  create(
     attributesOrModel: { [key: string]: any } | T,
     { optimistic = true, path }: CreateOptions = {}
   ): Request {
     const model = this.build(attributesOrModel)
     const request = model.save({}, { optimistic, path })
-    this.requests.push(request)
-    const { promise } = request
 
-    promise
-      .then(_response => {
-        this.requests.remove(request)
-      })
-      .catch(error => {
-        this.requests.remove(request)
-      })
+    this.requests.push(request)
+
+    const removeRequest = action('remove request', () =>
+      this.requests.remove(request)
+    )
+
+    request.promise.then(removeRequest).catch(removeRequest)
 
     return request
   }
@@ -363,8 +356,7 @@ export default abstract class Collection<T extends Model> extends Base {
    * use the options to disable adding, changing
    * or removing.
    */
-  @action
-  fetch ({ data, ...otherOptions }: SetOptions = {}): Request {
+  fetch({ data, ...otherOptions }: SetOptions = {}): Request {
     const { abort, promise } = apiClient().get(this.url(), data, otherOptions)
 
     promise
