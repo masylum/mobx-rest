@@ -1,6 +1,6 @@
 {
   "name": "mobx-rest",
-  "version": "9.0.0",
+  "version": "9.0.2",
   "description": "REST conventions for mobx.",
   "jest": {
     "roots": [
@@ -59,6 +59,7 @@
   },
   "dependencies": {
     "deepmerge": "4.2.2",
+    "object.fromentries": "2.0.4",
     "lodash": "4.17.21",
     "mobx": "^6.3.2",
     "rollup-plugin-dts": "^3.0.2"

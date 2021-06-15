@@ -1,5 +1,13 @@
 # Changelog
 
+## `9.0.2`
+
+  - Add missing fromEntries polyfill (second try)
+
+## `9.0.1`
+
+  - Add missing fromEntries polyfill
+
 ## `9.0.0`
 
   - Remove decorators

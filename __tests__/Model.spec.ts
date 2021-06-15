@@ -4,6 +4,7 @@ import Model from '../src/Model'
 import apiClient from '../src/apiClient'
 import { isObservable } from 'mobx'
 import { strMapToObj } from './utils'
+import fromEntries from 'object.fromentries'
 
 apiClient(MockApi)
 

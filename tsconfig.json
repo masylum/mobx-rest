@@ -7,7 +7,7 @@
     "moduleResolution": "Node",
     "esModuleInterop": true,
     "downlevelIteration": true,
-    "lib": ["es2019"]
+    "lib": ["es2018", "dom", "esnext"]
   },
   "include": [ "./src/**/*", "__tests__/**/*.spec.ts" ]
 }

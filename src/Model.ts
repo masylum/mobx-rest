@@ -6,6 +6,7 @@ import {
   toJS,
   makeObservable,
 } from 'mobx'
+import fromEntries from 'object.fromentries'
 import debounce from 'lodash/debounce'
 import includes from 'lodash/includes'
 import isEqual from 'lodash/isEqual'
@@ -68,7 +69,7 @@ export default class Model extends Base {
    * of the model
    */
   toJS () {
-    return Object.fromEntries(this.attributes)
+    return fromEntries(this.attributes)
   }
 
   /**
@@ -164,7 +165,7 @@ export default class Model extends Base {
    */
   get changedAttributes(): Array<string> {
     return getChangedAttributesBetween(
-      Object.fromEntries(this.committedAttributes),
+      fromEntries(this.committedAttributes),
       this.toJS()
     )
   }
@@ -174,7 +175,7 @@ export default class Model extends Base {
    */
   get changes(): { [key: string]: any } {
     return getChangesBetween(
-      Object.fromEntries(this.committedAttributes),
+      fromEntries(this.committedAttributes),
       this.toJS()
     )
   }
@@ -196,7 +197,7 @@ export default class Model extends Base {
   }
 
   discardChanges(): void {
-    this.attributes.replace(Object.fromEntries(this.committedAttributes))
+    this.attributes.replace(fromEntries(this.committedAttributes))
   }
 
   /**
