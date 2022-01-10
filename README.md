@@ -89,14 +89,6 @@ A pointer to a `Collection`. By having models
 "belong to" a collection you can take the most out
 of `mobx-rest`.
 
-#### `request`
-
-A `Request` object that represents the state of the ongoing request, if any.
-
-#### `error`
-
-An `Error` object that represents the state of the failed request, if any.
-
 #### `toJS(): Object`
 
 Return the object version of the attributes.
@@ -121,13 +113,6 @@ collection's base url (if any) or `urlRoot`. It uses the
 primary id since that's REST convention.
 
 Example: `tasks.get(34).url() // => "/tasks/34"`
-
-#### `isRequest(label: string): boolean`
-
-Helper method that asks the model whether there is an ongoing
-request with the given label.
-
-Example: `file.isRequest('saving')`
 
 #### changedAttributes: Array<string>
 
@@ -246,16 +231,13 @@ folder.get('name') // => 'Rubbish'
 
 #### `fetch(options): Promise`
 
-Request this resource's data from the server. It tracks the state
-of the request using the label `fetching` and updates the resource when
-the data is back from the API.
+Fetches this resource's data from the server.
 
 Example:
 
 ```js
 const task = new Task({ id: 3 })
 const promise = task.fetch()
-task.isRequest('fetching') // => true
 await promise
 task.get('name') // => 'Do the laundry'
 ```
@@ -283,7 +265,6 @@ Example:
 ```js
 const company = new Company({ name: 'Teambox' })
 const promise = company.save({ name: 'Redbooth' }, { optimistic: false })
-company.isRequest('saving') // => true
 company.get('name') // => 'Teambox'
 await promise
 company.get('name') // => 'Redbooth'
@@ -339,14 +320,6 @@ You can query your collection by a combination of attributes that are indexed an
 that are not indexed. `mobx-rest` will take care to sort your query in order to scan the least
 number of models.
 
-#### `request: ?Request`
-
-A `Request` object that represents the state of the ongoing request, if any.
-
-#### `error: ?ErrorObject`
-
-An `Error` object that represents the state of the failed request, if any.
-
 #### `constructor(data: Array<Object>)`
 
 Initializes the collection with the given resources.
@@ -370,17 +343,6 @@ without all the observable layer.
 #### `toArray(): Array<ObservableMap>`
 
 Return an array with the observable resources.
-
-#### `isRequest(label: string): boolean`
-
-Helper method that asks the collection whether there is an ongoing
-request with the given label.
-
-Example:
-
-```js
-filesCollection.isRequest('saving')
-```
 
 #### `isEmpty: boolean`
 
@@ -524,7 +486,6 @@ Options:
 
 ```js
 const promise = tasksCollection.create({ name: 'Do laundry' })
-tasksCollection.isRequest('creating') // => true
 await promise
 tasksCollection.at(0).get('name') // => 'Do laundry'
 ```
@@ -537,7 +498,6 @@ models. Accepts any option from the `set` method.
 ```js
 const promise = tasksCollection.fetch()
 tasksCollection.isEmpty // => true
-tasksCollection.isRequest('fetching') // => true
 await promise
 tasksCollection.isEmpty // => false
 ```
@@ -659,10 +619,6 @@ class Tasks extends React.Component {
   }
 
   render () {
-    if (tasksCollection.isRequest('fetching')) {
-      return <span>Fetching tasks...</span>
-    }
-
     return (
       <div>
         <span>{this.activeTasks.length} tasks</span>
@@ -682,15 +638,6 @@ Your collections and models will have the following state shape:
 
 ```js
 models: Array<Model>      // This is where the models live
-request: {                // An ongoing request
-  label: string,          // Examples: 'updating', 'creating', 'fetching', 'destroying' ...
-  abort: () => void,      // A method to abort the ongoing request
-  progress: number        // If uploading a file, represents the progress
-},
-error: {                  // A failed request
-  label: string,          // Examples: 'updating', 'creating', 'fetching', 'destroying' ...
-  body: Object,           // A string representing the error
-}
 ```
 
 ### Model
@@ -698,14 +645,6 @@ error: {                  // A failed request
 ```js
 attributes: Object    // The resource attributes
 optimisticId: string, // Client side id. Used for optimistic updates
-request: {            // An ongoing request
-  label: string,      // Examples: 'updating', 'creating', 'fetching', 'destroying' ...
-  abort: () => void,  // A method to abort the ongoing request
-},
-error: {              // A failed request
-  label: string,      // Examples: 'updating', 'creating', 'fetching', 'destroying' ...
-  body: string,       // A string representing the error
-},
 ```
 
 ## FAQ
@@ -740,7 +679,7 @@ Developed and battle tested in production in [Factorial](https://factorialhr.com
 
 (The MIT License)
 
-Copyright (c) 2019 Pau Ramon <masylum@gmail.com>
+Copyright (c) 2022 Pau Ramon <masylum@gmail.com>
 
 Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the 'Software'), to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so, subject to the following conditions:
 

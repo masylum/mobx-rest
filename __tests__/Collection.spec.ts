@@ -541,17 +541,6 @@ describe(Collection, () => {
       expect(collection.at(0).toJS()).toEqual({ id: 1, phone: '1234' })
     })
 
-    it('only creates an instance of Request', async () => {
-      const attributes = { phone: '1234' }
-      const { promise } = collection.create(attributes)
-
-      expect(collection.requests.length).toEqual(1)
-      MockApi.resolvePromise({ id: 1, phone: '1234' })
-      await promise
-
-      expect(collection.requests.length).toEqual(0)
-    })
-
     describe('if optimistic', () => {
       it('immediately adds the new model to the collection', () => {
         const attributes = { phone: '1234' }
@@ -640,10 +629,6 @@ describe(Collection, () => {
 
     it('passes the options to the api client', () => {
       expect(spy.mock.calls[0][1]).toBe(options.data)
-    })
-
-    it('tracks the request with the "fetching" label', () => {
-      expect(collection.isRequest('fetching')).toBe(true)
     })
 
     it('works without passing options', () => {
