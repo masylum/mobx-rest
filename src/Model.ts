@@ -7,16 +7,15 @@ import {
   makeObservable,
 } from 'mobx'
 import fromEntries from 'object.fromentries'
-import debounce from 'lodash/debounce'
 import includes from 'lodash/includes'
 import isEqual from 'lodash/isEqual'
 import isPlainObject from 'lodash/isPlainObject'
 import union from 'lodash/union'
 import uniqueId from 'lodash/uniqueId'
+import isObject from 'lodash/isObject'
 import deepmerge from 'deepmerge'
-import Base from './Base'
 import Collection from './Collection'
-import Request from './Request'
+import ErrorObject from './ErrorObject'
 import apiClient from './apiClient'
 import { OptimisticId, Id, DestroyOptions, SaveOptions } from './types'
 
@@ -25,7 +24,7 @@ const dontMergeArrays = (_oldArray, newArray) => newArray
 type Attributes = { [key: string]: any }
 export const DEFAULT_PRIMARY = 'id'
 
-export default class Model extends Base {
+export default class Model {
   defaultAttributes: Attributes = {}
 
   attributes: ObservableMap
@@ -38,8 +37,6 @@ export default class Model extends Base {
     attributes: Attributes = {},
     defaultAttributes: Attributes = {}
   ) {
-    super()
-
     makeObservable(this, {
       isNew: computed,
       changedAttributes: computed,
@@ -222,10 +219,10 @@ export default class Model extends Base {
   /**
    * Fetches the model from the backend.
    */
-  fetch({ data, ...otherOptions }: { data?: {} } = {}): Request {
+  fetch({ data, ...otherOptions }: { data?: {} } = {}): Promise<any> {
     const { abort, promise } = apiClient().get(this.url(), data, otherOptions)
 
-    promise
+    return promise
       .then(data => {
         if (!data) return
 
@@ -233,10 +230,12 @@ export default class Model extends Base {
           this.set(data)
           this.commitChanges()
         })()
-      })
-      .catch(_error => {}) // do nothing
 
-    return this.withRequest('fetching', promise, abort)
+        return data
+      })
+      .catch(error => {
+        throw new ErrorObject(error)
+      })
   }
 
   /**
@@ -256,7 +255,7 @@ export default class Model extends Base {
       path,
       ...otherOptions
     }: SaveOptions = {}
-  ): Request {
+  ): Promise<any> {
     const currentAttributes = this.toJS()
     const label = this.isNew ? 'creating' : 'updating'
     const collection = this.collection
@@ -289,19 +288,13 @@ export default class Model extends Base {
 
     if (optimistic && collection) collection.add([this])
 
-    const onProgress = debounce(progress => {
-      if (optimistic && this.request) {
-        this.request.setProgress(progress)
-      }
-    })
-
     const { promise, abort } = apiClient()[method](
       path || this.url(),
       data,
-      { onProgress, ...otherOptions }
+      otherOptions
     )
 
-    promise
+    return promise
       .then(data => {
         if (!data) return
 
@@ -320,6 +313,8 @@ export default class Model extends Base {
             this.set(applyPatchChanges(data, changes))
           }
         })()
+
+        return data
       })
       .catch(error => {
         action('save error', () => {
@@ -329,9 +324,9 @@ export default class Model extends Base {
             collection.remove(this)
           }
         })()
-      })
 
-    return this.withRequest(['saving', label], promise, abort)
+        throw new ErrorObject(error)
+      })
   }
 
   /**
@@ -339,19 +334,19 @@ export default class Model extends Base {
    * requests the backend to delete it there
    * too
    */
-  destroy({ data, optimistic = true, path, ...otherOptions }: DestroyOptions = {}): Request {
+  destroy({ data, optimistic = true, path, ...otherOptions }: DestroyOptions = {}): Promise<any> {
     const collection = this.collection
 
     if (this.isNew && collection) {
       collection.remove(this)
-      return new Request(Promise.resolve())
+      return Promise.resolve()
     }
 
     if (this.isNew) {
-      return new Request(Promise.resolve())
+      return Promise.resolve()
     }
 
-    const { promise, abort } = apiClient().del(
+    const { promise } = apiClient().del(
       path || this.url(),
       data,
       otherOptions
@@ -361,15 +356,34 @@ export default class Model extends Base {
       collection.remove(this)
     }
 
-    promise
-      .then(_data => {
+    return promise
+      .then(data => {
         if (!optimistic && collection) collection.remove(this)
+
+        return data
       })
       .catch(error => {
         if (optimistic && collection) collection.add(this)
-      })
 
-    return this.withRequest('destroying', promise, abort)
+        throw new ErrorObject(error)
+      })
+  }
+
+  /**
+   * Call an RPC action for all those
+   * non-REST endpoints that you may have in
+   * your API.
+   */
+  rpc(
+    endpoint: string | { rootUrl: string },
+    options?: {}
+  ): Promise<any> {
+    const url = isObject(endpoint) ? endpoint.rootUrl : `${this.url()}/${endpoint}`
+    const { promise } = apiClient().post(url, options)
+
+    return promise.catch(error => {
+      throw new ErrorObject(error)
+    })
   }
 }
 

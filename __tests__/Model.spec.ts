@@ -452,10 +452,6 @@ describe(Model, () => {
       })
     })
 
-    it('tracks the request with the "fetching" label', () => {
-      expect(model.isRequest('fetching')).toBe(true)
-    })
-
     it('works without passing options', () => {
       expect(() => model.fetch()).not.toThrow()
     })
@@ -829,8 +825,7 @@ describe(Model, () => {
         model.save(undefined, { method: 'HEAD' })
 
         expect(spy).toHaveBeenCalledWith(expect.anything(), expect.anything(), {
-          method: 'HEAD',
-          onProgress: expect.any(Function)
+          method: 'HEAD'
         })
       })
     })
@@ -1261,6 +1256,39 @@ describe(Model, () => {
 
           expect(spy.mock.calls[0][0]).toEqual('/custom')
         })
+      })
+    })
+  })
+
+  describe('rpc(endpoint, options)', () => {
+    let spy
+    let model
+
+    beforeEach(() => {
+      model = new Model()
+      model.url = () => '/api'
+      spy = jest.spyOn(apiClient(), 'post')
+
+      model.rpc('search', { method: 'GET' })
+    })
+
+    it('sends a request using the endpoint suffix', () => {
+      expect(spy.mock.calls.pop()[0]).toBe('/api/search')
+    })
+
+    it('passes the options to the api adapter', () => {
+      expect(spy.mock.calls.pop()[1]).toEqual({
+        method: 'GET'
+      })
+    })
+
+    describe('rpc with rootUrl', () => {
+      beforeEach(() => {
+        model.rpc({ rootUrl: '/another_api/search' }, { method: 'GET' }, 'searching')
+      })
+
+      it('should fetch with the rootUrl', () => {
+        expect(spy.mock.calls.pop()[0]).toBe('/another_api/search')
       })
     })
   })

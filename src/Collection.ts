@@ -1,8 +1,8 @@
-import Base from './Base'
 import Model, { DEFAULT_PRIMARY } from './Model'
-import Request from './Request'
 import apiClient from './apiClient'
+import ErrorObject from './ErrorObject'
 import difference from 'lodash/difference'
+import isObject from 'lodash/isObject'
 import intersection from 'lodash/intersection'
 import { observable, action, computed, IObservableArray, reaction, makeObservable } from 'mobx'
 import { CreateOptions, SetOptions, GetOptions, FindOptions, Id } from './types'
@@ -10,12 +10,10 @@ import { CreateOptions, SetOptions, GetOptions, FindOptions, Id } from './types'
 type IndexTree<T> = Map<string, Index<T>>
 type Index<T> = Map<any, Array<T>>
 
-export default abstract class Collection<T extends Model> extends Base {
+export default abstract class Collection<T extends Model> {
   models: IObservableArray<T>
 
   constructor (data: Array<{ [key: string]: any }> = []) {
-    super()
-
     this.models = observable.array(data.map(m => this.build(m)))
 
     makeObservable(this, {
@@ -104,6 +102,7 @@ export default abstract class Collection<T extends Model> extends Base {
    * Returns the URL where the model's resource would be located on the server.
    */
   abstract url (): string
+
 
   /**
    * Specifies the model class for that collection
@@ -334,19 +333,10 @@ export default abstract class Collection<T extends Model> extends Base {
   create(
     attributesOrModel: { [key: string]: any } | T,
     { optimistic = true, path }: CreateOptions = {}
-  ): Request {
+  ): Promise<T> {
     const model = this.build(attributesOrModel)
-    const request = model.save({}, { optimistic, path })
 
-    this.requests.push(request)
-
-    const removeRequest = action('remove request', () =>
-      this.requests.remove(request)
-    )
-
-    request.promise.then(removeRequest).catch(removeRequest)
-
-    return request
+    return model.save({}, { optimistic, path })
   }
 
   /**
@@ -356,15 +346,34 @@ export default abstract class Collection<T extends Model> extends Base {
    * use the options to disable adding, changing
    * or removing.
    */
-  fetch({ data, ...otherOptions }: SetOptions = {}): Request {
-    const { abort, promise } = apiClient().get(this.url(), data, otherOptions)
+  fetch({ data, ...otherOptions }: SetOptions = {}): Promise<any> {
+    const { promise } = apiClient().get(this.url(), data, otherOptions)
 
-    promise
+    return promise
       .then(data => {
         if (Array.isArray(data)) this.set(data, otherOptions)
-      })
-      .catch(_error => {}) // do nothing
 
-    return this.withRequest('fetching', promise, abort)
+        return data
+      })
+      .catch(error => {
+        throw new ErrorObject(error)
+      })
+  }
+
+  /**
+   * Call an RPC action for all those
+   * non-REST endpoints that you may have in
+   * your API.
+   */
+  rpc(
+    endpoint: string | { rootUrl: string },
+    options?: {}
+  ): Promise<any> {
+    const url = isObject(endpoint) ? endpoint.rootUrl : `${this.url()}/${endpoint}`
+    const { promise } = apiClient().post(url, options)
+
+    return promise.catch(error => {
+      throw new ErrorObject(error)
+    })
   }
 }

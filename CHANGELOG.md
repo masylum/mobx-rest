@@ -1,5 +1,9 @@
 # Changelog
 
+## `10.0.0`
+
+  - Simplify `Collection` and `Model` api, removing the `Request` wrapper.
+
 ## `9.0.2`
 
   - Add missing fromEntries polyfill (second try)
