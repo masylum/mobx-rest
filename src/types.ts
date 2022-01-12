@@ -4,7 +4,6 @@ export type RequestState = 'pending' | 'fulfilled' | 'rejected'
 
 export interface CreateOptions {
   optimistic?: boolean
-  onProgress?: () => any
   path?: string
 }
 
@@ -17,20 +16,8 @@ export interface DestroyOptions {
 export interface SaveOptions {
   optimistic?: boolean
   patch?: boolean
-  onProgress?: () => any
   keepChanges?: boolean
   path?: string
-}
-
-export interface Response {
-  abort: () => void
-  promise: Promise<any>
-}
-
-export interface RequestOptions {
-  abort?: () => void | null
-  progress?: number
-  labels?: Array<string>
 }
 
 export interface SetOptions {
@@ -49,9 +36,9 @@ export interface FindOptions {
 }
 
 export interface Adapter {
-  get(path: string, data?: {}, options?: {}): Response
-  patch(path: string, data?: {}, options?: {}): Response
-  post(path: string, data?: {}, options?: {}): Response
-  put(path: string, data?: {}, options?: {}): Response
-  del(path: string, data?: {}, options?: {}): Response
+  get(path: string, data?: {}, options?: {}): Promise<any>
+  patch(path: string, data?: {}, options?: {}): Promise<any>
+  post(path: string, data?: {}, options?: {}): Promise<any>
+  put(path: string, data?: {}, options?: {}): Promise<any>
+  del(path: string, data?: {}, options?: {}): Promise<any>
 }

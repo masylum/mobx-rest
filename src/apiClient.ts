@@ -1,11 +1,11 @@
 import { Adapter } from './types'
 
-let currentAdapter
+let currentAdapter: Adapter
 
 /**
  * Sets or gets the api client instance
  */
-export default function apiClient (
+export default function apiClient(
   adapter?: Adapter,
   options: { [key: string]: any } = {}
 ): Adapter {

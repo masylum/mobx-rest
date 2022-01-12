@@ -5,19 +5,18 @@ import apiClient from '../src/apiClient'
 
 apiClient(MockApi)
 
-class MockModel extends Model {
-}
+class MockModel extends Model {}
 
 class MockCollection extends Collection<MockModel> {
-  get indexes () {
+  get indexes() {
     return ['phone']
   }
 
-  url (): string {
+  url(): string {
     return '/users'
   }
 
-  model (): typeof MockModel {
+  model(): typeof MockModel {
     return MockModel
   }
 }
@@ -30,7 +29,7 @@ describe(Collection, () => {
       { id: 1, phone: '1234' },
       { id: 2, phone: '5678' },
       { id: 3, phone: null },
-      { id: 4 }
+      { id: 4 },
     ])
   })
 
@@ -46,38 +45,42 @@ describe(Collection, () => {
         { id: 1, phone: '1234' },
         { id: 2, phone: '5678' },
         { id: 3, phone: null },
-        { id: 4 }
+        { id: 4 },
       ])
     })
   })
 
   describe('index', () => {
     it('indexes the collection', () => {
-      expect(collection.index.get('id')).toEqual(new Map([
-        [1, collection.filter({ id: 1 })],
-        [2, collection.filter((model) => model.get('id') === 2)],
-        [3, collection.filter({ id: 3 })],
-        [4, collection.filter({ id: 4 })]
-      ]))
+      expect(collection.index.get('id')).toEqual(
+        new Map([
+          [1, collection.filter({ id: 1 })],
+          [2, collection.filter((model) => model.get('id') === 2)],
+          [3, collection.filter({ id: 3 })],
+          [4, collection.filter({ id: 4 })],
+        ])
+      )
 
-      expect(collection.index.get('phone')).toEqual(new Map([
-        ['1234', [collection.find({ phone: '1234' })]],
-        ['5678', [collection.find((model) => model.get('phone') === '5678')]],
-        [null, collection.filter({ phone: null })]
-      ]))
+      expect(collection.index.get('phone')).toEqual(
+        new Map([
+          ['1234', [collection.find({ phone: '1234' })]],
+          ['5678', [collection.find((model) => model.get('phone') === '5678')]],
+          [null, collection.filter({ phone: null })],
+        ])
+      )
     })
   })
 
   describe('map(callback)', () => {
     it('aliases `models.map`', () => {
-      expect(collection.map(model => model.id)).toEqual([1, 2, 3, 4])
+      expect(collection.map((model) => model.id)).toEqual([1, 2, 3, 4])
     })
   })
 
   describe('forEach(callback)', () => {
     it('aliases `models.forEach`', () => {
       const ids = []
-      const response = collection.forEach(model => ids.push(model.id))
+      const response = collection.forEach((model) => ids.push(model.id))
 
       expect(response).not.toBeDefined()
       expect(ids).toEqual([1, 2, 3, 4])
@@ -137,8 +140,9 @@ describe(Collection, () => {
     describe('if the model is not found', () => {
       describe('if required', () => {
         it('throws', () => {
-          expect(() => collection.get(999, { required: true }))
-            .toThrow('Invariant: MockModel must be found with id: 999')
+          expect(() => collection.get(999, { required: true })).toThrow(
+            'Invariant: MockModel must be found with id: 999'
+          )
         })
       })
 
@@ -156,26 +160,25 @@ describe(Collection, () => {
         { id: 1, phone: '1234', email: 'test1@test.com', age: 23 },
         { id: 2, phone: '1234', email: 'test2@test.com', age: 34 },
         { id: 3, phone: '5678', email: 'test2@test.com', age: 23 },
-        { id: 4, phone: '1234', email: 'test1@test.com' }
+        { id: 4, phone: '1234', email: 'test1@test.com' },
       ])
     })
 
     describe('if query is an object', () => {
       it('returns the models that matches the attributes', () => {
-        expect(collection.filter({
-          phone: '1234',
-          email: 'test1@test.com'
-        })).toEqual([
-          collection.at(0),
-          collection.at(3)
-        ])
+        expect(
+          collection.filter({
+            phone: '1234',
+            email: 'test1@test.com',
+          })
+        ).toEqual([collection.at(0), collection.at(3)])
       })
 
       describe('and the attribute may not exist in some models', () => {
         it('returns the models that have and math the attributes', () => {
           expect(collection.filter({ age: 23 })).toEqual([
             collection.at(0),
-            collection.at(2)
+            collection.at(2),
           ])
         })
       })
@@ -183,12 +186,9 @@ describe(Collection, () => {
 
     describe('if query is a function', () => {
       it('returns the models that returns true on the callback', () => {
-        expect(collection.filter(model =>
-          model.get('email') === 'test2@test.com'
-        )).toEqual([
-          collection.at(1),
-          collection.at(2)
-        ])
+        expect(
+          collection.filter((model) => model.get('email') === 'test2@test.com')
+        ).toEqual([collection.at(1), collection.at(2)])
       })
     })
   })
@@ -199,32 +199,35 @@ describe(Collection, () => {
         { id: 1, phone: '1234', email: 'test1@test.com' },
         { id: 2, phone: '1234', email: 'test2@test.com' },
         { id: 3, phone: '5678', email: 'test2@test.com' },
-        { id: 4, phone: '1234', email: 'test1@test.com' }
+        { id: 4, phone: '1234', email: 'test1@test.com' },
       ])
     })
 
     describe('if query is an object', () => {
       it('returns the first model that matches that attributes', () => {
-        expect(collection.find({
-          phone: '1234',
-          email: 'test1@test.com'
-        })).toEqual(collection.at(0))
+        expect(
+          collection.find({
+            phone: '1234',
+            email: 'test1@test.com',
+          })
+        ).toEqual(collection.at(0))
       })
     })
 
     describe('if query is a function', () => {
       it('returns the first model that returns true on the callback', () => {
-        expect(collection.find(model =>
-          model.get('email') === 'test2@test.com'
-        )).toEqual(collection.at(1))
+        expect(
+          collection.find((model) => model.get('email') === 'test2@test.com')
+        ).toEqual(collection.at(1))
       })
     })
 
     describe('if the model is not found', () => {
       describe('if required', () => {
         it('throws', () => {
-          expect(() => collection.find({ phone: '9999' }, { required: true }))
-            .toThrow('Invariant: MockModel must be found')
+          expect(() =>
+            collection.find({ phone: '9999' }, { required: true })
+          ).toThrow('Invariant: MockModel must be found')
         })
       })
 
@@ -285,10 +288,7 @@ describe(Collection, () => {
 
     describe('if model is an array', () => {
       it('adds every model to the collection', () => {
-        const models = [
-          new Model(),
-          new Model()
-        ]
+        const models = [new Model(), new Model()]
 
         collection.add(models)
 
@@ -305,18 +305,13 @@ describe(Collection, () => {
 
       expect(collection.length).toBe(3)
 
-      collection.forEach(model =>
-        expect(model).toBeInstanceOf(Model)
-      )
+      collection.forEach((model) => expect(model).toBeInstanceOf(Model))
     })
   })
 
   describe('remove(data)', () => {
     it('removes the specified id from the collection', () => {
-      collection.reset([
-        { id: 1 },
-        { id: 2 }
-      ])
+      collection.reset([{ id: 1 }, { id: 2 }])
 
       collection.remove(1)
 
@@ -335,7 +330,7 @@ describe(Collection, () => {
     })
 
     describe('if the id is not registered', () => {
-      it('doesn\'t throw', () => {
+      it("doesn't throw", () => {
         collection.reset([{ id: 1 }])
 
         expect(() => collection.remove(2)).not.toThrow()
@@ -345,11 +340,7 @@ describe(Collection, () => {
 
     describe('if data is an array', () => {
       it('removes all the specified ids', () => {
-        collection.reset([
-          { id: 1 },
-          { id: 2 },
-          { id: 3 }
-        ])
+        collection.reset([{ id: 1 }, { id: 2 }, { id: 3 }])
         collection.remove([1, 2])
 
         expect(collection.length).toBe(1)
@@ -359,10 +350,7 @@ describe(Collection, () => {
 
     describe('if data is a model assigned to this collection', () => {
       it('removes the model from the collection', () => {
-        collection.reset([
-          { id: 1 },
-          { id: 2 }
-        ])
+        collection.reset([{ id: 1 }, { id: 2 }])
 
         const model = collection.get(1)
 
@@ -375,7 +363,7 @@ describe(Collection, () => {
     })
 
     describe('if data is anything else', () => {
-      it('don\'t throw', () => {
+      it("don't throw", () => {
         expect(() => collection.remove('invalid')).not.toThrow()
       })
     })
@@ -387,28 +375,26 @@ describe(Collection, () => {
         it('adds the new models', () => {
           collection.reset([{ id: 1 }])
 
-          collection.set(
-            [{ id: 2 }, { id: 3 }],
-            { add: true, change: false, remove: false }
-          )
+          collection.set([{ id: 2 }, { id: 3 }], {
+            add: true,
+            change: false,
+            remove: false,
+          })
 
-          expect(collection.toJS()).toEqual([
-            { id: 1 }, { id: 2 }, { id: 3 }
-          ])
+          expect(collection.toJS()).toEqual([{ id: 1 }, { id: 2 }, { id: 3 }])
         })
       })
 
       describe('if add = false', () => {
         it('ignores the new models', () => {
           collection.reset([{ id: 1 }])
-          collection.set(
-            [{ id: 2 }, { id: 3 }],
-            { add: false, change: false, remove: false }
-          )
+          collection.set([{ id: 2 }, { id: 3 }], {
+            add: false,
+            change: false,
+            remove: false,
+          })
 
-          expect(collection.toJS()).toEqual([
-            { id: 1 }
-          ])
+          expect(collection.toJS()).toEqual([{ id: 1 }])
         })
       })
     })
@@ -418,17 +404,20 @@ describe(Collection, () => {
         it('updates the existing models', () => {
           collection.reset([
             { id: 1, phone: '1234' },
-            { id: 2, phone: '5678' }
+            { id: 2, phone: '5678' },
           ])
 
           collection.set(
-            [{ id: 1, phone: '8888' }, { id: 2, phone: '9999' }],
+            [
+              { id: 1, phone: '8888' },
+              { id: 2, phone: '9999' },
+            ],
             { add: false, change: true, remove: false }
           )
 
           expect(collection.toJS()).toEqual([
             { id: 1, phone: '8888' },
-            { id: 2, phone: '9999' }
+            { id: 2, phone: '9999' },
           ])
         })
       })
@@ -437,16 +426,19 @@ describe(Collection, () => {
         it('ignores the existing models', () => {
           collection.reset([
             { id: 1, phone: '1234' },
-            { id: 2, phone: '5678' }
+            { id: 2, phone: '5678' },
           ])
           collection.set(
-            [{ id: 1, phone: '8888' }, { id: 2, phone: '9999' }],
+            [
+              { id: 1, phone: '8888' },
+              { id: 2, phone: '9999' },
+            ],
             { add: false, change: false, remove: false }
           )
 
           expect(collection.toJS()).toEqual([
             { id: 1, phone: '1234' },
-            { id: 2, phone: '5678' }
+            { id: 2, phone: '5678' },
           ])
         })
       })
@@ -456,28 +448,26 @@ describe(Collection, () => {
       describe('if remove = true', () => {
         it('removes the missing models', () => {
           collection.reset([{ id: '1' }, { id: 2 }])
-          collection.set(
-            [{ id: 2 }],
-            { add: false, change: false, remove: true }
-          )
+          collection.set([{ id: 2 }], {
+            add: false,
+            change: false,
+            remove: true,
+          })
 
-          expect(collection.toJS()).toEqual([
-            { id: 2 }
-          ])
+          expect(collection.toJS()).toEqual([{ id: 2 }])
         })
       })
 
       describe('if remove = false', () => {
         it('ignores the missing models', () => {
           collection.reset([{ id: 1 }, { id: 2 }])
-          collection.set(
-            [{ id: 2 }],
-            { add: false, change: false, remove: false }
-          )
+          collection.set([{ id: 2 }], {
+            add: false,
+            change: false,
+            remove: false,
+          })
 
-          expect(collection.toJS()).toEqual([
-            { id: 1 }, { id: 2 }
-          ])
+          expect(collection.toJS()).toEqual([{ id: 1 }, { id: 2 }])
         })
       })
     })
@@ -596,10 +586,13 @@ describe(Collection, () => {
 
     describe('with customized path', () => {
       it('request to the given path', async () => {
-        const promise = collection.create({}, {
-          optimistic: false,
-          path: '/custom'
-        })
+        const promise = collection.create(
+          {},
+          {
+            optimistic: false,
+            path: '/custom',
+          }
+        )
 
         expect(spy.mock.calls[0][0]).toEqual('/custom')
       })
@@ -616,7 +609,7 @@ describe(Collection, () => {
       spy = jest.spyOn(apiClient(), 'get')
       options = {
         data: { full: true },
-        foo: 'bar'
+        foo: 'bar',
       }
       promise = collection.fetch(options)
     })
@@ -637,12 +630,57 @@ describe(Collection, () => {
 
     describe('if the request succeeds', () => {
       it('sets the response data passing the same options', async () => {
-        const response = []
+        const response = [{ id: 1 }]
 
         jest.spyOn(collection, 'set')
         MockApi.resolvePromise(response)
-        await promise
+        const data = await promise
+        expect(data).toEqual(response)
         expect(collection.set).toHaveBeenCalledWith(response, { foo: 'bar' })
+      })
+    })
+  })
+
+  describe('rpc', () => {
+    let spy
+    let promise
+    let options
+
+    beforeEach(() => {
+      collection.url = () => '/api'
+      spy = jest.spyOn(apiClient(), 'post')
+      promise = collection.rpc('search', { method: 'GET' })
+    })
+
+    afterEach(() => spy.mockRestore())
+
+    it('sends a request using the endpoint suffix', () => {
+      expect(spy.mock.calls.pop()[0]).toBe('/api/search')
+    })
+
+    it('passes the options to the api adapter', () => {
+      expect(spy.mock.calls.pop()[1]).toEqual({
+        method: 'GET',
+      })
+    })
+
+    describe('rpc with rootUrl', () => {
+      beforeEach(() => {
+        collection.rpc({ rootUrl: '/another_api/search' }, { method: 'GET' })
+      })
+
+      it('should fetch with the rootUrl', () => {
+        expect(spy.mock.calls.pop()[0]).toBe('/another_api/search')
+      })
+    })
+
+    describe('if the request succeeds', () => {
+      it('returns the data', async () => {
+        const response = [{ id: 1 }]
+        MockApi.resolvePromise(response)
+
+        const data = await promise
+        expect(data).toEqual(response)
       })
     })
   })

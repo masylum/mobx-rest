@@ -3,7 +3,6 @@ import {
   action,
   computed,
   observable,
-  toJS,
   makeObservable,
 } from 'mobx'
 import fromEntries from 'object.fromentries'
@@ -15,11 +14,11 @@ import uniqueId from 'lodash/uniqueId'
 import isObject from 'lodash/isObject'
 import deepmerge from 'deepmerge'
 import Collection from './Collection'
-import ErrorObject from './ErrorObject'
 import apiClient from './apiClient'
 import { OptimisticId, Id, DestroyOptions, SaveOptions } from './types'
 
-const dontMergeArrays = (_oldArray, newArray) => newArray
+const dontMergeArrays = (_oldArray: Array<any>, newArray: Array<any>) =>
+  newArray
 
 type Attributes = { [key: string]: any }
 export const DEFAULT_PRIMARY = 'id'
@@ -33,10 +32,7 @@ export default class Model {
   optimisticId: OptimisticId = uniqueId('i_')
   collection: Collection<this> | null = null
 
-  constructor (
-    attributes: Attributes = {},
-    defaultAttributes: Attributes = {}
-  ) {
+  constructor(attributes: Attributes = {}, defaultAttributes: Attributes = {}) {
     makeObservable(this, {
       isNew: computed,
       changedAttributes: computed,
@@ -47,14 +43,14 @@ export default class Model {
       set: action,
       fetch: action,
       save: action,
-      destroy: action
+      destroy: action,
     })
 
     this.defaultAttributes = defaultAttributes
 
     const mergedAttributes = {
       ...this.defaultAttributes,
-      ...attributes
+      ...attributes,
     }
 
     this.attributes = observable.map(mergedAttributes)
@@ -65,7 +61,7 @@ export default class Model {
    * Returns a JSON representation
    * of the model
    */
-  toJS () {
+  toJS() {
     return fromEntries(this.attributes)
   }
 
@@ -75,7 +71,7 @@ export default class Model {
    *
    * @abstract
    */
-  get primaryKey (): string {
+  get primaryKey(): string {
     return DEFAULT_PRIMARY
   }
 
@@ -85,14 +81,14 @@ export default class Model {
    *
    * @abstract
    */
-  urlRoot (): string | null {
+  urlRoot(): string | null {
     return null
   }
 
   /**
    * Return the url for this given REST resource
    */
-  url (): string {
+  url(): string {
     let urlRoot = this.urlRoot()
 
     if (!urlRoot && this.collection) {
@@ -132,7 +128,7 @@ export default class Model {
    * use `has` to check wether the field
    * exists.
    */
-  get (attribute: string): any {
+  get(attribute: string): any {
     if (this.has(attribute)) {
       return this.attributes.get(attribute)
     }
@@ -143,7 +139,7 @@ export default class Model {
    * Returns whether the given field exists
    * for the model.
    */
-  has (attribute: string): boolean {
+  has(attribute: string): boolean {
     return this.attributes.has(attribute)
   }
 
@@ -151,7 +147,7 @@ export default class Model {
    * Get an id from the model. It will use either
    * the backend assigned one or the client.
    */
-  get id (): Id {
+  get id(): Id {
     return this.has(this.primaryKey)
       ? this.get(this.primaryKey)
       : this.optimisticId
@@ -171,17 +167,14 @@ export default class Model {
    * Gets the current changes.
    */
   get changes(): { [key: string]: any } {
-    return getChangesBetween(
-      fromEntries(this.committedAttributes),
-      this.toJS()
-    )
+    return getChangesBetween(fromEntries(this.committedAttributes), this.toJS())
   }
 
   /**
    * If an attribute is specified, returns true if it has changes.
    * If no attribute is specified, returns true if any attribute has changes.
    */
-  hasChanges (attribute?: string): boolean {
+  hasChanges(attribute?: string): boolean {
     if (attribute) {
       return includes(this.changedAttributes, attribute)
     }
@@ -202,9 +195,7 @@ export default class Model {
    */
   reset(data?: {}): void {
     this.attributes.replace(
-      data
-        ? { ...this.defaultAttributes, ...data }
-        : this.defaultAttributes
+      data ? { ...this.defaultAttributes, ...data } : this.defaultAttributes
     )
   }
 
@@ -219,23 +210,17 @@ export default class Model {
   /**
    * Fetches the model from the backend.
    */
-  fetch({ data, ...otherOptions }: { data?: {} } = {}): Promise<any> {
-    const { abort, promise } = apiClient().get(this.url(), data, otherOptions)
+  async fetch({ data, ...otherOptions }: { data?: {} } = {}): Promise<any> {
+    const newData = await apiClient().get(this.url(), data, otherOptions)
 
-    return promise
-      .then(data => {
-        if (!data) return
+    if (!newData) return
 
-        action('fetch done', () => {
-          this.set(data)
-          this.commitChanges()
-        })()
+    action('fetch done', () => {
+      this.set(newData)
+      this.commitChanges()
+    })()
 
-        return data
-      })
-      .catch(error => {
-        throw new ErrorObject(error)
-      })
+    return newData
   }
 
   /**
@@ -246,7 +231,7 @@ export default class Model {
    *
    * It supports optimistic and patch updates.
    */
-  save(
+  async save(
     attributes?: {},
     {
       optimistic = true,
@@ -257,9 +242,8 @@ export default class Model {
     }: SaveOptions = {}
   ): Promise<any> {
     const currentAttributes = this.toJS()
-    const label = this.isNew ? 'creating' : 'updating'
     const collection = this.collection
-    let data
+    let data: {}
 
     if (patch && attributes && !this.isNew) {
       data = attributes
@@ -269,7 +253,7 @@ export default class Model {
       data = { ...currentAttributes, ...attributes }
     }
 
-    let method
+    let method: string
 
     if (this.isNew) {
       method = 'post'
@@ -280,53 +264,46 @@ export default class Model {
     }
 
     if (optimistic && attributes) {
-      this.set(patch
-        ? applyPatchChanges(currentAttributes, attributes)
-        : attributes
+      this.set(
+        patch ? applyPatchChanges(currentAttributes, attributes) : attributes
       )
     }
 
     if (optimistic && collection) collection.add([this])
 
-    const { promise, abort } = apiClient()[method](
-      path || this.url(),
-      data,
-      otherOptions
-    )
+    try {
+      const newData = await apiClient()[method](
+        path || this.url(),
+        data,
+        otherOptions
+      )
+      if (!newData) return
 
-    return promise
-      .then(data => {
-        if (!data) return
+      const changes = getChangesBetween(currentAttributes, this.toJS())
 
-        const changes = getChangesBetween(
-          currentAttributes,
-          this.toJS()
-        )
+      action('save success', () => {
+        this.set(newData)
+        this.commitChanges()
 
-        action('save success', () => {
-          this.set(data)
-          this.commitChanges()
+        if (!optimistic && collection) collection.add([this])
 
-          if (!optimistic && collection) collection.add([this])
+        if (keepChanges) {
+          this.set(applyPatchChanges(newData, changes))
+        }
+      })()
 
-          if (keepChanges) {
-            this.set(applyPatchChanges(data, changes))
-          }
-        })()
+      return newData
+    } catch (error) {
+      action('save error', () => {
+        this.set(currentAttributes)
 
-        return data
-      })
-      .catch(error => {
-        action('save error', () => {
-          this.set(currentAttributes)
+        if (optimistic && this.isNew && collection) {
+          collection.remove(this)
+        }
+      })()
 
-          if (optimistic && this.isNew && collection) {
-            collection.remove(this)
-          }
-        })()
-
-        throw new ErrorObject(error)
-      })
+      throw error
+    }
   }
 
   /**
@@ -334,39 +311,37 @@ export default class Model {
    * requests the backend to delete it there
    * too
    */
-  destroy({ data, optimistic = true, path, ...otherOptions }: DestroyOptions = {}): Promise<any> {
+  async destroy({
+    data,
+    optimistic = true,
+    path,
+    ...otherOptions
+  }: DestroyOptions = {}): Promise<any> {
     const collection = this.collection
 
     if (this.isNew && collection) {
       collection.remove(this)
-      return Promise.resolve()
+      return
     }
-
-    if (this.isNew) {
-      return Promise.resolve()
-    }
-
-    const { promise } = apiClient().del(
-      path || this.url(),
-      data,
-      otherOptions
-    )
+    if (this.isNew) return
 
     if (optimistic && collection) {
       collection.remove(this)
     }
 
-    return promise
-      .then(data => {
-        if (!optimistic && collection) collection.remove(this)
+    try {
+      const newData = await apiClient().del(
+        path || this.url(),
+        data,
+        otherOptions
+      )
+      if (!optimistic && collection) collection.remove(this)
 
-        return data
-      })
-      .catch(error => {
-        if (optimistic && collection) collection.add(this)
-
-        throw new ErrorObject(error)
-      })
+      return newData
+    } catch (error) {
+      if (optimistic && collection) collection.add(this)
+      throw error
+    }
   }
 
   /**
@@ -374,16 +349,12 @@ export default class Model {
    * non-REST endpoints that you may have in
    * your API.
    */
-  rpc(
-    endpoint: string | { rootUrl: string },
-    options?: {}
-  ): Promise<any> {
-    const url = isObject(endpoint) ? endpoint.rootUrl : `${this.url()}/${endpoint}`
-    const { promise } = apiClient().post(url, options)
+  rpc(endpoint: string | { rootUrl: string }, options?: {}): Promise<any> {
+    const url = isObject(endpoint)
+      ? endpoint.rootUrl
+      : `${this.url()}/${endpoint}`
 
-    return promise.catch(error => {
-      throw new ErrorObject(error)
-    })
+    return apiClient().post(url, options)
   }
 }
 
@@ -393,26 +364,24 @@ export default class Model {
  */
 const applyPatchChanges = (oldAttributes: {}, changes: {}): {} => {
   return deepmerge(oldAttributes, changes, {
-    arrayMerge: dontMergeArrays
+    arrayMerge: dontMergeArrays,
   })
 }
 
 const getChangedAttributesBetween = (source: {}, target: {}): Array<string> => {
-  const keys = union(
-    Object.keys(source),
-    Object.keys(target)
-  )
+  const keys = union(Object.keys(source), Object.keys(target))
 
-  return keys.filter(key => !isEqual(source[key], target[key]))
+  return keys.filter((key) => !isEqual(source[key], target[key]))
 }
 
 const getChangesBetween = (source: {}, target: {}): { [key: string]: any } => {
   const changes = {}
 
-  getChangedAttributesBetween(source, target).forEach(key => {
-    changes[key] = isPlainObject(source[key]) && isPlainObject(target[key])
-      ? getChangesBetween(source[key], target[key])
-      : target[key]
+  getChangedAttributesBetween(source, target).forEach((key) => {
+    changes[key] =
+      isPlainObject(source[key]) && isPlainObject(target[key])
+        ? getChangesBetween(source[key], target[key])
+        : target[key]
   })
 
   return changes
