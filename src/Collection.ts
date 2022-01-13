@@ -1,10 +1,15 @@
 import Model, { DEFAULT_PRIMARY } from './Model'
 import apiClient from './apiClient'
-import ErrorObject from './ErrorObject'
 import difference from 'lodash/difference'
 import isObject from 'lodash/isObject'
 import intersection from 'lodash/intersection'
-import { observable, action, computed, IObservableArray, reaction, makeObservable } from 'mobx'
+import {
+  observable,
+  action,
+  computed,
+  IObservableArray,
+  makeObservable,
+} from 'mobx'
 import { CreateOptions, SetOptions, GetOptions, FindOptions, Id } from './types'
 
 type IndexTree<T> = Map<string, Index<T>>
@@ -13,8 +18,8 @@ type Index<T> = Map<any, Array<T>>
 export default abstract class Collection<T extends Model> {
   models: IObservableArray<T>
 
-  constructor (data: Array<{ [key: string]: any }> = []) {
-    this.models = observable.array(data.map(m => this.build(m)))
+  constructor(data: Array<{ [key: string]: any }> = []) {
+    this.models = observable.array(data.map((m) => this.build(m)))
 
     makeObservable(this, {
       index: computed({ keepAlive: true }),
@@ -25,14 +30,14 @@ export default abstract class Collection<T extends Model> {
       remove: action,
       set: action,
       create: action,
-      fetch: action
+      fetch: action,
     })
   }
 
   /*
    * Override this to have more indexes
    */
-  get indexes (): Array<string> {
+  get indexes(): Array<string> {
     return []
   }
 
@@ -45,7 +50,7 @@ export default abstract class Collection<T extends Model> {
    * would not be backward compatible and Typescript sucks at
    * static polymorphism (https://github.com/microsoft/TypeScript/issues/5863).
    */
-  get primaryKey (): string {
+  get primaryKey(): string {
     const ModelClass = this.model()
     if (!ModelClass) return DEFAULT_PRIMARY
 
@@ -65,9 +70,7 @@ export default abstract class Collection<T extends Model> {
 
     return indexes.reduce((tree: IndexTree<T>, attr: string) => {
       const newIndex = this.models.reduce((index: Index<T>, model: T) => {
-        const value = model.has(attr)
-          ? model.get(attr)
-          : null
+        const value = model.has(attr) ? model.get(attr) : null
         const oldModels = index.get(value) || []
 
         return index.set(value, oldModels.concat(model))
@@ -87,40 +90,41 @@ export default abstract class Collection<T extends Model> {
   /**
    * Alias for models.map
    */
-  map<P> (callback: (model: T) => P): Array<P> {
+  map<P>(callback: (model: T) => P): Array<P> {
     return this.models.map(callback)
   }
 
   /**
    * Alias for models.forEach
    */
-  forEach (callback: (model: T) => void): void {
+  forEach(callback: (model: T) => void): void {
     return this.models.forEach(callback)
   }
 
   /**
    * Returns the URL where the model's resource would be located on the server.
    */
-  abstract url (): string
-
+  abstract url(): string
 
   /**
    * Specifies the model class for that collection
    */
-  abstract model (attributes?: { [key: string]: any }): new(attributes?: {[key: string]: any}) => T | null
+  abstract model(attributes?: {
+    [key: string]: any
+  }): new (attributes?: { [key: string]: any }) => T | null
 
   /**
    * Returns a JSON representation
    * of the collection
    */
-  toJS (): Array<{ [key: string]: any }> {
-    return this.models.map(model => model.toJS())
+  toJS(): Array<{ [key: string]: any }> {
+    return this.models.map((model) => model.toJS())
   }
 
   /**
    * Alias of slice
    */
-  toArray (): Array<T> {
+  toArray(): Array<T> {
     return this.slice()
   }
 
@@ -128,7 +132,7 @@ export default abstract class Collection<T extends Model> {
    * Returns a defensive shallow array representation
    * of the collection
    */
-  slice (): Array<T> {
+  slice(): Array<T> {
     return this.models.slice()
   }
 
@@ -142,19 +146,23 @@ export default abstract class Collection<T extends Model> {
   /**
    * Get a resource at a given position
    */
-  at (index: number): T | null {
+  at(index: number): T | null {
     return this.models[index]
   }
 
   /**
    * Get a resource with the given id or uuid
    */
-  get (id: Id, { required = false }: GetOptions = {}): T {
+  get(id: Id, { required = false }: GetOptions = {}): T {
     const models = this.index.get(this.primaryKey).get(id)
     const model = models && models[0]
 
     if (!model && required) {
-      throw new Error(`Invariant: ${this.model().name} must be found with ${this.primaryKey}: ${id}`)
+      throw new Error(
+        `Invariant: ${this.model().name} must be found with ${
+          this.primaryKey
+        }: ${id}`
+      )
     }
 
     return model
@@ -166,13 +174,13 @@ export default abstract class Collection<T extends Model> {
    * If passing an object of key:value conditions, it will
    * use the indexes to efficiently retrieve the data.
    */
-  filter (query: { [key: string]: any } | ((T) => boolean)): Array<T> {
+  filter(query: { [key: string]: any } | ((query: T) => boolean)): Array<T> {
     if (typeof query === 'function') {
-      return this.models.filter(model => query(model))
+      return this.models.filter((model) => query(model))
     } else {
       // Sort the query to hit the indexes first
-      const optimizedQuery = Object.entries(query).sort((A, B) =>
-        Number(this.index.has(B[0])) - Number(this.index.has(A[0]))
+      const optimizedQuery = Object.entries(query).sort(
+        (A, B) => Number(this.index.has(B[0])) - Number(this.index.has(A[0]))
       )
 
       return optimizedQuery.reduce(
@@ -184,21 +192,27 @@ export default abstract class Collection<T extends Model> {
           } else {
             // Either Re-filter or Full scan
             const target = values || this.models
-            return target.filter((model: T) =>
-              model.has(attr) && model.get(attr) === value
+            return target.filter(
+              (model: T) => model.has(attr) && model.get(attr) === value
             )
           }
-        }, null)
+        },
+        null
+      )
     }
   }
 
   /**
    * Finds an element with the given matcher
    */
-  find (query: { [key: string]: any } | ((T) => boolean), { required = false }: FindOptions = {}): T | null {
-    const model = typeof query === 'function'
-      ? this.models.find(model => query(model))
-      : this.filter(query)[0]
+  find(
+    query: { [key: string]: any } | ((query: T) => boolean),
+    { required = false }: FindOptions = {}
+  ): T | null {
+    const model =
+      typeof query === 'function'
+        ? this.models.find((model) => query(model))
+        : this.filter(query)[0]
 
     if (!model && required) {
       throw new Error(`Invariant: ${this.model().name} must be found`)
@@ -210,7 +224,7 @@ export default abstract class Collection<T extends Model> {
   /**
    * Returns the last element of the collection
    */
-  last (): T | null {
+  last(): T | null {
     const length = this.models.length
     if (length === 0) return null
 
@@ -220,11 +234,13 @@ export default abstract class Collection<T extends Model> {
   /**
    * Adds a model or collection of models.
    */
-  add(data: Array<{ [key: string]: any } | T> | { [key: string]: any } | T): Array<T> {
+  add(
+    data: Array<{ [key: string]: any } | T> | { [key: string]: any } | T
+  ): Array<T> {
     if (!Array.isArray(data)) data = [data]
 
     const models = difference(
-      data.map(m => this.build(m)),
+      data.map((m: {}) => this.build(m)),
       this.models
     )
 
@@ -237,7 +253,7 @@ export default abstract class Collection<T extends Model> {
    * Resets the collection of models.
    */
   reset(data: Array<{ [key: string]: any }>): void {
-    this.models.replace(data.map(m => this.build(m)))
+    this.models.replace(data.map((m) => this.build(m)))
   }
 
   /**
@@ -250,8 +266,8 @@ export default abstract class Collection<T extends Model> {
 
     const toKeep: Set<T> = new Set(this.models)
 
-    ids.forEach(id => {
-      let model
+    ids.forEach((id) => {
+      let model: T
 
       if (id instanceof Model && id.collection === this) {
         model = id
@@ -260,7 +276,11 @@ export default abstract class Collection<T extends Model> {
       }
 
       if (!model) {
-        return console.warn(`${this.constructor.name}: ${this.model().name} with ${this.primaryKey} ${id} not found.`)
+        return console.warn(
+          `${this.constructor.name}: ${this.model().name} with ${
+            this.primaryKey
+          } ${id} not found.`
+        )
       }
 
       toKeep.delete(model)
@@ -284,7 +304,7 @@ export default abstract class Collection<T extends Model> {
 
     idsToRemove.delete(null)
 
-    resources.forEach(resource => {
+    resources.forEach((resource) => {
       const id = resource[this.primaryKey]
       const model = id ? this.get(id) : null
 
@@ -311,7 +331,7 @@ export default abstract class Collection<T extends Model> {
   /**
    * Creates a new model instance with the given attributes
    */
-  build (attributes: Object | T = {}): T {
+  build(attributes: Object | T = {}): T {
     if (attributes instanceof Model) {
       attributes.collection = this
       return attributes
@@ -346,18 +366,12 @@ export default abstract class Collection<T extends Model> {
    * use the options to disable adding, changing
    * or removing.
    */
-  fetch({ data, ...otherOptions }: SetOptions = {}): Promise<any> {
-    const { promise } = apiClient().get(this.url(), data, otherOptions)
+  async fetch({ data, ...otherOptions }: SetOptions = {}): Promise<{}> {
+    const newData = await apiClient().get(this.url(), data, otherOptions)
 
-    return promise
-      .then(data => {
-        if (Array.isArray(data)) this.set(data, otherOptions)
+    if (Array.isArray(newData)) this.set(newData, otherOptions)
 
-        return data
-      })
-      .catch(error => {
-        throw new ErrorObject(error)
-      })
+    return newData
   }
 
   /**
@@ -365,15 +379,11 @@ export default abstract class Collection<T extends Model> {
    * non-REST endpoints that you may have in
    * your API.
    */
-  rpc(
-    endpoint: string | { rootUrl: string },
-    options?: {}
-  ): Promise<any> {
-    const url = isObject(endpoint) ? endpoint.rootUrl : `${this.url()}/${endpoint}`
-    const { promise } = apiClient().post(url, options)
+  rpc(endpoint: string | { rootUrl: string }, options?: {}): Promise<any> {
+    const url = isObject(endpoint)
+      ? endpoint.rootUrl
+      : `${this.url()}/${endpoint}`
 
-    return promise.catch(error => {
-      throw new ErrorObject(error)
-    })
+    return apiClient().post(url, options)
   }
 }

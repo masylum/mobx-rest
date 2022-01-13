@@ -1,6 +1,6 @@
 {
   "name": "mobx-rest",
-  "version": "9.0.2",
+  "version": "10.0.0",
   "description": "REST conventions for mobx.",
   "jest": {
     "roots": [
@@ -20,22 +20,26 @@
     "mobx": "^6.3.2"
   },
   "devDependencies": {
-    "@types/jest": "26.0.23",
-    "@types/lodash": "4.14.170",
-    "@typescript-eslint/eslint-plugin": "4.26.1",
-    "@typescript-eslint/parser": "4.26.1",
+    "@types/deepmerge": "2.2.0",
+    "@types/jest": "27.4.0",
+    "@types/lodash": "4.14.178",
+    "@types/object.fromentries": "2.0.1",
+    "@typescript-eslint/eslint-plugin": "5.9.1",
+    "@typescript-eslint/parser": "5.9.1",
     "benchmark": "2.1.4",
-    "eslint": "7.28.0",
-    "husky": "4.3.0",
-    "jest": "27.0.4",
-    "lint-staged": "11.0.0",
+    "eslint": "8.6.0",
+    "eslint-config-prettier": "8.3.0",
+    "husky": "7.0.4",
+    "jest": "27.4.7",
+    "lint-staged": "^12.1.7",
+    "prettier": "2.5.1",
     "rimraf": "3.0.2",
-    "rollup": "2.51.2",
+    "rollup": "2.63.0",
     "rollup-plugin-node-resolve": "5.2.0",
-    "rollup-plugin-typescript2": "^0.30.0",
-    "ts-jest": "27.0.3",
-    "tslib": "2.3.0",
-    "typescript": "4.3.2"
+    "rollup-plugin-typescript2": "0.31.1",
+    "ts-jest": "27.1.2",
+    "tslib": "2.3.1",
+    "typescript": "4.5.4"
   },
   "main": "lib",
   "types": "./lib/index.d.ts",
@@ -47,21 +51,21 @@
     "lint": "eslint --ext .ts --cache src/ __tests__/",
     "prepublish": "yarn build",
     "prepush": "yarn test",
+    "prepare": "husky install",
     "test": "yarn lint && yarn jest",
-    "watch": "rollup --config -w",
-    "lint-staged": {
-      "linters": {
-        "{src|__tests__}/**/*.ts": [
-          "git add"
-        ]
-      }
-    }
+    "watch": "rollup --config -w"
+  },
+  "lint-staged": {
+    "{__test__,src}/*": [
+      "eslint",
+      "prettier --write --ignore-unknown"
+    ]
   },
   "dependencies": {
     "deepmerge": "4.2.2",
-    "object.fromentries": "2.0.4",
     "lodash": "4.17.21",
     "mobx": "^6.3.2",
-    "rollup-plugin-dts": "^3.0.2"
+    "object.fromentries": "2.0.5",
+    "rollup-plugin-dts": "4.1.0"
   }
 }

@@ -1,6 +1,7 @@
 module.exports = {
   parser: '@typescript-eslint/parser',
-  plugins: [ '@typescript-eslint' ],
+  plugins: ['@typescript-eslint'],
+  extends: ['prettier'],
 
   env: {
     browser: true,
@@ -16,12 +17,5 @@ module.exports = {
     ecmaFeatures: {
       experimentalObjectRestSpread: true
     }
-  },
-
-  rules: {
-    'object-curly-spacing': ['warn', 'always'],
-    'prefer-promise-reject-errors': 'off',
-    'no-duplicate-imports': 'off'
   }
 };
-

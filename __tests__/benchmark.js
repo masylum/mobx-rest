@@ -1,20 +1,20 @@
 const Benchmark = require('benchmark')
 const Index = require('../lib/index')
-const suite = new Benchmark.Suite
+const suite = new Benchmark.Suite()
 
 class MockCollection extends Index.Collection {
-  url () {
+  url() {
     return '/users'
   }
 
-  model () {
+  model() {
     return Index.Model
   }
 }
 
 const collection = new MockCollection([])
 
-for (var i = 10000; i--;)  {
+for (var i = 10000; i--; ) {
   collection.add({ id: i, age: i })
 }
 
@@ -31,4 +31,4 @@ suite
   .on('complete', function onComplete() {
     console.log('Fastest is ' + this.filter('fastest').map('name'))
   })
-  .run({ 'async': true })
+  .run({ async: true })
