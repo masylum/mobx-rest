@@ -330,6 +330,14 @@ describe(Collection, () => {
     })
 
     describe('if the id is not registered', () => {
+      let consoleWarnMock
+
+      beforeEach(() => {
+        consoleWarnMock = jest.spyOn(console, 'warn').mockImplementation()
+      })
+
+      afterEach(() => consoleWarnMock.mockRestore())
+
       it("doesn't throw", () => {
         collection.reset([{ id: 1 }])
 
@@ -363,6 +371,14 @@ describe(Collection, () => {
     })
 
     describe('if data is anything else', () => {
+      let consoleWarnMock
+
+      beforeEach(() => {
+        consoleWarnMock = jest.spyOn(console, 'warn').mockImplementation()
+      })
+
+      afterEach(() => consoleWarnMock.mockRestore())
+
       it("don't throw", () => {
         expect(() => collection.remove('invalid')).not.toThrow()
       })

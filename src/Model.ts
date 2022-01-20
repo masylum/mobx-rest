@@ -325,16 +325,16 @@ export default class Model {
     }
     if (this.isNew) return
 
+    // It is important to compute the url before removing it if
+    // the url depends on the collection url.
+    const url = path || this.url()
+
     if (optimistic && collection) {
       collection.remove(this)
     }
 
     try {
-      const newData = await apiClient().del(
-        path || this.url(),
-        data,
-        otherOptions
-      )
+      const newData = await apiClient().del(url, data, otherOptions)
       if (!optimistic && collection) collection.remove(this)
 
       return newData

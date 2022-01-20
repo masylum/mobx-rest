@@ -1184,7 +1184,7 @@ describe(Model, () => {
 
       it('makes a DELETE request', () => {
         model.destroy()
-        expect(spy).toHaveBeenCalled()
+        expect(spy).toHaveBeenCalledWith('/resources/2', undefined, {})
       })
 
       describe('if optimistic and belongs to a collection', () => {
@@ -1192,6 +1192,8 @@ describe(Model, () => {
 
         beforeEach(() => {
           collection = new MockCollection()
+          collection.url = () => '/tasks'
+          model.urlRoot = () => null
           model.collection = collection
           collection.models.push(model)
         })
@@ -1200,6 +1202,7 @@ describe(Model, () => {
           expect(collection.length).toBe(1)
           model.destroy({ optimistic: true })
           expect(collection.length).toBe(0)
+          expect(spy).toHaveBeenCalledWith('/tasks/2', undefined, {})
         })
       })
 
