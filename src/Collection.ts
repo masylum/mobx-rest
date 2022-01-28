@@ -153,7 +153,7 @@ export default abstract class Collection<T extends Model> {
   /**
    * Get a resource with the given id or uuid
    */
-  get(id: Id, { required = false }: GetOptions = {}): T {
+  get(id: Id, { required = false }: GetOptions = {}): T | undefined {
     const models = this.index.get(this.primaryKey).get(id)
     const model = models && models[0]
 

@@ -1,5 +1,13 @@
 # Changelog
 
+## `11.0.0`
+
+  - Breaking: `Collection`'s `get` method return type is now typed to `T | undefined`.
+
+## `10.0.1`
+
+  - Fixed: optimistic destroys for models in collections.
+
 ## `10.0.0`
 
   - Simplify `Collection` and `Model` api, removing the `Request` wrapper.
