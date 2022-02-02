@@ -434,9 +434,9 @@ describe(Model, () => {
   })
 
   describe('fetch(options)', () => {
-    let spy
-    let promise
-    let model
+    let spy: any
+    let promise: any
+    let model: any
 
     beforeEach(() => {
       model = new Model({ id: 2 })
@@ -496,7 +496,7 @@ describe(Model, () => {
   })
 
   describe('save(attributes, options)', () => {
-    let model
+    let model: any
 
     beforeEach(() => {
       model = new Model({
@@ -508,7 +508,7 @@ describe(Model, () => {
     })
 
     describe('when it belongs to a collection', () => {
-      let collection
+      let collection: any
 
       beforeEach(() => {
         collection = new MockCollection()
@@ -683,7 +683,7 @@ describe(Model, () => {
     })
 
     describe('if is new', () => {
-      let spy
+      let spy: any
 
       beforeEach(() => {
         spy = jest.spyOn(apiClient(), 'post')
@@ -739,7 +739,7 @@ describe(Model, () => {
       })
 
       describe('if patch = true', () => {
-        let spy
+        let spy: any
 
         beforeEach(() => {
           spy = jest.spyOn(apiClient(), 'patch')
@@ -788,7 +788,7 @@ describe(Model, () => {
       })
 
       describe('if patch = false', () => {
-        let spy
+        let spy: any
 
         beforeEach(() => {
           spy = jest.spyOn(apiClient(), 'put')
@@ -843,7 +843,7 @@ describe(Model, () => {
     })
 
     describe('if other options are specified', () => {
-      let spy
+      let spy: any
 
       beforeEach(() => {
         spy = jest.spyOn(apiClient(), 'post')
@@ -1112,7 +1112,7 @@ describe(Model, () => {
     })
 
     describe('with customized path', () => {
-      let spy
+      let spy: any
 
       beforeEach(() => {
         spy = jest.spyOn(apiClient(), 'post')
@@ -1142,8 +1142,8 @@ describe(Model, () => {
   })
 
   describe('destroy(options)', () => {
-    let spy
-    let model
+    let spy: any
+    let model: any
 
     beforeEach(() => {
       model = new Model()
@@ -1282,7 +1282,7 @@ describe(Model, () => {
 
             try {
               await promise
-            } catch (errorObject) {
+            } catch (errorObject: any) {
               expect(errorObject.error).toBe('Conflict')
             }
           })
@@ -1306,9 +1306,9 @@ describe(Model, () => {
   })
 
   describe('rpc(endpoint, options)', () => {
-    let spy
-    let model
-    let promise
+    let spy: any
+    let model: any
+    let promise: any
 
     beforeEach(() => {
       model = new Model()

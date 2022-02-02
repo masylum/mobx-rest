@@ -22,7 +22,7 @@ class MockCollection extends Collection<MockModel> {
 }
 
 describe(Collection, () => {
-  let collection
+  let collection: any
 
   beforeEach(() => {
     collection = new MockCollection([
@@ -55,7 +55,7 @@ describe(Collection, () => {
       expect(collection.index.get('id')).toEqual(
         new Map([
           [1, collection.filter({ id: 1 })],
-          [2, collection.filter((model) => model.get('id') === 2)],
+          [2, collection.filter((model: any) => model.get('id') === 2)],
           [3, collection.filter({ id: 3 })],
           [4, collection.filter({ id: 4 })],
         ])
@@ -64,7 +64,7 @@ describe(Collection, () => {
       expect(collection.index.get('phone')).toEqual(
         new Map([
           ['1234', [collection.find({ phone: '1234' })]],
-          ['5678', [collection.find((model) => model.get('phone') === '5678')]],
+          ['5678', [collection.find((model: any) => model.get('phone') === '5678')]],
           [null, collection.filter({ phone: null })],
         ])
       )
@@ -73,14 +73,14 @@ describe(Collection, () => {
 
   describe('map(callback)', () => {
     it('aliases `models.map`', () => {
-      expect(collection.map((model) => model.id)).toEqual([1, 2, 3, 4])
+      expect(collection.map((model: any) => model.id)).toEqual([1, 2, 3, 4])
     })
   })
 
   describe('forEach(callback)', () => {
     it('aliases `models.forEach`', () => {
-      const ids = []
-      const response = collection.forEach((model) => ids.push(model.id))
+      const ids: any[] = []
+      const response = collection.forEach((model: any) => ids.push(model.id))
 
       expect(response).not.toBeDefined()
       expect(ids).toEqual([1, 2, 3, 4])
@@ -187,7 +187,7 @@ describe(Collection, () => {
     describe('if query is a function', () => {
       it('returns the models that returns true on the callback', () => {
         expect(
-          collection.filter((model) => model.get('email') === 'test2@test.com')
+          collection.filter((model: any) => model.get('email') === 'test2@test.com')
         ).toEqual([collection.at(1), collection.at(2)])
       })
     })
@@ -217,7 +217,7 @@ describe(Collection, () => {
     describe('if query is a function', () => {
       it('returns the first model that returns true on the callback', () => {
         expect(
-          collection.find((model) => model.get('email') === 'test2@test.com')
+          collection.find((model: any) => model.get('email') === 'test2@test.com')
         ).toEqual(collection.at(1))
       })
     })
@@ -305,7 +305,7 @@ describe(Collection, () => {
 
       expect(collection.length).toBe(3)
 
-      collection.forEach((model) => expect(model).toBeInstanceOf(Model))
+      collection.forEach((model: any) => expect(model).toBeInstanceOf(Model))
     })
   })
 
@@ -330,7 +330,7 @@ describe(Collection, () => {
     })
 
     describe('if the id is not registered', () => {
-      let consoleWarnMock
+      let consoleWarnMock: any
 
       beforeEach(() => {
         consoleWarnMock = jest.spyOn(console, 'warn').mockImplementation()
@@ -371,7 +371,7 @@ describe(Collection, () => {
     })
 
     describe('if data is anything else', () => {
-      let consoleWarnMock
+      let consoleWarnMock: any
 
       beforeEach(() => {
         consoleWarnMock = jest.spyOn(console, 'warn').mockImplementation()
@@ -527,7 +527,8 @@ describe(Collection, () => {
   })
 
   describe('create(attributes, { optimistic = true })', () => {
-    let spy
+    let spy: any
+
     beforeEach(() => {
       collection.url = () => '/resources'
       collection.reset([])
@@ -594,7 +595,7 @@ describe(Collection, () => {
 
         try {
           await promise
-        } catch (errorObject) {
+        } catch (errorObject: any) {
           expect(errorObject.error).toBe('Conflict')
         }
       })
@@ -616,9 +617,9 @@ describe(Collection, () => {
   })
 
   describe('fetch(options)', () => {
-    let spy
-    let promise
-    let options
+    let spy: any
+    let promise: any
+    let options: any
 
     beforeEach(() => {
       collection.url = () => '/resources'
@@ -658,8 +659,8 @@ describe(Collection, () => {
   })
 
   describe('rpc', () => {
-    let spy
-    let promise
+    let spy: any
+    let promise: any
     let options
 
     beforeEach(() => {

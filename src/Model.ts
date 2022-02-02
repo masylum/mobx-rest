@@ -30,7 +30,7 @@ export default class Model {
   committedAttributes: ObservableMap
 
   optimisticId: OptimisticId = uniqueId('i_')
-  collection: Collection<this> | null = null
+  collection: Collection<this> | undefined | null = null
 
   constructor(attributes: Attributes = {}, defaultAttributes: Attributes = {}) {
     makeObservable(this, {
@@ -128,7 +128,7 @@ export default class Model {
    * use `has` to check wether the field
    * exists.
    */
-  get(attribute: string): any {
+  get(attribute: string) {
     if (this.has(attribute)) {
       return this.attributes.get(attribute)
     }
@@ -368,14 +368,20 @@ const applyPatchChanges = (oldAttributes: {}, changes: {}): {} => {
   })
 }
 
-const getChangedAttributesBetween = (source: {}, target: {}): Array<string> => {
+const getChangedAttributesBetween = (
+  source: { [key: string]: any },
+  target: { [key: string]: any }
+): Array<string> => {
   const keys = union(Object.keys(source), Object.keys(target))
 
   return keys.filter((key) => !isEqual(source[key], target[key]))
 }
 
-const getChangesBetween = (source: {}, target: {}): { [key: string]: any } => {
-  const changes = {}
+const getChangesBetween = (
+  source: { [key: string]: any },
+  target: { [key: string]: any }
+): { [key: string]: any } => {
+  const changes: { [key: string]: any } = {}
 
   getChangedAttributesBetween(source, target).forEach((key) => {
     changes[key] =

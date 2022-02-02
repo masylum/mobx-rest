@@ -1,42 +1,51 @@
-let resolvePromise
-let rejectPromise
+import { Adapter } from "../../src/types"
 
-export default {
-  resolvePromise(...args) {
+let resolvePromise: any
+let rejectPromise: any
+
+interface MockAdapter extends Adapter {
+  resolvePromise(...args: any[]): any;
+  resolvePromise(error: any, requestResponse: any): any;
+}
+
+const mockAdapter: MockAdapter = {
+  resolvePromise(...args): any {
     resolvePromise(...args)
   },
 
-  rejectPromise(error, requestResponse = {}) {
+  rejectPromise(error, requestResponse = {}): any {
     rejectPromise({
       error,
       requestResponse,
     })
   },
 
-  _mock() {
+  _mock(_path, _data, _options) {
     return new Promise((resolve, reject) => {
       resolvePromise = resolve
       rejectPromise = reject
     })
   },
 
-  get() {
-    return this._mock()
+  get(path, data, options) {
+    return this._mock(path, data, options)
   },
 
-  post() {
-    return this._mock()
+  post(path, data, options) {
+    return this._mock(path, data, options)
   },
 
-  put() {
-    return this._mock()
+  put(path, data, options) {
+    return this._mock(path, data, options)
   },
 
-  patch() {
-    return this._mock()
+  patch(path, data, options) {
+    return this._mock(path, data, options)
   },
 
-  del() {
-    return this._mock()
+  del(path, data, options) {
+    return this._mock(path, data, options)
   },
 }
+
+export default mockAdapter

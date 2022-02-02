@@ -7,7 +7,8 @@
     "moduleResolution": "Node",
     "esModuleInterop": true,
     "downlevelIteration": true,
-    "lib": ["es2018", "dom", "esnext"]
+    "lib": ["es2018", "dom", "esnext"],
+    "strict": true
   },
   "include": [ "./src/**/*", "__tests__/**/*.spec.ts" ]
 }

@@ -41,4 +41,5 @@ export interface Adapter {
   post(path: string, data?: {}, options?: {}): Promise<any>
   put(path: string, data?: {}, options?: {}): Promise<any>
   del(path: string, data?: {}, options?: {}): Promise<any>
+  [key: string]: (path: string, data?: {}, options?: {}) => Promise<any>
 }

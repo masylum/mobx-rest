@@ -16,7 +16,7 @@ type IndexTree<T> = Map<string, Index<T>>
 type Index<T> = Map<any, Array<T>>
 
 export default abstract class Collection<T extends Model> {
-  models: IObservableArray<T>
+  models: IObservableArray<T | null>
 
   constructor(data: Array<{ [key: string]: any }> = []) {
     this.models = observable.array(data.map((m) => this.build(m)))
@@ -69,12 +69,15 @@ export default abstract class Collection<T extends Model> {
     const indexes = this.indexes.concat([this.primaryKey])
 
     return indexes.reduce((tree: IndexTree<T>, attr: string) => {
-      const newIndex = this.models.reduce((index: Index<T>, model: T) => {
-        const value = model.has(attr) ? model.get(attr) : null
-        const oldModels = index.get(value) || []
+      const newIndex = this.models.reduce(
+        (index: Index<T>, model: T | null) => {
+          const value = model && model.has(attr) ? model.get(attr) : null
+          const oldModels = index.get(value) || []
 
-        return index.set(value, oldModels.concat(model))
-      }, new Map())
+          return index.set(value, model ? oldModels.concat(model) : oldModels)
+        },
+        new Map()
+      )
 
       return tree.set(attr, newIndex)
     }, new Map())
@@ -90,14 +93,14 @@ export default abstract class Collection<T extends Model> {
   /**
    * Alias for models.map
    */
-  map<P>(callback: (model: T) => P): Array<P> {
+  map<P>(callback: (model: T | null) => P): Array<P> {
     return this.models.map(callback)
   }
 
   /**
    * Alias for models.forEach
    */
-  forEach(callback: (model: T) => void): void {
+  forEach(callback: (model: T | null) => void): void {
     return this.models.forEach(callback)
   }
 
@@ -118,13 +121,13 @@ export default abstract class Collection<T extends Model> {
    * of the collection
    */
   toJS(): Array<{ [key: string]: any }> {
-    return this.models.map((model) => model.toJS())
+    return this.models.map((model) => model?.toJS())
   }
 
   /**
    * Alias of slice
    */
-  toArray(): Array<T> {
+  toArray(): Array<T | null> {
     return this.slice()
   }
 
@@ -132,7 +135,7 @@ export default abstract class Collection<T extends Model> {
    * Returns a defensive shallow array representation
    * of the collection
    */
-  slice(): Array<T> {
+  slice(): Array<T | null> {
     return this.models.slice()
   }
 
@@ -154,7 +157,7 @@ export default abstract class Collection<T extends Model> {
    * Get a resource with the given id or uuid
    */
   get(id: Id, { required = false }: GetOptions = {}): T | undefined {
-    const models = this.index.get(this.primaryKey).get(id)
+    const models = this.index.get(this.primaryKey)?.get(id)
     const model = models && models[0]
 
     if (!model && required) {
@@ -174,7 +177,9 @@ export default abstract class Collection<T extends Model> {
    * If passing an object of key:value conditions, it will
    * use the indexes to efficiently retrieve the data.
    */
-  filter(query: { [key: string]: any } | ((query: T) => boolean)): Array<T> {
+  filter(
+    query: { [key: string]: any } | ((query: T | null) => boolean)
+  ): Array<T | null> {
     if (typeof query === 'function') {
       return this.models.filter((model) => query(model))
     } else {
@@ -184,20 +189,21 @@ export default abstract class Collection<T extends Model> {
       )
 
       return optimizedQuery.reduce(
-        (values: Array<T> | null, [attr, value]): Array<T> => {
+        (values: Array<T | null>, [attr, value]): Array<T | null> => {
           // Hitting index
           if (this.index.has(attr)) {
-            const newValues = this.index.get(attr).get(value) || []
+            const newValues = this.index.get(attr)?.get(value) || []
             return values ? intersection(values, newValues) : newValues
           } else {
             // Either Re-filter or Full scan
             const target = values || this.models
             return target.filter(
-              (model: T) => model.has(attr) && model.get(attr) === value
+              (model: T | null) =>
+                model && model.has(attr) && model.get(attr) === value
             )
           }
         },
-        null
+        []
       )
     }
   }
@@ -206,7 +212,7 @@ export default abstract class Collection<T extends Model> {
    * Finds an element with the given matcher
    */
   find(
-    query: { [key: string]: any } | ((query: T) => boolean),
+    query: { [key: string]: any } | ((query: T | null) => boolean),
     { required = false }: FindOptions = {}
   ): T | null {
     const model =
@@ -218,7 +224,11 @@ export default abstract class Collection<T extends Model> {
       throw new Error(`Invariant: ${this.model().name} must be found`)
     }
 
-    return model
+    if (model) {
+      return model
+    }
+
+    return null
   }
 
   /**
@@ -236,7 +246,7 @@ export default abstract class Collection<T extends Model> {
    */
   add(
     data: Array<{ [key: string]: any } | T> | { [key: string]: any } | T
-  ): Array<T> {
+  ): Array<T | null> {
     if (!Array.isArray(data)) data = [data]
 
     const models = difference(
@@ -264,10 +274,10 @@ export default abstract class Collection<T extends Model> {
       ids = [ids]
     }
 
-    const toKeep: Set<T> = new Set(this.models)
+    const toKeep: Set<T | null> = new Set(this.models)
 
     ids.forEach((id) => {
-      let model: T
+      let model: T | undefined
 
       if (id instanceof Model && id.collection === this) {
         model = id
@@ -299,13 +309,14 @@ export default abstract class Collection<T extends Model> {
     resources: Array<{ [key: string]: any } | T>,
     { add = true, change = true, remove = true }: SetOptions = {}
   ): void {
-    const idsToRemove = new Set(this.index.get(this.primaryKey).keys())
-    const resourcesToAdd = new Set([])
+    const idsToRemove = new Set(this.index.get(this.primaryKey)?.keys())
+    const resourcesToAdd = new Set<T | { [key: string]: any }>([])
 
     idsToRemove.delete(null)
 
     resources.forEach((resource) => {
-      const id = resource[this.primaryKey]
+      // FIXME: find another way to bypass this
+      const id = (resource as any)[this.primaryKey]
       const model = id ? this.get(id) : null
 
       if (!model) {
@@ -331,7 +342,7 @@ export default abstract class Collection<T extends Model> {
   /**
    * Creates a new model instance with the given attributes
    */
-  build(attributes: Object | T = {}): T {
+  build(attributes: Object | T = {}): T | null {
     if (attributes instanceof Model) {
       attributes.collection = this
       return attributes
@@ -339,7 +350,10 @@ export default abstract class Collection<T extends Model> {
 
     const ModelClass = this.model(attributes)
     const model = new ModelClass(attributes)
-    model.collection = this
+
+    if (model) {
+      model.collection = this
+    }
 
     return model
   }
@@ -353,10 +367,12 @@ export default abstract class Collection<T extends Model> {
   create(
     attributesOrModel: { [key: string]: any } | T,
     { optimistic = true, path }: CreateOptions = {}
-  ): Promise<T> {
+  ): Promise<T> | undefined {
     const model = this.build(attributesOrModel)
 
-    return model.save({}, { optimistic, path })
+    if (model) {
+      return model.save({}, { optimistic, path })
+    }
   }
 
   /**
