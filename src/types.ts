@@ -36,9 +36,9 @@ export interface FindOptions {
 }
 
 export interface Adapter {
-  get(path: string, data?: {}, options?: {}): Promise<any>
-  patch(path: string, data?: {}, options?: {}): Promise<any>
-  post(path: string, data?: {}, options?: {}): Promise<any>
-  put(path: string, data?: {}, options?: {}): Promise<any>
-  del(path: string, data?: {}, options?: {}): Promise<any>
+  get<T = unknown>(path: string, data?: {}, options?: {}): Promise<T>
+  patch<T = unknown>(path: string, data?: {}, options?: {}): Promise<T>
+  post<T = unknown>(path: string, data?: {}, options?: {}): Promise<T>
+  put<T = unknown>(path: string, data?: {}, options?: {}): Promise<T>
+  del<T = unknown>(path: string, data?: {}, options?: {}): Promise<T>
 }

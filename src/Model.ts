@@ -210,7 +210,7 @@ export default class Model {
   /**
    * Fetches the model from the backend.
    */
-  async fetch({ data, ...otherOptions }: { data?: {} } = {}): Promise<any> {
+  async fetch({ data, ...otherOptions }: { data?: {} } = {}) {
     const newData = await apiClient().get(this.url(), data, otherOptions)
 
     if (!newData) return
@@ -316,7 +316,7 @@ export default class Model {
     optimistic = true,
     path,
     ...otherOptions
-  }: DestroyOptions = {}): Promise<any> {
+  }: DestroyOptions = {}) {
     const collection = this.collection
 
     if (this.isNew && collection) {
@@ -349,7 +349,7 @@ export default class Model {
    * non-REST endpoints that you may have in
    * your API.
    */
-  rpc(endpoint: string | { rootUrl: string }, options?: {}): Promise<any> {
+  rpc(endpoint: string | { rootUrl: string }, options?: {}) {
     const url = isObject(endpoint)
       ? endpoint.rootUrl
       : `${this.url()}/${endpoint}`

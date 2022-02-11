@@ -366,7 +366,7 @@ export default abstract class Collection<T extends Model> {
    * use the options to disable adding, changing
    * or removing.
    */
-  async fetch({ data, ...otherOptions }: SetOptions = {}): Promise<{}> {
+  async fetch({ data, ...otherOptions }: SetOptions = {}) {
     const newData = await apiClient().get(this.url(), data, otherOptions)
 
     if (Array.isArray(newData)) this.set(newData, otherOptions)
@@ -379,7 +379,7 @@ export default abstract class Collection<T extends Model> {
    * non-REST endpoints that you may have in
    * your API.
    */
-  rpc(endpoint: string | { rootUrl: string }, options?: {}): Promise<any> {
+  rpc(endpoint: string | { rootUrl: string }, options?: {}) {
     const url = isObject(endpoint)
       ? endpoint.rootUrl
       : `${this.url()}/${endpoint}`
