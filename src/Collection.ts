@@ -19,7 +19,11 @@ export default abstract class Collection<T extends Model> {
   models: IObservableArray<T>
 
   constructor(data: Array<{ [key: string]: any }> = []) {
-    this.models = observable.array(data.map((m) => this.build(m)))
+    this.models = observable.array(
+      data
+        .map((m) => this.build(m))
+        .filter((m: T | undefined): m is T => m !== undefined)
+    )
 
     makeObservable(this, {
       index: computed({ keepAlive: true }),
@@ -154,7 +158,7 @@ export default abstract class Collection<T extends Model> {
    * Get a resource with the given id or uuid
    */
   get(id: Id, { required = false }: GetOptions = {}): T | undefined {
-    const models = this.index.get(this.primaryKey).get(id)
+    const models = this.index.get(this.primaryKey)?.get(id)
     const model = models && models[0]
 
     if (!model && required) {
@@ -174,7 +178,7 @@ export default abstract class Collection<T extends Model> {
    * If passing an object of key:value conditions, it will
    * use the indexes to efficiently retrieve the data.
    */
-  filter(query: { [key: string]: any } | ((query: T) => boolean)): Array<T> {
+  filter(query: { [key: string]: any } | ((query: T) => boolean)) {
     if (typeof query === 'function') {
       return this.models.filter((model) => query(model))
     } else {
@@ -183,22 +187,19 @@ export default abstract class Collection<T extends Model> {
         (A, B) => Number(this.index.has(B[0])) - Number(this.index.has(A[0]))
       )
 
-      return optimizedQuery.reduce(
-        (values: Array<T> | null, [attr, value]): Array<T> => {
-          // Hitting index
-          if (this.index.has(attr)) {
-            const newValues = this.index.get(attr).get(value) || []
-            return values ? intersection(values, newValues) : newValues
-          } else {
-            // Either Re-filter or Full scan
-            const target = values || this.models
-            return target.filter(
-              (model: T) => model.has(attr) && model.get(attr) === value
-            )
-          }
-        },
-        null
-      )
+      return optimizedQuery.reduce<T[] | null>((values, [attr, value]) => {
+        // Hitting index
+        if (this.index.has(attr)) {
+          const newValues = this.index.get(attr)?.get(value) ?? []
+          return values ? intersection(values, newValues) : newValues
+        } else {
+          // Either Re-filter or Full scan
+          const target = values ?? this.models
+          return target.filter(
+            (model) => model.has(attr) && model.get(attr) === value
+          )
+        }
+      }, null)
     }
   }
 
@@ -208,11 +209,11 @@ export default abstract class Collection<T extends Model> {
   find(
     query: { [key: string]: any } | ((query: T) => boolean),
     { required = false }: FindOptions = {}
-  ): T | null {
+  ) {
     const model =
       typeof query === 'function'
         ? this.models.find((model) => query(model))
-        : this.filter(query)[0]
+        : this.filter(query)?.[0]
 
     if (!model && required) {
       throw new Error(`Invariant: ${this.model().name} must be found`)
@@ -253,7 +254,10 @@ export default abstract class Collection<T extends Model> {
    * Resets the collection of models.
    */
   reset(data: Array<{ [key: string]: any }>): void {
-    this.models.replace(data.map((m) => this.build(m)))
+    const result = data
+      .map((m) => this.build(m))
+      .filter((m: T | undefined): m is T => m !== undefined)
+    this.models.replace(result)
   }
 
   /**
@@ -267,7 +271,7 @@ export default abstract class Collection<T extends Model> {
     const toKeep: Set<T> = new Set(this.models)
 
     ids.forEach((id) => {
-      let model: T
+      let model: T | undefined
 
       if (id instanceof Model && id.collection === this) {
         model = id
@@ -299,12 +303,13 @@ export default abstract class Collection<T extends Model> {
     resources: Array<{ [key: string]: any } | T>,
     { add = true, change = true, remove = true }: SetOptions = {}
   ): void {
-    const idsToRemove = new Set(this.index.get(this.primaryKey).keys())
-    const resourcesToAdd = new Set([])
+    const idsToRemove = new Set(this.index.get(this.primaryKey)?.keys())
+    const resourcesToAdd = new Set<{ [key: string]: any } | T>([])
 
     idsToRemove.delete(null)
 
-    resources.forEach((resource) => {
+    // TODO: remove this any
+    resources.forEach((resource: any) => {
       const id = resource[this.primaryKey]
       const model = id ? this.get(id) : null
 
@@ -331,7 +336,7 @@ export default abstract class Collection<T extends Model> {
   /**
    * Creates a new model instance with the given attributes
    */
-  build(attributes: Object | T = {}): T {
+  build(attributes: Object | T) {
     if (attributes instanceof Model) {
       attributes.collection = this
       return attributes
@@ -339,9 +344,12 @@ export default abstract class Collection<T extends Model> {
 
     const ModelClass = this.model(attributes)
     const model = new ModelClass(attributes)
-    model.collection = this
 
-    return model
+    if (model) {
+      model.collection = this
+
+      return model
+    }
   }
 
   /**
@@ -350,13 +358,13 @@ export default abstract class Collection<T extends Model> {
    * The default behaviour is optimistic but this
    * can be tuned.
    */
-  create(
+  create<R = unknown>(
     attributesOrModel: { [key: string]: any } | T,
     { optimistic = true, path }: CreateOptions = {}
-  ): Promise<T> {
+  ) {
     const model = this.build(attributesOrModel)
 
-    return model.save({}, { optimistic, path })
+    return model?.save<R>({}, { optimistic, path })
   }
 
   /**
@@ -366,8 +374,8 @@ export default abstract class Collection<T extends Model> {
    * use the options to disable adding, changing
    * or removing.
    */
-  async fetch({ data, ...otherOptions }: SetOptions = {}): Promise<{}> {
-    const newData = await apiClient().get(this.url(), data, otherOptions)
+  async fetch<R = unknown>({ data, ...otherOptions }: SetOptions = {}) {
+    const newData = await apiClient().get<R>(this.url(), data, otherOptions)
 
     if (Array.isArray(newData)) this.set(newData, otherOptions)
 
@@ -379,11 +387,11 @@ export default abstract class Collection<T extends Model> {
    * non-REST endpoints that you may have in
    * your API.
    */
-  rpc(endpoint: string | { rootUrl: string }, options?: {}): Promise<any> {
+  rpc<R = unknown>(endpoint: string | { rootUrl: string }, options?: {}) {
     const url = isObject(endpoint)
       ? endpoint.rootUrl
       : `${this.url()}/${endpoint}`
 
-    return apiClient().post(url, options)
+    return apiClient().post<R>(url, options)
   }
 }

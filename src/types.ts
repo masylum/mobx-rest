@@ -35,10 +35,18 @@ export interface FindOptions {
   required?: boolean
 }
 
-export interface Adapter {
-  get(path: string, data?: {}, options?: {}): Promise<any>
-  patch(path: string, data?: {}, options?: {}): Promise<any>
-  post(path: string, data?: {}, options?: {}): Promise<any>
-  put(path: string, data?: {}, options?: {}): Promise<any>
-  del(path: string, data?: {}, options?: {}): Promise<any>
+export type RestVerbs = 'get' | 'patch' | 'post' | 'put' | 'del'
+
+export type Adapter = {
+  [key in RestVerbs]: <R = unknown>(
+    path: string,
+    data?: {},
+    options?: {}
+  ) => Promise<R>
+} & {
+  get<R = unknown>(path: string, data?: {}, options?: {}): Promise<R>
+  patch<R = unknown>(path: string, data?: {}, options?: {}): Promise<R>
+  post<R = unknown>(path: string, data?: {}, options?: {}): Promise<R>
+  put<R = unknown>(path: string, data?: {}, options?: {}): Promise<R>
+  del<R = unknown>(path: string, data?: {}, options?: {}): Promise<R>
 }
